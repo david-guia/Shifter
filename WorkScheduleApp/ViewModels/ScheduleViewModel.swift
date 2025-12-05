@@ -13,19 +13,52 @@ import UniformTypeIdentifiers
 
 @MainActor
 class ScheduleViewModel: ObservableObject {
+    // MARK: - Propriétés publiées
+    
+    /// Liste de tous les schedules (en pratique, un seul schedule principal)
     @Published var schedules: [WorkSchedule] = []
     @Published var selectedSchedule: WorkSchedule?
+    
+    /// Indicateur de chargement pendant l'OCR
     @Published var isLoading = false
+    
+    /// Message d'erreur à afficher
     @Published var errorMessage: String?
     @Published var showError = false
+    
     @Published var filterLocation: String?
     
+    /// Indicateur pour afficher le toast de restauration automatique
+    @Published var showRestoredMessage = false
+    
+    // MARK: - Propriétés privées
+    
+    /// Service OCR pour extraire le texte des images
     private let ocrService = OCRService()
+    
+    /// Contexte SwiftData pour les opérations de persistance
     private var modelContext: ModelContext?
     
+    // MARK: - Backup automatique
+    
+    /// URL du fichier de backup JSON automatique dans Documents/
+    /// Survit aux réinstallations via "Build & Run" Xcode (certificat dev)
+    private var backupURL: URL {
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        return documentsPath.appendingPathComponent("shifter_auto_backup.json")
+    }
+    
+    /// Initialise le contexte SwiftData et tente une restauration automatique si nécessaire
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
         fetchSchedules()
+        
+        // Si aucune donnée SwiftData trouvée, vérifier si un backup existe
+        if schedules.isEmpty {
+            Task {
+                await attemptAutoRestore()
+            }
+        }
     }
     
     func fetchSchedules() {
@@ -42,25 +75,29 @@ class ScheduleViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Import depuis image OCR
+    
+    /// Importe les horaires depuis une capture d'écran via OCR
+    /// Processus: OCR → Parsing → Ajout à SwiftData → Backup automatique
     func importScheduleFromImage(_ image: UIImage) async {
         isLoading = true
         errorMessage = nil
         
         do {
-            // Étape 1: OCR
+            // Étape 1: OCR - Extraction du texte de l'image
             let recognizedText = try await ocrService.recognizeText(from: image)
             print("📄 Texte OCR détecté:\n\(recognizedText)\n")
             
-            // Étape 2: Parsing
+            // Étape 2: Parsing - Analyse du texte pour extraire dates, horaires, segments
             let parsedShifts = ocrService.parseScheduleText(recognizedText)
             print("📊 Shifts parsés: \(parsedShifts.count)")
             
-            // Si aucun shift détecté, afficher une erreur claire
+            // Validation: au moins un shift détecté
             if parsedShifts.isEmpty {
                 throw NSError(domain: "ViewModel", code: 2, userInfo: [NSLocalizedDescriptionKey: "Aucun horaire détecté. Vérifiez que l'image contient des dates et horaires au format WorkJam."])
             }
             
-            // Étape 3: Ajouter à un schedule existant ou en créer un nouveau
+            // Étape 3: Sauvegarde dans SwiftData
             guard let context = modelContext else {
                 throw NSError(domain: "ViewModel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Context non disponible"])
             }
@@ -69,7 +106,7 @@ class ScheduleViewModel: ObservableObject {
             dateFormatter.dateStyle = .medium
             dateFormatter.timeStyle = .none
             
-            // Récupérer ou créer le schedule principal
+            // Récupérer le schedule principal ou en créer un nouveau
             var schedule: WorkSchedule
             if let existingSchedule = schedules.first {
                 schedule = existingSchedule
@@ -82,7 +119,7 @@ class ScheduleViewModel: ObservableObject {
                 context.insert(schedule)
             }
             
-            // Ajouter les nouveaux shifts au schedule existant
+            // Ajouter tous les shifts parsés au schedule
             for parsed in parsedShifts {
                 let shift = Shift(
                     date: parsed.date,
@@ -100,6 +137,11 @@ class ScheduleViewModel: ObservableObject {
             
             fetchSchedules()
             selectedSchedule = schedule
+            
+            // Backup automatique après import
+            Task {
+                await saveAutoBackup()
+            }
             
             isLoading = false
         } catch {
@@ -140,6 +182,9 @@ class ScheduleViewModel: ObservableObject {
         do {
             try context.save()
             fetchSchedules()
+            Task {
+                await saveAutoBackup()
+            }
         } catch {
             handleError(error)
         }
@@ -158,6 +203,9 @@ class ScheduleViewModel: ObservableObject {
         do {
             try context.save()
             fetchSchedules()
+            Task {
+                await saveAutoBackup()
+            }
         } catch {
             handleError(error)
         }
@@ -171,6 +219,9 @@ class ScheduleViewModel: ObservableObject {
         do {
             try context.save()
             fetchSchedules()
+            Task {
+                await saveAutoBackup()
+            }
         } catch {
             handleError(error)
         }
@@ -188,6 +239,9 @@ class ScheduleViewModel: ObservableObject {
         do {
             try context.save()
             fetchSchedules()
+            Task {
+                await saveAutoBackup()
+            }
         } catch {
             handleError(error)
         }
@@ -201,6 +255,9 @@ class ScheduleViewModel: ObservableObject {
         do {
             try context.save()
             fetchSchedules()
+            Task {
+                await saveAutoBackup()
+            }
         } catch {
             handleError(error)
         }
@@ -212,10 +269,13 @@ class ScheduleViewModel: ObservableObject {
             switch ocrError {
             case .imageProcessingFailed:
                 errorMessage = "Impossible de traiter l'image. Essayez avec une capture d'écran plus claire."
-            case .noTextFound:
-                errorMessage = "Aucun texte détecté dans l'image. Vérifiez que la capture contient des horaires."
+            case .noTextFound(let imageSize):
+                errorMessage = "Aucun texte détecté dans l'image (\(Int(imageSize.width))×\(Int(imageSize.height)) px). Vérifiez que la capture contient des horaires."
             case .invalidImage:
                 errorMessage = "L'image est invalide ou corrompue. Sélectionnez une autre image."
+            case .parsingFailed(let lineCount, let sampleText):
+                let preview = sampleText.prefix(50)
+                errorMessage = "Échec du parsing (\(lineCount) lignes détectées). Aperçu: \(preview)..."
             }
         } else {
             errorMessage = "Erreur: \(error.localizedDescription)"
@@ -245,6 +305,54 @@ class ScheduleViewModel: ObservableObject {
     }
     
     // MARK: - Export/Import JSON
+    
+    // MARK: - Backup & Restore automatiques
+    
+    /// Sauvegarde automatique des données en JSON dans Documents/
+    /// Appelé après chaque modification (import, ajout, suppression, etc.)
+    private func saveAutoBackup() async {
+        guard let jsonString = exportToJSON() else {
+            print("⚠️ Impossible de créer le backup")
+            return
+        }
+        
+        do {
+            try jsonString.write(to: backupURL, atomically: true, encoding: .utf8)
+            print("✅ Backup automatique sauvegardé: \(backupURL.path)")
+        } catch {
+            print("❌ Erreur sauvegarde backup: \(error.localizedDescription)")
+        }
+    }
+    
+    /// Tente de restaurer les données depuis le backup automatique
+    /// Appelé au lancement si aucune donnée SwiftData n'existe
+    private func attemptAutoRestore() async {
+        guard FileManager.default.fileExists(atPath: backupURL.path) else {
+            print("📁 Aucun backup trouvé")
+            return
+        }
+        
+        do {
+            let jsonString = try String(contentsOf: backupURL, encoding: .utf8)
+            print("🔄 Restauration du backup...")
+            
+            await importFromJSON(jsonString)
+            
+            // Afficher le message de restauration
+            await MainActor.run {
+                showRestoredMessage = true
+                // Masquer après 3 secondes
+                Task {
+                    try? await Task.sleep(nanoseconds: 3_000_000_000)
+                    showRestoredMessage = false
+                }
+            }
+        } catch {
+            print("❌ Erreur restauration backup: \(error.localizedDescription)")
+        }
+    }
+    
+    // MARK: - Export/Import JSON manuel
     
     func exportToJSON() -> String? {
         guard let schedule = schedules.first else { return nil }

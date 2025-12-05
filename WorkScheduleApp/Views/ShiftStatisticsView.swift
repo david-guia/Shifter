@@ -7,11 +7,29 @@
 
 import SwiftUI
 
+/// Vue affichant les statistiques des shifts par segment (catégorie)
+/// Affiche: heures par segment, pourcentage, évolution par rapport à la période précédente
 struct ShiftStatisticsView: View {
+    /// Shifts filtrés pour la période sélectionnée
     let shifts: [Shift]
+    
+    /// Tous les shifts (pour calculer l'évolution)
     let allShifts: [Shift]
+    
+    /// Période sélectionnée (mois/trimestre/année)
     let selectedPeriod: ContentView.TimePeriod
+    
+    /// Date sélectionnée
     let selectedDate: Date
+    
+    // MARK: - Cache pour optimisation performance
+    
+    /// Statistiques mémorisées (recalculées uniquement si les shifts changent)
+    @State private var memoizedSegmentStats: [String: (hours: Double, percentage: Double)] = [:]
+    @State private var memoizedTotalHours: Double = 0
+    
+    /// Hash des IDs des shifts pour détecter les changements
+    @State private var lastShiftsHash: Int = 0
     
     var body: some View {
         VStack(spacing: 0) {
@@ -122,16 +140,48 @@ struct ShiftStatisticsView: View {
             .padding(.horizontal, 12)
             .padding(.bottom, 12)
         }
+        .onAppear {
+            updateStatsIfNeeded()
+        }
+        .onChange(of: shifts.map(\.id)) { _, _ in
+            updateStatsIfNeeded()
+        }
+    }
+    
+    // MARK: - Mémorisation (optimisation)
+    
+    /// Met à jour les statistiques uniquement si les shifts ont changé
+    /// Évite les recalculs inutiles à chaque rendu de la vue
+    private func updateStatsIfNeeded() {
+        let newHash = shifts.map(\.id).hashValue
+        guard newHash != lastShiftsHash else { return }
+        
+        lastShiftsHash = newHash
+        memoizedTotalHours = calculateTotalHours()
+        memoizedSegmentStats = calculateSegmentStats()
     }
     
     // MARK: - Statistiques calculées
     
+    /// Total d'heures (utilise le cache mémorisé)
     private var totalHours: Double {
+        memoizedTotalHours
+    }
+    
+    /// Statistiques par segment (utilise le cache mémorisé)
+    private var segmentStats: [String: (hours: Double, percentage: Double)] {
+        memoizedSegmentStats
+    }
+    
+    /// Calcule le total d'heures (hors shifts "Général")
+    private func calculateTotalHours() -> Double {
         // Total uniquement des shifts spécifiques (hors "Général")
         shifts.filter { $0.segment != "Général" }.reduce(0) { $0 + $1.duration / 3600 }
     }
     
-    private var segmentStats: [String: (hours: Double, percentage: Double)] {
+    /// Calcule les heures et pourcentages pour chaque segment
+    /// Retourne: [segment: (heures, pourcentage du total)]
+    private func calculateSegmentStats() -> [String: (hours: Double, percentage: Double)] {
         var stats: [String: Double] = [:]
         
         // Calculer les heures par segment (uniquement les shifts spécifiques)

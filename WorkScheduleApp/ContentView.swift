@@ -10,21 +10,38 @@ import SwiftData
 import PhotosUI
 
 struct ContentView: View {
+    // MARK: - Propriétés
+    
+    /// Contexte SwiftData pour la persistance des données
     @Environment(\.modelContext) private var modelContext
+    
+    /// ViewModel qui gère la logique métier (import OCR, export, backup auto)
     @StateObject private var viewModel = ScheduleViewModel()
+    
+    /// Images sélectionnées via PhotosPicker pour import OCR
     @State private var selectedItems: [PhotosPickerItem] = []
+    
+    /// Indicateurs d'affichage des différentes feuilles modales
     @State private var showingExportSheet = false
     @State private var showingImportSheet = false
     @State private var showingManageSheet = false
     @State private var showingMenu = false
+    @State private var showingAboutSheet = false
+    
     @State private var exportFileURL: URL?
     @State private var importText = ""
+    
+    /// Période de temps sélectionnée pour le filtrage (Mois/Trimestre/Année)
     @State private var selectedPeriod: TimePeriod = .month
     @State private var selectedDate = Date()
-    @State private var cachedFilteredShifts: [Shift] = []
-    @State private var lastFilteredDate: Date?
-    @State private var lastFilteredPeriod: TimePeriod?
     
+    /// Cache des shifts filtrés (optimisation performance)
+    @State private var filteredShifts: [Shift] = []
+    
+    /// Task pour gérer l'annulation des imports concurrents
+    @State private var importTask: Task<Void, Never>?
+    
+    /// Types de période disponibles pour le filtrage
     enum TimePeriod: String, CaseIterable {
         case month = "Mois"
         case quarter = "Trimestre"
@@ -33,16 +50,26 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
+            // Couleur de fond beige style macOS classique
             Color.systemBeige
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Header avec titre et bouton menu
+                // MARK: - Header avec titre et bouton menu
                 HStack {
-                    Text("Shifts Visual")
-                        .font(.custom("Chicago", size: 28))
-                        .fontWeight(.bold)
-                        .foregroundStyle(Color.systemBlack)
+                    HStack(spacing: 4) {
+                        Text("Shifter")
+                            .font(.custom("Chicago", size: 28))
+                            .fontWeight(.bold)
+                            .foregroundStyle(Color.systemBlack)
+                        
+                        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+                            Text("v\(version)")
+                                .font(.chicago12)
+                                .foregroundStyle(Color.systemBlack.opacity(0.6))
+                                .padding(.top, 8)
+                        }
+                    }
                     
                     Spacer()
                     
@@ -66,21 +93,27 @@ struct ContentView: View {
                 .padding(.top, 20)
                 .padding(.bottom, 16)
                 
-                // Sélecteur de période et navigation temporelle
+                // MARK: - Sélecteur de période et navigation temporelle
+                
+                // Afficher uniquement si des données existent
                 if viewModel.schedules.first != nil {
                     VStack(spacing: 10) {
-                        // Sélecteur Mois/Trimestre/Année
+                        // Boutons Mois/Trimestre/Année
                         HStack(spacing: 8) {
                             ForEach(TimePeriod.allCases, id: \.self) { period in
                                 Button {
                                     selectedPeriod = period
                                 } label: {
+                                    let isSelected = selectedPeriod == period
+                                    let textColor = isSelected ? Color.systemWhite : Color.systemBlack
+                                    let bgColor = isSelected ? Color.systemBlack : Color.systemWhite
+                                    
                                     Text(period.rawValue)
                                         .font(.chicago12)
-                                        .foregroundStyle(selectedPeriod == period ? Color.systemWhite : Color.systemBlack)
+                                        .foregroundStyle(textColor)
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 8)
-                                        .background(selectedPeriod == period ? Color.systemBlack : Color.systemWhite)
+                                        .background(bgColor)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 6)
                                                 .stroke(Color.systemBlack, lineWidth: 2)
@@ -142,7 +175,9 @@ struct ContentView: View {
                     .padding(.bottom, 12)
                 }
                 
-                // Statistiques directement affichées
+                // MARK: - Zone d'affichage des statistiques
+                
+                // Si des données existent, afficher les statistiques filtrées
                 if let schedule = viewModel.schedules.first {
                     ShiftStatisticsView(
                         shifts: filteredShifts,
@@ -168,8 +203,38 @@ struct ContentView: View {
                 }
             }
             
+            // MARK: - Overlays
+            
+            // Overlay de chargement pendant l'OCR
             if viewModel.isLoading {
                 loadingOverlay
+            }
+            
+            // Toast vert affiché après restauration automatique du backup
+            if viewModel.showRestoredMessage {
+                VStack {
+                    Spacer()
+                    
+                    HStack(spacing: 12) {
+                        Text("✅")
+                            .font(.system(size: 20))
+                        Text("Données restaurées automatiquement")
+                            .font(.chicago12)
+                            .foregroundStyle(Color.systemWhite)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 14)
+                    .background(Color.green.opacity(0.9))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.systemBlack, lineWidth: 2)
+                    )
+                    .cornerRadius(8)
+                    .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+                    .padding(.bottom, 80)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(.spring(response: 0.3), value: viewModel.showRestoredMessage)
             }
             
             // Menu contextuel
@@ -269,6 +334,27 @@ struct ContentView: View {
                                 .foregroundStyle(Color.systemBlack)
                                 .background(Color.systemWhite)
                             }
+                            
+                            Divider()
+                                .background(Color.systemBlack)
+                            
+                            Button {
+                                showingMenu = false
+                                showingAboutSheet = true
+                            } label: {
+                                HStack {
+                                    Text("ℹ️")
+                                        .font(.system(size: 16))
+                                    Text("À Propos")
+                                        .font(.chicago12)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Color.systemBlack)
+                            .background(Color.systemWhite)
                         }
                         .frame(width: 200)
                         .background(Color.systemWhite)
@@ -287,16 +373,38 @@ struct ContentView: View {
             }
         }
         .persistentSystemOverlays(.hidden)
+        // MARK: - Gestion des imports d'images
+        
+        // Détection de nouvelles images sélectionnées via PhotosPicker
         .onChange(of: selectedItems) { _, newItems in
-            Task {
+            // Annuler l'import précédent si en cours (optimisation)
+            importTask?.cancel()
+            importTask = Task {
                 for item in newItems {
+                    // Vérifier si la task a été annulée
+                    if Task.isCancelled { break }
                     if let data = try? await item.loadTransferable(type: Data.self),
                        let image = UIImage(data: data) {
+                        // Lancer l'OCR et le parsing via le ViewModel
                         await viewModel.importScheduleFromImage(image)
                     }
                 }
                 selectedItems.removeAll()
             }
+        }
+        // MARK: - Mise à jour du cache de filtrage
+        
+        // Recalculer les shifts filtrés quand la date change
+        .onChange(of: selectedDate) { _, _ in
+            updateFilteredShifts()
+        }
+        // Recalculer les shifts filtrés quand la période change (mois/trimestre/année)
+        .onChange(of: selectedPeriod) { _, _ in
+            updateFilteredShifts()
+        }
+        // Recalculer les shifts filtrés quand les données changent (import, suppression, etc.)
+        .onChange(of: viewModel.schedules) { _, _ in
+            updateFilteredShifts()
         }
         .alert("Erreur", isPresented: $viewModel.showError) {
             SystemButton("OK") {
@@ -308,6 +416,7 @@ struct ContentView: View {
         }
         .onAppear {
             viewModel.setModelContext(modelContext)
+            updateFilteredShifts()
         }
         .sheet(isPresented: $showingExportSheet) {
             if let url = exportFileURL {
@@ -320,39 +429,36 @@ struct ContentView: View {
         .sheet(isPresented: $showingManageSheet) {
             ManageDataView(viewModel: viewModel, isPresented: $showingManageSheet)
         }
+        .sheet(isPresented: $showingAboutSheet) {
+            AboutView(isPresented: $showingAboutSheet)
+        }
     }
     
     // MARK: - Helpers
     
-    private var filteredShifts: [Shift] {
-        // Cache invalidation: recalculer seulement si période ou date ont changé
-        let needsUpdate = lastFilteredDate != selectedDate || lastFilteredPeriod != selectedPeriod
-        
-        if needsUpdate {
-            guard let schedule = viewModel.schedules.first else { return [] }
-            
-            let calendar = Calendar.current
-            let filtered = schedule.shifts.filter { shift in
-                switch selectedPeriod {
-                case .month:
-                    return calendar.isDate(shift.date, equalTo: selectedDate, toGranularity: .month)
-                case .quarter:
-                    return FiscalCalendarHelper.isInSameQuarter(shift.date, selectedDate)
-                case .year:
-                    return calendar.isDate(shift.date, equalTo: selectedDate, toGranularity: .year)
-                }
-            }
-            
-            // Mettre à jour le cache (nécessite DispatchQueue car @State immutable dans computed property)
-            DispatchQueue.main.async {
-                self.cachedFilteredShifts = filtered
-                self.lastFilteredDate = self.selectedDate
-                self.lastFilteredPeriod = self.selectedPeriod
-            }
-            return filtered
+    /// Met à jour le cache des shifts filtrés selon la période et la date sélectionnées
+    /// Optimisation : évite les recalculs inutiles grâce au cache @State
+    private func updateFilteredShifts() {
+        guard let schedule = viewModel.schedules.first else {
+            filteredShifts = []
+            return
         }
         
-        return cachedFilteredShifts
+        let calendar = Calendar.current
+        // Filtrer les shifts selon la période sélectionnée
+        filteredShifts = schedule.shifts.filter { shift in
+            switch selectedPeriod {
+            case .month:
+                // Même mois et même année
+                return calendar.isDate(shift.date, equalTo: selectedDate, toGranularity: .month)
+            case .quarter:
+                // Même trimestre fiscal (Q1: Oct-Dec, Q2: Jan-Mar, Q3: Apr-Jun, Q4: Jul-Sep)
+                return FiscalCalendarHelper.isInSameQuarter(shift.date, selectedDate)
+            case .year:
+                // Même année
+                return calendar.isDate(shift.date, equalTo: selectedDate, toGranularity: .year)
+            }
+        }
     }
     
     private func formatTotalHours() -> String {

@@ -11,18 +11,28 @@ import UIKit
 
 class OCRService {
     
+    // MARK: - Cache de parsing
+    
+    /// Cache des résultats de parsing pour éviter de reparser le même texte
+    /// Limite: 20 entrées maximum pour éviter une croissance infinie
+    private var parseCache: [String: [(date: Date, startTime: Date, endTime: Date, location: String, segment: String)]] = [:]
+    private let cacheQueue = DispatchQueue(label: "com.shifter.ocr.cache", attributes: .concurrent)
+    
     // MARK: - Regex statiques pré-compilées (optimisation performance)
     
+    /// Regex pour détecter les dates au format WorkJam: "lundi 25 novembre"
     private static let workJamDateRegex: NSRegularExpression? = {
         let pattern = "(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\\s+(\\d{1,2})\\s+(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)"
         return try? NSRegularExpression(pattern: pattern, options: .caseInsensitive)
     }()
     
+    /// Regex pour horaires format AM/PM: "10:00 AM–11:30 AM"
     private static let timeRangeAMPMRegex: NSRegularExpression? = {
         let pattern = "(\\d{1,2}):(\\d{2})\\s*(AM|PM)\\s*[\\-–]\\s*(\\d{1,2}):(\\d{2})\\s*(AM|PM)"
         return try? NSRegularExpression(pattern: pattern, options: .caseInsensitive)
     }()
     
+    /// Regex pour horaires format 24h avec 'h': "9h-17h" ou "9:00-17:00"
     private static let timeRange24HRegex1: NSRegularExpression? = {
         let pattern = "(\\d{1,2})[h:](\\d{2})?\\s*[\\-\\u{2013}]\\s*(\\d{1,2})[h:](\\d{2})?"
         return try? NSRegularExpression(pattern: pattern, options: [])
@@ -33,33 +43,46 @@ class OCRService {
         return try? NSRegularExpression(pattern: pattern, options: [])
     }()
     
+    /// Regex pour détecter les segments/catégories de travail
     private static let segmentRegex: NSRegularExpression? = {
         let pattern = "Sales \\d+|PZ On Point|Pause repas|Learn and Grow|Runner \\d+|Break|Training|Meeting|Opening|Closing|Daily Download|Setup"
         return try? NSRegularExpression(pattern: pattern, options: .caseInsensitive)
     }()
     
+    // MARK: - Erreurs
+    
+    /// Erreurs personnalisées avec contexte pour faciliter le debugging
     enum OCRError: LocalizedError {
         case imageProcessingFailed
-        case noTextFound
+        case noTextFound(imageSize: CGSize)
         case invalidImage
+        case parsingFailed(lineCount: Int, sampleText: String)
         
         var errorDescription: String? {
             switch self {
             case .imageProcessingFailed:
                 return "Impossible de traiter l'image"
-            case .noTextFound:
-                return "Aucun texte détecté dans l'image"
+            case .noTextFound(let imageSize):
+                return "Aucun texte détecté dans l'image (\(Int(imageSize.width))×\(Int(imageSize.height)) px)"
             case .invalidImage:
                 return "Image invalide"
+            case .parsingFailed(let lineCount, let sampleText):
+                let preview = sampleText.prefix(100)
+                return "Échec du parsing (\(lineCount) lignes). Aperçu: \(preview)..."
             }
         }
     }
     
-    /// Extrait le texte d'une image
+    // MARK: - OCR (Reconnaissance de texte)
+    
+    /// Extrait le texte d'une image via Vision Framework
+    /// Retourne le texte reconnu ou lance une erreur OCRError
     func recognizeText(from image: UIImage) async throws -> String {
         guard let cgImage = image.cgImage else {
             throw OCRError.invalidImage
         }
+        
+        let imageSize = image.size
         
         return try await withCheckedThrowingContinuation { continuation in
             let request = VNRecognizeTextRequest { request, error in
@@ -69,7 +92,7 @@ class OCRService {
                 }
                 
                 guard let observations = request.results as? [VNRecognizedTextObservation] else {
-                    continuation.resume(throwing: OCRError.noTextFound)
+                    continuation.resume(throwing: OCRError.noTextFound(imageSize: imageSize))
                     return
                 }
                 
@@ -78,7 +101,7 @@ class OCRService {
                 }.joined(separator: "\n")
                 
                 if recognizedText.isEmpty {
-                    continuation.resume(throwing: OCRError.noTextFound)
+                    continuation.resume(throwing: OCRError.noTextFound(imageSize: imageSize))
                 } else {
                     continuation.resume(returning: recognizedText)
                 }
@@ -99,16 +122,46 @@ class OCRService {
         }
     }
     
-    /// Parse le texte OCR pour extraire les shifts avec segments (catégories)
+    // MARK: - Parsing du texte OCR
+    
+    /// Parse le texte OCR pour extraire les shifts avec toutes leurs informations
+    /// Utilise un cache pour éviter de reparser le même texte plusieurs fois
+    /// Retourne: [(date, startTime, endTime, location, segment)]
     func parseScheduleText(_ text: String) -> [(date: Date, startTime: Date, endTime: Date, location: String, segment: String)] {
+        // Vérifier le cache en premier (optimisation)
+        let cacheKey = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        return cacheQueue.sync {
+            if let cached = parseCache[cacheKey] {
+                print("✨ Cache hit: \(cached.count) shifts récupérés du cache")
+                return cached
+            }
+            
+            // Si pas en cache, effectuer le parsing
+            let shifts = performParsing(text)
+            
+            // Mettre en cache (limite: 20 entrées max)
+            if parseCache.count >= 20 {
+                // Supprimer la première entrée pour éviter une croissance infinie
+                if let firstKey = parseCache.keys.first {
+                    parseCache.removeValue(forKey: firstKey)
+                }
+            }
+            parseCache[cacheKey] = shifts
+            
+            return shifts
+        }
+    }
+    
+    /// Effectue le parsing réel du texte OCR
+    /// Analyse ligne par ligne pour détecter dates, horaires, lieux et segments
+    private func performParsing(_ text: String) -> [(date: Date, startTime: Date, endTime: Date, location: String, segment: String)] {
         var shifts: [(date: Date, startTime: Date, endTime: Date, location: String, segment: String)] = []
         let lines = text.components(separatedBy: .newlines)
         
         print("🔍 Parsing \(lines.count) lignes...")
         
-        let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "fr_FR")
-        
+        // Variables de contexte pour le parsing ligne par ligne
         var currentDate: Date?
         var currentLocation = "Non spécifié"
         var currentSegment = "Général"
@@ -124,7 +177,7 @@ class OCRService {
             if trimmedLine.isEmpty { continue }
             
             // Détection de la date principale (ex: "mercredi 26 novembre")
-            if let date = detectWorkJamDate(in: trimmedLine, using: dateFormatter) {
+            if let date = detectWorkJamDate(in: trimmedLine) {
                 print("📅 Date détectée: \(date) dans '\(trimmedLine)'")
                 // Si on avait des segments en attente, créer les shifts
                 if let mainDate = shiftMainDate, !segmentTimeRanges.isEmpty {
@@ -218,7 +271,7 @@ class OCRService {
         return shifts
     }
     
-    private func detectWorkJamDate(in text: String, using formatter: DateFormatter) -> Date? {
+    private func detectWorkJamDate(in text: String) -> Date? {
         // Utiliser regex statique pré-compilée
         guard let regex = Self.workJamDateRegex,
               let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) else {
@@ -227,8 +280,11 @@ class OCRService {
         
         let matchedText = (text as NSString).substring(with: match.range)
         
-        // Parser avec l'année courante
+        // Utiliser DateFormatterCache avec un formatter temporaire pour ce format spécifique
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
         formatter.dateFormat = "EEEE dd MMMM"
+        
         if let date = formatter.date(from: matchedText) {
             // Déterminer l'année correcte en fonction du trimestre fiscal
             let calendar = Calendar.current
@@ -278,11 +334,14 @@ class OCRService {
         return nil
     }
     
-    private func detectDate(in text: String, using formatter: DateFormatter) -> Date? {
+    private func detectDate(in text: String) -> Date? {
         // Utiliser la nouvelle méthode WorkJam
-        if let date = detectWorkJamDate(in: text, using: formatter) {
+        if let date = detectWorkJamDate(in: text) {
             return date
         }
+        
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
         
         // Format français: "Lundi 25 Novembre"
         formatter.dateFormat = "EEEE dd MMMM"

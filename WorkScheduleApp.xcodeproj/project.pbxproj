@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2A4EA6912EE35E7C006F4D56 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A4EA6902EE35E7C006F4D56 /* AboutView.swift */; };
 		2AA13CC32EDCED1F004C0E67 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2AA13CC22EDCED1A004C0E67 /* Assets.xcassets */; };
 		5A1 /* WorkScheduleAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1 /* WorkScheduleAppApp.swift */; };
 		5A10 /* ShiftStatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B10 /* ShiftStatisticsView.swift */; };
@@ -22,6 +23,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2A4EA6902EE35E7C006F4D56 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		2AA13C512EDCE5EC004C0E67 /* logo.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = logo.icon; sourceTree = "<group>"; };
 		2AA13CC22EDCED1A004C0E67 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5B1 /* WorkScheduleAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkScheduleAppApp.swift; sourceTree = "<group>"; };
@@ -47,17 +49,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
-
-/* Begin PBXResourcesBuildPhase section */
-		5D2 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				2AA13CC32EDCED1F004C0E67 /* Assets.xcassets in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXGroup section */
 		5E1 = {
@@ -112,6 +103,7 @@
 		5E6 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				2A4EA6902EE35E7C006F4D56 /* AboutView.swift */,
 				5B9 /* SystemCSSTheme.swift */,
 				5B10 /* ShiftStatisticsView.swift */,
 				5B11 /* ManageDataView.swift */,
@@ -191,6 +183,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		5D2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2AA13CC32EDCED1F004C0E67 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXShellScriptBuildPhase section */
 		2AA13CC62EDCEEF7004C0E67 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -220,6 +223,7 @@
 				5A2 /* ContentView.swift in Sources */,
 				5A3 /* Shift.swift in Sources */,
 				5A4 /* WorkSchedule.swift in Sources */,
+				2A4EA6912EE35E7C006F4D56 /* AboutView.swift in Sources */,
 				5A5 /* ScheduleViewModel.swift in Sources */,
 				5A6 /* OCRService.swift in Sources */,
 				5A9 /* SystemCSSTheme.swift in Sources */,
