@@ -41,11 +41,55 @@ struct ContentView: View {
     /// Task pour gérer l'annulation des imports concurrents
     @State private var importTask: Task<Void, Never>?
     
+    /// Alertes pour l'expiration du certificat développeur
+    @State private var showingExpiryWarning = false
+    @State private var showingExpiryUrgent = false
+    
     /// Types de période disponibles pour le filtrage
     enum TimePeriod: String, CaseIterable {
         case month = "Mois"
         case quarter = "Trimestre"
         case year = "Année"
+    }
+    
+    // MARK: - Calcul du temps restant avant expiration
+    
+    /// Calcule les jours restants avant expiration du certificat développeur (7 jours)
+    private var daysRemaining: Int {
+        // Récupérer ou initialiser la date d'installation
+        if UserDefaults.standard.object(forKey: "firstInstallDate") == nil {
+            UserDefaults.standard.set(Date(), forKey: "firstInstallDate")
+        }
+        
+        guard let installDate = UserDefaults.standard.object(forKey: "firstInstallDate") as? Date else {
+            return 7
+        }
+        
+        // Expiration complète : 7 jours
+        let expiryDate = Calendar.current.date(byAdding: .day, value: 7, to: installDate)!
+        let components = Calendar.current.dateComponents([.day], from: Date(), to: expiryDate)
+        return max(0, components.day ?? 0)
+    }
+    
+    /// Calcule les heures restantes (pour affichage détaillé)
+    private var hoursRemaining: Int {
+        guard let installDate = UserDefaults.standard.object(forKey: "firstInstallDate") as? Date else {
+            return 0
+        }
+        
+        let expiryDate = Calendar.current.date(byAdding: .day, value: 7, to: installDate)!
+        let components = Calendar.current.dateComponents([.hour], from: Date(), to: expiryDate)
+        return max(0, components.hour ?? 0)
+    }
+    
+    /// Couleur du badge selon l'urgence
+    private var expiryBadgeColor: Color {
+        switch daysRemaining {
+        case 0...1: return .red
+        case 2...3: return .orange
+        case 4...5: return .green
+        default: return .green // 6-7 jours
+        }
     }
     
     var body: some View {
@@ -69,6 +113,25 @@ struct ContentView: View {
                                 .foregroundStyle(Color.systemBlack.opacity(0.6))
                                 .padding(.top, 8)
                         }
+                        
+                        // Badge du timer de certificat développeur
+                        HStack(spacing: 2) {
+                            Text(daysRemaining == 0 ? "⏱️" : "🕐")
+                                .font(.system(size: 10))
+                            Text("\(daysRemaining)j")
+                                .font(.geneva9)
+                                .fontWeight(.bold)
+                        }
+                        .foregroundStyle(expiryBadgeColor)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(expiryBadgeColor.opacity(0.2))
+                        .cornerRadius(4)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(expiryBadgeColor, lineWidth: 1)
+                        )
+                        .padding(.top, 8)
                     }
                     
                     Spacer()
@@ -373,6 +436,10 @@ struct ContentView: View {
             }
         }
         .persistentSystemOverlays(.hidden)
+        .onAppear {
+            // Vérifier l'expiration du certificat et afficher les alertes appropriées
+            checkCertificateExpiry()
+        }
         // MARK: - Gestion des imports d'images
         
         // Détection de nouvelles images sélectionnées via PhotosPicker
@@ -431,6 +498,30 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingAboutSheet) {
             AboutView(isPresented: $showingAboutSheet)
+        }
+        .alert("⚠️ Expiration Proche", isPresented: $showingExpiryWarning) {
+            Button("OK", role: .cancel) { }
+            Button("💾 Sauvegarder", role: .none) {
+                if let zipURL = viewModel.exportToZIP() {
+                    exportFileURL = zipURL
+                    showingExportSheet = true
+                }
+            }
+        } message: {
+            Text("Votre certificat développeur expire dans \(daysRemaining) jour\(daysRemaining > 1 ? "s" : "").\n\nPensez à exporter vos données. La sauvegarde automatique est active dans Documents/shifter_auto_backup.json")
+                .font(.geneva10)
+        }
+        .alert("🚨 Expiration Imminente", isPresented: $showingExpiryUrgent) {
+            Button("Plus tard", role: .cancel) { }
+            Button("💾 Exporter Maintenant", role: .none) {
+                if let zipURL = viewModel.exportToZIP() {
+                    exportFileURL = zipURL
+                    showingExportSheet = true
+                }
+            }
+        } message: {
+            Text("Votre certificat développeur expire dans moins de 2 jours !\n\n⏱️ Temps restant : \(daysRemaining)j \(hoursRemaining % 24)h\n\nExportez vos données MAINTENANT pour éviter toute perte. Le backup automatique est actif mais un export manuel est recommandé.")
+                .font(.geneva10)
         }
     }
     
@@ -493,6 +584,39 @@ struct ContentView: View {
         case .year:
             if let newDate = calendar.date(byAdding: .year, value: offset, to: selectedDate) {
                 selectedDate = newDate
+            }
+        }
+    }
+    
+    /// Vérifie l'expiration du certificat développeur et affiche les alertes appropriées
+    private func checkCertificateExpiry() {
+        let days = daysRemaining
+        
+        // Alerte urgente (J0-1)
+        if days <= 1 {
+            // Afficher l'alerte urgente seulement une fois par jour
+            let lastUrgentAlertKey = "lastUrgentAlertDate"
+            let lastAlert = UserDefaults.standard.object(forKey: lastUrgentAlertKey) as? Date
+            let calendar = Calendar.current
+            
+            if lastAlert == nil || !calendar.isDateInToday(lastAlert!) {
+                UserDefaults.standard.set(Date(), forKey: lastUrgentAlertKey)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    showingExpiryUrgent = true
+                }
+            }
+        }
+        // Alerte avertissement (J2-3)
+        else if days <= 3 {
+            let lastWarningAlertKey = "lastWarningAlertDate"
+            let lastAlert = UserDefaults.standard.object(forKey: lastWarningAlertKey) as? Date
+            let calendar = Calendar.current
+            
+            if lastAlert == nil || !calendar.isDateInToday(lastAlert!) {
+                UserDefaults.standard.set(Date(), forKey: lastWarningAlertKey)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    showingExpiryWarning = true
+                }
             }
         }
     }

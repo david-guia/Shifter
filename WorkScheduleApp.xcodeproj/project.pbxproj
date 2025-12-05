@@ -24,7 +24,6 @@
 
 /* Begin PBXFileReference section */
 		2A4EA6902EE35E7C006F4D56 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
-		2AA13C512EDCE5EC004C0E67 /* logo.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = logo.icon; sourceTree = "<group>"; };
 		2AA13CC22EDCED1A004C0E67 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5B1 /* WorkScheduleAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkScheduleAppApp.swift; sourceTree = "<group>"; };
 		5B10 /* ShiftStatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShiftStatisticsView.swift; sourceTree = "<group>"; };
@@ -70,7 +69,6 @@
 				5E5 /* Services */,
 				5E6 /* Views */,
 				5E7 /* Helpers */,
-				2AA13C512EDCE5EC004C0E67 /* logo.icon */,
 			);
 			path = WorkScheduleApp;
 			sourceTree = "<group>";

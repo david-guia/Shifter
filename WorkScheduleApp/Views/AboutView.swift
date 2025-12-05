@@ -110,6 +110,20 @@ struct AboutView: View {
                                 InfoRow(icon: "🎨", text: "Design inspiré macOS classique")
                                 InfoRow(icon: "🤖", text: "OCR & Parsing automatique")
                                 InfoRow(icon: "💾", text: "Backup automatique")
+                                
+                                // Afficher le timer de certificat développeur
+                                if let installDate = UserDefaults.standard.object(forKey: "firstInstallDate") as? Date {
+                                    let expiryDate = Calendar.current.date(byAdding: .day, value: 7, to: installDate)!
+                                    let days = max(0, Calendar.current.dateComponents([.day], from: Date(), to: expiryDate).day ?? 0)
+                                    
+                                    if days <= 5 {
+                                        InfoRow(
+                                            icon: days <= 1 ? "⏱️" : "🕐",
+                                            text: "Certificat expire dans \(days)j",
+                                            color: days <= 1 ? .red : (days <= 3 ? .orange : .green)
+                                        )
+                                    }
+                                }
                             }
                             .padding(.top, 8)
                             
@@ -162,6 +176,7 @@ struct AboutView: View {
 struct InfoRow: View {
     let icon: String
     let text: String
+    var color: Color? = nil
     
     var body: some View {
         HStack(spacing: 12) {
@@ -169,7 +184,8 @@ struct InfoRow: View {
                 .font(.system(size: 16))
             Text(text)
                 .font(.geneva10)
-                .foregroundStyle(Color.systemBlack)
+                .foregroundStyle(color ?? Color.systemBlack)
+                .fontWeight(color != nil ? .bold : .regular)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 48)
