@@ -42,13 +42,13 @@ struct AboutView: View {
                 )
                 
                 ScrollView {
-                    VStack(spacing: 32) {
+                    VStack(spacing: 20) {
                         // MARK: - Logo et nom de l'app
-                        VStack(spacing: 16) {
+                        VStack(spacing: 12) {
                             ZStack {
                                 Circle()
                                     .fill(Color.systemWhite)
-                                    .frame(width: 120, height: 120)
+                                    .frame(width: 100, height: 100)
                                     .overlay(
                                         Circle()
                                             .stroke(Color.systemBlack, lineWidth: 3)
@@ -70,80 +70,86 @@ struct AboutView: View {
                                 .font(.geneva10)
                                 .foregroundStyle(Color.systemGray)
                         }
-                        .padding(.top, 32)
+                        .padding(.top, 20)
                         
                         // MARK: - Description
-                        VStack(spacing: 12) {
+                        VStack(spacing: 8) {
                             Text("Gestion d'horaires de travail")
-                                .font(.chicago14)
+                                .font(.system(size: 16, weight: .bold, design: .monospaced))
                                 .foregroundStyle(Color.systemBlack)
                             
                             Text("Importez vos captures d'écran WorkJam\net visualisez vos statistiques")
-                                .font(.geneva10)
+                                .font(.system(size: 13))
                                 .foregroundStyle(Color.systemGray)
                                 .multilineTextAlignment(.center)
-                                .lineSpacing(4)
+                                .lineSpacing(3)
                         }
                         .padding(.horizontal, 32)
                         
-                        // MARK: - Développeur
-                        VStack(spacing: 16) {
-                            Rectangle()
-                                .fill(Color.systemBlack)
-                                .frame(height: 2)
-                                .padding(.horizontal, 40)
+                        // Barre de séparation
+                        Rectangle()
+                            .fill(Color.systemBlack)
+                            .frame(height: 2)
+                            .padding(.horizontal, 40)
+                        
+                        // MARK: - Informations
+                        VStack(spacing: 10) {
+                            InfoRow(icon: "📱", text: "iOS 18+")
                             
-                            VStack(spacing: 8) {
-                                Text("Développé par")
-                                    .font(.geneva9)
-                                    .foregroundStyle(Color.systemGray)
-                                
-                                Text("David Guia")
-                                    .font(.chicago14)
-                                    .foregroundStyle(Color.systemBlack)
-                                    .fontWeight(.bold)
-                            }
-                            
-                            // Informations supplémentaires
-                            VStack(spacing: 8) {
-                                InfoRow(icon: "📱", text: "iOS 18+")
-                                InfoRow(icon: "🎨", text: "Design inspiré macOS classique")
-                                InfoRow(icon: "🤖", text: "OCR & Parsing automatique")
-                                InfoRow(icon: "💾", text: "Backup automatique")
-                                
-                                // Afficher le timer de certificat développeur
-                                if let installDate = UserDefaults.standard.object(forKey: "firstInstallDate") as? Date {
-                                    let expiryDate = Calendar.current.date(byAdding: .day, value: 7, to: installDate)!
-                                    let days = max(0, Calendar.current.dateComponents([.day], from: Date(), to: expiryDate).day ?? 0)
-                                    
-                                    if days <= 5 {
-                                        InfoRow(
-                                            icon: days <= 1 ? "⏱️" : "🕐",
-                                            text: "Certificat expire dans \(days)j",
-                                            color: days <= 1 ? .red : (days <= 3 ? .orange : .green)
-                                        )
+                            Button {
+                                if let url = URL(string: "https://github.com/sakofchit/system.css") {
+                                    UIApplication.shared.open(url)
+                                }
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Text("🎨")
+                                        .font(.system(size: 18))
+                                    HStack(spacing: 0) {
+                                        Text("Design inspiré macOS classique (")
+                                            .font(.system(size: 13))
+                                            .foregroundStyle(Color.systemBlack)
+                                        Text("GitHub")
+                                            .font(.system(size: 13))
+                                            .foregroundStyle(Color.blue)
+                                            .underline()
+                                        Text(")")
+                                            .font(.system(size: 13))
+                                            .foregroundStyle(Color.systemBlack)
                                     }
                                 }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 48)
                             }
-                            .padding(.top, 8)
+                            .buttonStyle(.plain)
                             
-                            Rectangle()
-                                .fill(Color.systemBlack)
-                                .frame(height: 2)
-                                .padding(.horizontal, 40)
+                            InfoRow(icon: "🤖", text: "OCR & Parsing automatique")
+                            InfoRow(icon: "💾", text: "Backup automatique")
+                            
+                            // Afficher le timer de certificat développeur
+                            if let installDate = UserDefaults.standard.object(forKey: "firstInstallDate") as? Date {
+                                let expiryDate = Calendar.current.date(byAdding: .day, value: 7, to: installDate)!
+                                let days = max(0, Calendar.current.dateComponents([.day], from: Date(), to: expiryDate).day ?? 0)
+                                
+                                if days <= 5 {
+                                    InfoRow(
+                                        icon: days <= 1 ? "⏱️" : "🕐",
+                                        text: "Certificat expire dans \(days)j",
+                                        color: days <= 1 ? .red : (days <= 3 ? .orange : .green)
+                                    )
+                                }
+                            }
                         }
                         
+                        Rectangle()
+                            .fill(Color.systemBlack)
+                            .frame(height: 2)
+                            .padding(.horizontal, 40)
+                        
                         // MARK: - Copyright
-                        VStack(spacing: 4) {
-                            Text("© 2025 David Guia")
-                                .font(.geneva9)
-                                .foregroundStyle(Color.systemGray)
-                            
-                            Text("Tous droits réservés")
-                                .font(.geneva9)
-                                .foregroundStyle(Color.systemGray)
-                        }
-                        .padding(.bottom, 32)
+                        Text("© 2025 David Guia")
+                            .font(.geneva9)
+                            .foregroundStyle(Color.systemGray)
+                            .padding(.bottom, 16)
                     }
                 }
                 
@@ -165,7 +171,7 @@ struct AboutView: View {
                 }
                 .buttonStyle(.plain)
                 .padding(.horizontal, 24)
-                .padding(.bottom, 32)
+                .padding(.bottom, 20)
             }
         }
     }
@@ -181,9 +187,9 @@ struct InfoRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Text(icon)
-                .font(.system(size: 16))
+                .font(.system(size: 18))
             Text(text)
-                .font(.geneva10)
+                .font(.system(size: 13))
                 .foregroundStyle(color ?? Color.systemBlack)
                 .fontWeight(color != nil ? .bold : .regular)
         }

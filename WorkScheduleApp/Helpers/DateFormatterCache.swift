@@ -9,23 +9,6 @@ import Foundation
 
 enum DateFormatterCache {
     
-    /// Formatter pour dates complètes françaises (ex: "25 novembre 2024")
-    static let mediumFrench: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        formatter.locale = Locale(identifier: "fr_FR")
-        return formatter
-    }()
-    
-    /// Formatter pour dates courtes (ex: "25 Nov 2024")
-    static let shortDate: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd MMM yyyy"
-        formatter.locale = Locale(identifier: "fr_FR")
-        return formatter
-    }()
-    
     /// Formatter pour mois complet avec année (ex: "Novembre 2024")
     static let monthYear: DateFormatter = {
         let formatter = DateFormatter()
@@ -51,16 +34,6 @@ enum DateFormatterCache {
 }
 
 extension Date {
-    /// Format date en français moyen (25 novembre 2024)
-    var mediumFrench: String {
-        DateFormatterCache.mediumFrench.string(from: self)
-    }
-    
-    /// Format date courte (25 Nov 2024)
-    var shortDate: String {
-        DateFormatterCache.shortDate.string(from: self)
-    }
-    
     /// Format mois + année (Novembre 2024)
     var monthYear: String {
         DateFormatterCache.monthYear.string(from: self).capitalized

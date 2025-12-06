@@ -50,22 +50,4 @@ final class WorkSchedule: Identifiable {
     var locations: [String] {
         Array(Set(shifts.map { $0.location })).sorted()
     }
-    
-    /// Retourne les shifts pour un lieu spécifique, triés par date
-    func shiftsForLocation(_ location: String) -> [Shift] {
-        shifts.filter { $0.location == location }.sorted { $0.date < $1.date }
-    }
-    
-    /// Retourne les shifts d'une semaine spécifique
-    /// - Parameter date: N'importe quelle date dans la semaine souhaitée
-    /// - Returns: Shifts de la semaine, triés par date
-    func shiftsForWeek(startingFrom date: Date) -> [Shift] {
-        let calendar = Calendar.current
-        let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date))!
-        let weekEnd = calendar.date(byAdding: .day, value: 7, to: weekStart)!
-        
-        return shifts.filter { shift in
-            shift.date >= weekStart && shift.date < weekEnd
-        }.sorted { $0.date < $1.date }
-    }
 }

@@ -4,6 +4,16 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>ShifterShareExtension.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
+		<key>ShifterWidgetExtension.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
 		<key>WorkScheduleApp.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
@@ -12,6 +22,16 @@
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
+		<key>2A0C28A82EE37EC400929A7E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>2AC001FF2EE4D036003B911F</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
 		<key>5F1</key>
 		<dict>
 			<key>primary</key>

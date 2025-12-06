@@ -99,9 +99,10 @@ struct ShiftStatisticsView: View {
                                 .padding(.vertical, 12)
                                 .background(Color.systemWhite)
                                 .overlay(
-                                    Rectangle()
+                                    RoundedRectangle(cornerRadius: 4)
                                         .stroke(Color.systemBlack, lineWidth: 1)
                                 )
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
                             }
                         }
                         
@@ -134,9 +135,10 @@ struct ShiftStatisticsView: View {
                 }
             }
             .overlay(
-                Rectangle()
+                RoundedRectangle(cornerRadius: 8)
                     .stroke(Color.systemBlack, lineWidth: 2)
             )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
             .padding(.horizontal, 12)
             .padding(.bottom, 12)
         }

@@ -3,12 +3,20 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2A0C28B32EE37EC400929A7E /* ShifterShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2A0C28A92EE37EC400929A7E /* ShifterShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2A4EA6912EE35E7C006F4D56 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A4EA6902EE35E7C006F4D56 /* AboutView.swift */; };
 		2AA13CC32EDCED1F004C0E67 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2AA13CC22EDCED1A004C0E67 /* Assets.xcassets */; };
+		2AC002032EE4D036003B911F /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2AC002022EE4D036003B911F /* WidgetKit.framework */; };
+		2AC002052EE4D036003B911F /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2AC002042EE4D036003B911F /* SwiftUI.framework */; };
+		2AC002162EE4D037003B911F /* ShifterWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2AC002002EE4D036003B911F /* ShifterWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		2AC0021D2EE4D146003B911F /* Shift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B3 /* Shift.swift */; };
+		2AC0021E2EE4D169003B911F /* WorkSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B4 /* WorkSchedule.swift */; };
+		2AC0021F2EE4D178003B911F /* FiscalCalendarHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B12 /* FiscalCalendarHelper.swift */; };
+		2AC002202EE4D180003B911F /* DateFormatterCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B13 /* DateFormatterCache.swift */; };
 		5A1 /* WorkScheduleAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1 /* WorkScheduleAppApp.swift */; };
 		5A10 /* ShiftStatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B10 /* ShiftStatisticsView.swift */; };
 		5A11 /* ManageDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B11 /* ManageDataView.swift */; };
@@ -22,9 +30,47 @@
 		5A9 /* SystemCSSTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B9 /* SystemCSSTheme.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		2A0C28B12EE37EC400929A7E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5G1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2A0C28A82EE37EC400929A7E;
+			remoteInfo = ShifterShareExtension;
+		};
+		2AC002142EE4D037003B911F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5G1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2AC001FF2EE4D036003B911F;
+			remoteInfo = ShifterWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		2A0C28B82EE37EC400929A7E /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				2AC002162EE4D037003B911F /* ShifterWidgetExtension.appex in Embed Foundation Extensions */,
+				2A0C28B32EE37EC400929A7E /* ShifterShareExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		2A0C28A92EE37EC400929A7E /* ShifterShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShifterShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		2A0C28BD2EE380C900929A7E /* WorkScheduleApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WorkScheduleApp.entitlements; sourceTree = "<group>"; };
 		2A4EA6902EE35E7C006F4D56 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		2AA13CC22EDCED1A004C0E67 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		2AC002002EE4D036003B911F /* ShifterWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShifterWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		2AC002022EE4D036003B911F /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		2AC002042EE4D036003B911F /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		2AC002212EE4D66F003B911F /* ShifterWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShifterWidgetExtension.entitlements; sourceTree = "<group>"; };
 		5B1 /* WorkScheduleAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkScheduleAppApp.swift; sourceTree = "<group>"; };
 		5B10 /* ShiftStatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShiftStatisticsView.swift; sourceTree = "<group>"; };
 		5B11 /* ManageDataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageDataView.swift; sourceTree = "<group>"; };
@@ -39,7 +85,45 @@
 		5C3 /* WorkScheduleApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WorkScheduleApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		2A0C28B42EE37EC400929A7E /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2A0C28A82EE37EC400929A7E /* ShifterShareExtension */;
+		};
+		2AC002192EE4D037003B911F /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2AC001FF2EE4D036003B911F /* ShifterWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		2A0C28AA2EE37EC400929A7E /* ShifterShareExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2A0C28B42EE37EC400929A7E /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ShifterShareExtension; sourceTree = "<group>"; };
+		2AC002062EE4D036003B911F /* ShifterWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2AC002192EE4D037003B911F /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ShifterWidget; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
+		2A0C28A62EE37EC400929A7E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2AC001FD2EE4D036003B911F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2AC002052EE4D036003B911F /* SwiftUI.framework in Frameworks */,
+				2AC002032EE4D036003B911F /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5D1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -50,10 +134,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2AC002012EE4D036003B911F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				2AC002022EE4D036003B911F /* WidgetKit.framework */,
+				2AC002042EE4D036003B911F /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		5E1 = {
 			isa = PBXGroup;
 			children = (
+				2AC002212EE4D66F003B911F /* ShifterWidgetExtension.entitlements */,
 				5E2 /* WorkScheduleApp */,
+				2A0C28AA2EE37EC400929A7E /* ShifterShareExtension */,
+				2AC002062EE4D036003B911F /* ShifterWidget */,
+				2AC002012EE4D036003B911F /* Frameworks */,
 				5E8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -61,6 +158,7 @@
 		5E2 /* WorkScheduleApp */ = {
 			isa = PBXGroup;
 			children = (
+				2A0C28BD2EE380C900929A7E /* WorkScheduleApp.entitlements */,
 				2AA13CC22EDCED1A004C0E67 /* Assets.xcassets */,
 				5B1 /* WorkScheduleAppApp.swift */,
 				5B2 /* ContentView.swift */,
@@ -122,6 +220,8 @@
 			isa = PBXGroup;
 			children = (
 				5C3 /* WorkScheduleApp.app */,
+				2A0C28A92EE37EC400929A7E /* ShifterShareExtension.appex */,
+				2AC002002EE4D036003B911F /* ShifterWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -129,6 +229,50 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		2A0C28A82EE37EC400929A7E /* ShifterShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2A0C28B52EE37EC400929A7E /* Build configuration list for PBXNativeTarget "ShifterShareExtension" */;
+			buildPhases = (
+				2A0C28A52EE37EC400929A7E /* Sources */,
+				2A0C28A62EE37EC400929A7E /* Frameworks */,
+				2A0C28A72EE37EC400929A7E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				2A0C28AA2EE37EC400929A7E /* ShifterShareExtension */,
+			);
+			name = ShifterShareExtension;
+			packageProductDependencies = (
+			);
+			productName = ShifterShareExtension;
+			productReference = 2A0C28A92EE37EC400929A7E /* ShifterShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		2AC001FF2EE4D036003B911F /* ShifterWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2AC0021A2EE4D037003B911F /* Build configuration list for PBXNativeTarget "ShifterWidgetExtension" */;
+			buildPhases = (
+				2AC001FC2EE4D036003B911F /* Sources */,
+				2AC001FD2EE4D036003B911F /* Frameworks */,
+				2AC001FE2EE4D036003B911F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				2AC002062EE4D036003B911F /* ShifterWidget */,
+			);
+			name = ShifterWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = ShifterWidgetExtension;
+			productReference = 2AC002002EE4D036003B911F /* ShifterWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		5F1 /* WorkScheduleApp */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 5F2 /* Build configuration list for PBXNativeTarget "WorkScheduleApp" */;
@@ -137,10 +281,13 @@
 				5D1 /* Frameworks */,
 				5F3 /* Sources */,
 				2AA13CC62EDCEEF7004C0E67 /* ShellScript */,
+				2A0C28B82EE37EC400929A7E /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				2A0C28B22EE37EC400929A7E /* PBXTargetDependency */,
+				2AC002152EE4D037003B911F /* PBXTargetDependency */,
 			);
 			name = WorkScheduleApp;
 			productName = WorkScheduleApp;
@@ -154,9 +301,15 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1500;
+				LastSwiftUpdateCheck = 2610;
 				LastUpgradeCheck = 2610;
 				TargetAttributes = {
+					2A0C28A82EE37EC400929A7E = {
+						CreatedOnToolsVersion = 26.1.1;
+					};
+					2AC001FF2EE4D036003B911F = {
+						CreatedOnToolsVersion = 26.1.1;
+					};
 					5F1 = {
 						CreatedOnToolsVersion = 15.0;
 					};
@@ -177,11 +330,27 @@
 			projectRoot = "";
 			targets = (
 				5F1 /* WorkScheduleApp */,
+				2A0C28A82EE37EC400929A7E /* ShifterShareExtension */,
+				2AC001FF2EE4D036003B911F /* ShifterWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		2A0C28A72EE37EC400929A7E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2AC001FE2EE4D036003B911F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5D2 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -195,6 +364,7 @@
 /* Begin PBXShellScriptBuildPhase section */
 		2AA13CC62EDCEEF7004C0E67 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -213,6 +383,24 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		2A0C28A52EE37EC400929A7E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2AC001FC2EE4D036003B911F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2AC0021D2EE4D146003B911F /* Shift.swift in Sources */,
+				2AC0021F2EE4D178003B911F /* FiscalCalendarHelper.swift in Sources */,
+				2AC0021E2EE4D169003B911F /* WorkSchedule.swift in Sources */,
+				2AC002202EE4D180003B911F /* DateFormatterCache.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5F3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -234,7 +422,152 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		2A0C28B22EE37EC400929A7E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2A0C28A82EE37EC400929A7E /* ShifterShareExtension */;
+			targetProxy = 2A0C28B12EE37EC400929A7E /* PBXContainerItemProxy */;
+		};
+		2AC002152EE4D037003B911F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2AC001FF2EE4D036003B911F /* ShifterWidgetExtension */;
+			targetProxy = 2AC002142EE4D037003B911F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		2A0C28B62EE37EC400929A7E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGN_ENTITLEMENTS = ShifterShareExtension/ShifterShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8646HX4XDV;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShifterShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShifterShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.workjam.WorkScheduleApp.ShifterShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2A0C28B72EE37EC400929A7E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGN_ENTITLEMENTS = ShifterShareExtension/ShifterShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8646HX4XDV;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShifterShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShifterShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.workjam.WorkScheduleApp.ShifterShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		2AC002172EE4D037003B911F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = ShifterWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8646HX4XDV;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShifterWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShifterWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.workjam.WorkScheduleApp.ShifterWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2AC002182EE4D037003B911F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = ShifterWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8646HX4XDV;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShifterWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShifterWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.workjam.WorkScheduleApp.ShifterWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		5H1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -270,6 +603,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = WorkScheduleApp/WorkScheduleApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
@@ -305,7 +639,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -359,6 +693,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = WorkScheduleApp/WorkScheduleApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
@@ -388,7 +723,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.workjam.WorkScheduleApp;
@@ -528,6 +863,24 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		2A0C28B52EE37EC400929A7E /* Build configuration list for PBXNativeTarget "ShifterShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2A0C28B62EE37EC400929A7E /* Debug */,
+				2A0C28B72EE37EC400929A7E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2AC0021A2EE4D037003B911F /* Build configuration list for PBXNativeTarget "ShifterWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2AC002172EE4D037003B911F /* Debug */,
+				2AC002182EE4D037003B911F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		5F2 /* Build configuration list for PBXNativeTarget "WorkScheduleApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

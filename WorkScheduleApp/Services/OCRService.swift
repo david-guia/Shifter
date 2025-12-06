@@ -8,6 +8,7 @@
 import Foundation
 import Vision
 import UIKit
+import PDFKit
 
 class OCRService {
     
@@ -23,6 +24,13 @@ class OCRService {
     /// Regex pour détecter les dates au format WorkJam: "lundi 25 novembre"
     private static let workJamDateRegex: NSRegularExpression? = {
         let pattern = "(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\\s+(\\d{1,2})\\s+(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)"
+        return try? NSRegularExpression(pattern: pattern, options: .caseInsensitive)
+    }()
+    
+    /// Regex pour détecter les indicateurs temporels relatifs
+    private static let relativeTimeRegex: NSRegularExpression? = {
+        // Détecte: "hier", "Il y a X jour(s)", "Il y a X semaine(s)", "Il y a X mois", "Aujourd'hui"
+        let pattern = "(hier|aujourd'hui|il y a (\\d+) jour[s]?|il y a (\\d+) semaine[s]?|il y a (\\d+) mois)"
         return try? NSRegularExpression(pattern: pattern, options: .caseInsensitive)
     }()
     
@@ -122,6 +130,34 @@ class OCRService {
         }
     }
     
+    // MARK: - Conversion PDF vers image
+    
+    /// Convertit la première page d'un PDF en UIImage pour l'OCR
+    /// Retourne une image haute résolution (300 DPI) pour améliorer la précision de l'OCR
+    func convertPDFToImage(from url: URL) -> UIImage? {
+        guard let document = PDFDocument(url: url),
+              let page = document.page(at: 0) else {
+            return nil
+        }
+        
+        let pageRect = page.bounds(for: .mediaBox)
+        let scale: CGFloat = 3.0 // 300 DPI pour une meilleure qualité OCR
+        let scaledSize = CGSize(width: pageRect.width * scale, height: pageRect.height * scale)
+        
+        let renderer = UIGraphicsImageRenderer(size: scaledSize)
+        let image = renderer.image { context in
+            UIColor.white.set()
+            context.fill(CGRect(origin: .zero, size: scaledSize))
+            
+            context.cgContext.translateBy(x: 0, y: scaledSize.height)
+            context.cgContext.scaleBy(x: scale, y: -scale)
+            
+            page.draw(with: .mediaBox, to: context.cgContext)
+        }
+        
+        return image
+    }
+    
     // MARK: - Parsing du texte OCR
     
     /// Parse le texte OCR pour extraire les shifts avec toutes leurs informations
@@ -161,6 +197,20 @@ class OCRService {
         
         print("🔍 Parsing \(lines.count) lignes...")
         
+        // ÉTAPE 1: Scanner TOUT le texte pour trouver l'indicateur temporel AVANT de parser les dates
+        var globalRelativeIndicator: (days: Int?, months: Int?)? = nil
+        for line in lines {
+            if let (days, months) = detectRelativeTime(in: line) {
+                globalRelativeIndicator = (days: days, months: months)
+                if let d = days {
+                    print("🕐 Indicateur temporel détecté (pré-scan): Il y a \(d) jour(s)")
+                } else if let m = months {
+                    print("🕐 Indicateur temporel détecté (pré-scan): Il y a \(m) mois")
+                }
+                break // Prendre le premier trouvé
+            }
+        }
+        
         // Variables de contexte pour le parsing ligne par ligne
         var currentDate: Date?
         var currentLocation = "Non spécifié"
@@ -176,8 +226,14 @@ class OCRService {
             
             if trimmedLine.isEmpty { continue }
             
+            // Sauter les lignes d'indicateurs temporels (déjà traités)
+            if detectRelativeTime(in: trimmedLine) != nil {
+                continue
+            }
+            
             // Détection de la date principale (ex: "mercredi 26 novembre")
-            if let date = detectWorkJamDate(in: trimmedLine) {
+            // Utiliser l'indicateur global trouvé précédemment
+            if let date = detectWorkJamDate(in: trimmedLine, relativeTimeIndicator: globalRelativeIndicator) {
                 print("📅 Date détectée: \(date) dans '\(trimmedLine)'")
                 // Si on avait des segments en attente, créer les shifts
                 if let mainDate = shiftMainDate, !segmentTimeRanges.isEmpty {
@@ -271,7 +327,7 @@ class OCRService {
         return shifts
     }
     
-    private func detectWorkJamDate(in text: String) -> Date? {
+    private func detectWorkJamDate(in text: String, relativeTimeIndicator: (days: Int?, months: Int?)?) -> Date? {
         // Utiliser regex statique pré-compilée
         guard let regex = Self.workJamDateRegex,
               let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) else {
@@ -286,14 +342,81 @@ class OCRService {
         formatter.dateFormat = "EEEE dd MMMM"
         
         if let date = formatter.date(from: matchedText) {
-            // Déterminer l'année correcte en fonction du trimestre fiscal
             let calendar = Calendar.current
             let month = calendar.component(.month, from: date)
+            let day = calendar.component(.day, from: date)
             let currentDate = Date()
             let currentMonth = calendar.component(.month, from: currentDate)
             let currentYear = calendar.component(.year, from: currentDate)
             
-            // Déterminer l'année fiscale appropriée
+            // Si on a un indicateur temporel relatif (ex: "Il y a 6 jours" ou "Il y a 5 mois"), l'utiliser en priorité
+            if let indicator = relativeTimeIndicator {
+                print("🔍 DEBUG: relativeTimeIndicator = days:\(indicator.days ?? -1) months:\(indicator.months ?? -1)")
+                
+                // Cas 1: "Il y a X mois"
+                if let monthsAgo = indicator.months {
+                    print("🔍 DEBUG: Traitement mois - monthsAgo=\(monthsAgo)")
+                    // Reculer de X mois depuis aujourd'hui pour obtenir l'année approximative
+                    if let pastDate = calendar.date(byAdding: .month, value: -monthsAgo, to: currentDate) {
+                        // Utiliser l'année de la date calculée, MAIS le mois et jour de la date parsée
+                        var calculatedYear = calendar.component(.year, from: pastDate)
+                        let calculatedMonth = calendar.component(.month, from: pastDate)
+                        
+                        print("🔍 DEBUG: Date calculée (-\(monthsAgo) mois) = \(calculatedYear)/\(calculatedMonth)")
+                        print("🔍 DEBUG: Date parsée = mois:\(month) jour:\(day)")
+                        
+                        // Si le mois parsé est proche du mois calculé (±2 mois), c'est la même année
+                        // Sinon, ajuster l'année
+                        let monthDiff = abs(month - calculatedMonth)
+                        print("🔍 DEBUG: Différence de mois = \(monthDiff)")
+                        
+                        if monthDiff > 6 {
+                            // Si le mois parsé est beaucoup plus tard dans l'année, c'est l'année précédente
+                            if month > calculatedMonth {
+                                calculatedYear -= 1
+                                print("🔍 DEBUG: Mois parsé > calculé et diff>6 → année -1 = \(calculatedYear)")
+                            } else {
+                                calculatedYear += 1
+                                print("🔍 DEBUG: Mois parsé < calculé et diff>6 → année +1 = \(calculatedYear)")
+                            }
+                        } else {
+                            print("🔍 DEBUG: Différence < 6 mois → même année = \(calculatedYear)")
+                        }
+                        
+                        var components = DateComponents()
+                        components.year = calculatedYear
+                        components.month = month // Utiliser le mois PARSÉ (juin dans ton cas)
+                        components.day = day
+                        
+                        print("🔍 DEBUG: DateComponents finale = \(calculatedYear)/\(month)/\(day)")
+                        
+                        if let finalDate = calendar.date(from: components) {
+                            print("📅 Année corrigée via indicateur temporel (mois): \(calculatedYear)/\(month)/\(day) (Il y a \(monthsAgo) mois)")
+                            return finalDate
+                        }
+                    }
+                }
+                // Cas 2: "Il y a X jours"
+                else if let daysAgo = indicator.days {
+                    // Calculer la date exacte en reculant de X jours depuis aujourd'hui
+                    if let pastDate = calendar.date(byAdding: .day, value: -daysAgo, to: currentDate) {
+                        let targetYear = calendar.component(.year, from: pastDate)
+                        let targetMonth = calendar.component(.month, from: pastDate)
+                        
+                        var components = DateComponents()
+                        components.year = targetYear
+                        components.month = targetMonth
+                        components.day = day
+                        
+                        if let finalDate = calendar.date(from: components) {
+                            print("📅 Année corrigée via indicateur temporel (jours): \(targetYear) (Il y a \(daysAgo) jours)")
+                            return finalDate
+                        }
+                    }
+                }
+            }
+            
+            // Sinon, utiliser la logique fiscale existante (fallback)
             var targetYear = currentYear
             
             // Si le mois détecté est Oct/Nov/Dec (Q1 fiscal)
@@ -315,19 +438,43 @@ class OCRService {
         return nil
     }
     
-    private func detectSegment(in text: String) -> String? {
-        // Utiliser regex statique pr\u00e9-compil\u00e9e pour segments
-        if let regex = Self.segmentRegex,
-           let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) {
-            return (text as NSString).substring(with: match.range)
+    /// Détecte les indicateurs temporels relatifs et retourne (jours, mois) dans le passé
+    /// Exemples: "hier" → (1, nil), "Il y a 6 jours" → (6, nil), "Il y a 5 mois" → (nil, 5)
+    private func detectRelativeTime(in text: String) -> (days: Int?, months: Int?)? {
+        let lowercased = text.lowercased()
+        
+        // "aujourd'hui" ou "Aujourd'hui"
+        if lowercased.contains("aujourd'hui") {
+            return (days: 0, months: nil)
         }
         
-        // Si c'est une ligne qui ne contient pas d'horaire mais du texte, c'est probablement un segment
-        if !text.contains("AM") && !text.contains("PM") && !text.contains(":") && text.count > 3 {
-            // Nettoyer le texte des caractères spéciaux
-            let cleaned = text.trimmingCharacters(in: CharacterSet.letters.inverted)
-            if !cleaned.isEmpty {
-                return cleaned
+        // "hier" ou "Hier"
+        if lowercased.contains("hier") {
+            return (days: 1, months: nil)
+        }
+        
+        // "Il y a X jour(s)" ou "Il y a X mois" ou "Il y a X semaine(s)"
+        if let regex = Self.relativeTimeRegex,
+           let match = regex.firstMatch(in: lowercased, range: NSRange(lowercased.startIndex..., in: lowercased)) {
+            let matchedText = (lowercased as NSString).substring(with: match.range)
+            
+            // Extraire le nombre
+            if let numberMatch = matchedText.range(of: "\\d+", options: .regularExpression) {
+                let numberString = String(matchedText[numberMatch])
+                if let number = Int(numberString) {
+                    // Cas 1: mois
+                    if matchedText.contains("mois") {
+                        return (days: nil, months: number)
+                    }
+                    // Cas 2: semaines → convertir en jours
+                    else if matchedText.contains("semaine") {
+                        return (days: number * 7, months: nil)
+                    }
+                    // Cas 3: jours
+                    else {
+                        return (days: number, months: nil)
+                    }
+                }
             }
         }
         
@@ -335,8 +482,8 @@ class OCRService {
     }
     
     private func detectDate(in text: String) -> Date? {
-        // Utiliser la nouvelle méthode WorkJam
-        if let date = detectWorkJamDate(in: text) {
+        // Utiliser la nouvelle méthode WorkJam (avec support des indicateurs temporels)
+        if let date = detectWorkJamDate(in: text, relativeTimeIndicator: (days: nil, months: nil)) {
             return date
         }
         
@@ -359,6 +506,25 @@ class OCRService {
         formatter.dateFormat = "dd MMM"
         if let date = formatter.date(from: text) {
             return date
+        }
+        
+        return nil
+    }
+    
+    private func detectSegment(in text: String) -> String? {
+        // Utiliser regex statique pr\u00e9-compil\u00e9e pour segments
+        if let regex = Self.segmentRegex,
+           let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) {
+            return (text as NSString).substring(with: match.range)
+        }
+        
+        // Si c'est une ligne qui ne contient pas d'horaire mais du texte, c'est probablement un segment
+        if !text.contains("AM") && !text.contains("PM") && !text.contains(":") && text.count > 3 {
+            // Nettoyer le texte des caractères spéciaux
+            let cleaned = text.trimmingCharacters(in: CharacterSet.letters.inverted)
+            if !cleaned.isEmpty {
+                return cleaned
+            }
         }
         
         return nil

@@ -12,6 +12,9 @@ import PhotosUI
 struct ContentView: View {
     // MARK: - Propriétés
     
+    /// Chemin de l'image partagée depuis l'extension (optionnel)
+    @Binding var sharedImagePath: String?
+    
     /// Contexte SwiftData pour la persistance des données
     @Environment(\.modelContext) private var modelContext
     
@@ -20,6 +23,9 @@ struct ContentView: View {
     
     /// Images sélectionnées via PhotosPicker pour import OCR
     @State private var selectedItems: [PhotosPickerItem] = []
+    
+    /// Document PDF sélectionné pour import
+    @State private var showingPDFPicker = false
     
     /// Indicateurs d'affichage des différentes feuilles modales
     @State private var showingExportSheet = false
@@ -313,11 +319,32 @@ struct ContentView: View {
                         Spacer()
                         
                         VStack(spacing: 0) {
-                            PhotosPicker(selection: $selectedItems, maxSelectionCount: 10, matching: .images) {
+                            PhotosPicker(selection: $selectedItems, matching: .images) {
                                 HStack {
                                     Text("📸")
                                         .font(.system(size: 16))
-                                    Text("Importer")
+                                    Text("Images")
+                                        .font(.chicago12)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Color.systemBlack)
+                            .background(Color.systemWhite)
+                            
+                            Divider()
+                                .background(Color.systemBlack)
+                            
+                            Button {
+                                showingMenu = false
+                                showingPDFPicker = true
+                            } label: {
+                                HStack {
+                                    Text("📄")
+                                        .font(.system(size: 16))
+                                    Text("PDF")
                                         .font(.chicago12)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
@@ -444,6 +471,8 @@ struct ContentView: View {
         
         // Détection de nouvelles images sélectionnées via PhotosPicker
         .onChange(of: selectedItems) { _, newItems in
+            // Fermer le menu automatiquement après sélection
+            showingMenu = false
             // Annuler l'import précédent si en cours (optimisation)
             importTask?.cancel()
             importTask = Task {
@@ -499,6 +528,13 @@ struct ContentView: View {
         .sheet(isPresented: $showingAboutSheet) {
             AboutView(isPresented: $showingAboutSheet)
         }
+        .fileImporter(
+            isPresented: $showingPDFPicker,
+            allowedContentTypes: [.pdf],
+            allowsMultipleSelection: false
+        ) { result in
+            handlePDFSelection(result)
+        }
         .alert("⚠️ Expiration Proche", isPresented: $showingExpiryWarning) {
             Button("OK", role: .cancel) { }
             Button("💾 Sauvegarder", role: .none) {
@@ -522,6 +558,9 @@ struct ContentView: View {
         } message: {
             Text("Votre certificat développeur expire dans moins de 2 jours !\n\n⏱️ Temps restant : \(daysRemaining)j \(hoursRemaining % 24)h\n\nExportez vos données MAINTENANT pour éviter toute perte. Le backup automatique est actif mais un export manuel est recommandé.")
                 .font(.geneva10)
+        }
+        .onChange(of: sharedImagePath) { _, imagePath in
+            handleSharedImage(imagePath)
         }
     }
     
@@ -618,6 +657,50 @@ struct ContentView: View {
                     showingExpiryWarning = true
                 }
             }
+        }
+    }
+    
+    /// Traite une image reçue depuis l'extension de partage
+    private func handleSharedImage(_ imagePath: String?) {
+        guard let imagePath = imagePath else { return }
+        
+        Task {
+            let fileURL = URL(fileURLWithPath: imagePath)
+            
+            // Vérifier que le fichier existe
+            guard FileManager.default.fileExists(atPath: imagePath),
+                  let imageData = try? Data(contentsOf: fileURL),
+                  let image = UIImage(data: imageData) else {
+                return
+            }
+            
+            // Lancer l'import OCR
+            await viewModel.importScheduleFromImage(image)
+            
+            // Nettoyer le fichier temporaire
+            try? FileManager.default.removeItem(at: fileURL)
+            
+            // Réinitialiser le chemin
+            sharedImagePath = nil
+        }
+    }
+    
+    /// Traite la sélection d'un fichier PDF pour import
+    private func handlePDFSelection(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            
+            // Annuler tout import en cours
+            importTask?.cancel()
+            
+            // Lancer l'import PDF
+            importTask = Task {
+                await viewModel.importScheduleFromPDF(url)
+            }
+            
+        case .failure(let error):
+            print("❌ Erreur sélection PDF: \(error.localizedDescription)")
         }
     }
     
@@ -945,6 +1028,6 @@ struct ImportView: View {
 }
 
 #Preview {
-    ContentView()
+    ContentView(sharedImagePath: .constant(nil))
         .modelContainer(for: WorkSchedule.self, inMemory: true)
 }

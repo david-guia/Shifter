@@ -10,6 +10,7 @@ import SwiftUI
 import SwiftData
 import PhotosUI
 import UniformTypeIdentifiers
+import WidgetKit
 
 @MainActor
 class ScheduleViewModel: ObservableObject {
@@ -25,8 +26,6 @@ class ScheduleViewModel: ObservableObject {
     /// Message d'erreur à afficher
     @Published var errorMessage: String?
     @Published var showError = false
-    
-    @Published var filterLocation: String?
     
     /// Indicateur pour afficher le toast de restauration automatique
     @Published var showRestoredMessage = false
@@ -119,31 +118,86 @@ class ScheduleViewModel: ObservableObject {
                 context.insert(schedule)
             }
             
-            // Ajouter tous les shifts parsés au schedule
+            // Ajouter tous les shifts parsés au schedule (avec détection des doublons)
+            var addedCount = 0
+            var duplicateCount = 0
+            
             for parsed in parsedShifts {
-                let shift = Shift(
-                    date: parsed.date,
-                    startTime: parsed.startTime,
-                    endTime: parsed.endTime,
-                    location: parsed.location,
-                    segment: parsed.segment
-                )
-                shift.schedule = schedule
-                schedule.shifts.append(shift)
-                context.insert(shift)
+                // Vérifier si un shift identique existe déjà
+                let isDuplicate = schedule.shifts.contains { existing in
+                    Calendar.current.isDate(existing.date, inSameDayAs: parsed.date) &&
+                    Calendar.current.isDate(existing.startTime, equalTo: parsed.startTime, toGranularity: .minute) &&
+                    Calendar.current.isDate(existing.endTime, equalTo: parsed.endTime, toGranularity: .minute) &&
+                    existing.location == parsed.location &&
+                    existing.segment == parsed.segment
+                }
+                
+                if !isDuplicate {
+                    let shift = Shift(
+                        date: parsed.date,
+                        startTime: parsed.startTime,
+                        endTime: parsed.endTime,
+                        location: parsed.location,
+                        segment: parsed.segment
+                    )
+                    shift.schedule = schedule
+                    schedule.shifts.append(shift)
+                    context.insert(shift)
+                    addedCount += 1
+                } else {
+                    duplicateCount += 1
+                }
             }
+            
+            // Log pour débug
+            if duplicateCount > 0 {
+                print("⚠️ \(duplicateCount) shift(s) en doublon ignoré(s)")
+            }
+            print("✅ \(addedCount) shift(s) ajouté(s)")
             
             try context.save()
             
             fetchSchedules()
             selectedSchedule = schedule
             
+            // Afficher message d'alerte si doublons détectés
+            if duplicateCount > 0 {
+                errorMessage = "\(addedCount) shift(s) ajouté(s)\n⚠️ \(duplicateCount) doublon(s) ignoré(s)"
+                showError = true
+            }
+            
             // Backup automatique après import
             Task {
                 await saveAutoBackup()
             }
             
+            // Rafraîchir les widgets
+            WidgetCenter.shared.reloadAllTimelines()
+            
             isLoading = false
+        } catch {
+            isLoading = false
+            handleError(error)
+        }
+    }
+    
+    // MARK: - Import depuis PDF
+    
+    /// Importe les horaires depuis un fichier PDF
+    /// Processus: PDF → Image → OCR → Parsing → SwiftData → Backup
+    func importScheduleFromPDF(_ url: URL) async {
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            // Étape 1: Conversion PDF → Image
+            guard let image = ocrService.convertPDFToImage(from: url) else {
+                throw NSError(domain: "ViewModel", code: 3, userInfo: [NSLocalizedDescriptionKey: "Impossible de convertir le PDF en image. Vérifiez que le fichier est valide."])
+            }
+            
+            // Étape 2-4: Utiliser le même processus que pour les images
+            await importScheduleFromImage(image)
+            
         } catch {
             isLoading = false
             handleError(error)
@@ -222,6 +276,9 @@ class ScheduleViewModel: ObservableObject {
             Task {
                 await saveAutoBackup()
             }
+            
+            // Rafraîchir les widgets
+            WidgetCenter.shared.reloadAllTimelines()
         } catch {
             handleError(error)
         }
@@ -242,22 +299,9 @@ class ScheduleViewModel: ObservableObject {
             Task {
                 await saveAutoBackup()
             }
-        } catch {
-            handleError(error)
-        }
-    }
-    
-    func toggleShiftConfirmation(_ shift: Shift) {
-        guard let context = modelContext else { return }
-        
-        shift.isConfirmed.toggle()
-        
-        do {
-            try context.save()
-            fetchSchedules()
-            Task {
-                await saveAutoBackup()
-            }
+            
+            // Rafraîchir les widgets
+            WidgetCenter.shared.reloadAllTimelines()
         } catch {
             handleError(error)
         }
@@ -284,22 +328,10 @@ class ScheduleViewModel: ObservableObject {
         showError = true
     }
     
-    // Filtrage et statistiques
-    var filteredShifts: [Shift] {
-        guard let schedule = selectedSchedule else { return [] }
-        
-        if let location = filterLocation {
-            return schedule.shifts.filter { $0.location == location }
-        }
-        return schedule.shifts
-    }
-    
-    var totalHoursForFiltered: Double {
-        filteredShifts.reduce(0) { $0 + $1.duration / 3600 }
-    }
-    
+    // Statistiques
     var shiftsGroupedByDate: [Date: [Shift]] {
-        Dictionary(grouping: filteredShifts) { shift in
+        guard let schedule = selectedSchedule else { return [:] }
+        return Dictionary(grouping: schedule.shifts) { shift in
             Calendar.current.startOfDay(for: shift.date)
         }
     }

@@ -15,20 +15,18 @@ struct ManageDataView: View {
     @State private var showingDeleteAllAlert = false
     @State private var selectedShiftToDelete: Shift?
     @State private var selectedShiftToEdit: Shift?
-    @State private var searchText = ""
+    @State private var selectedCalendarDate = Date()
     
     private var allShifts: [Shift] {
         guard let schedule = viewModel.schedules.first else { return [] }
         return schedule.shifts.sorted { $0.date > $1.date }
     }
     
-    private var filteredShifts: [Shift] {
-        if searchText.isEmpty {
-            return allShifts
-        }
+    // Shifts filtrés par le mois sélectionné dans le calendrier
+    private var shiftsForSelectedMonth: [Shift] {
+        let calendar = Calendar.current
         return allShifts.filter { shift in
-            shift.segment.localizedCaseInsensitiveContains(searchText) ||
-            shift.location.localizedCaseInsensitiveContains(searchText)
+            calendar.isDate(shift.date, equalTo: selectedCalendarDate, toGranularity: .month)
         }
     }
     
@@ -48,60 +46,108 @@ struct ManageDataView: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
                 .background(Color.systemWhite)
-                .overlay(
-                    Rectangle()
-                        .stroke(Color.systemBlack, lineWidth: 2)
-                )
                 
-                // Barre de recherche pleine largeur
-                HStack(spacing: 12) {
-                    Text("🔍")
-                        .font(.system(size: 18))
-                    TextField("Rechercher par segment ou emplacement...", text: $searchText)
-                        .font(.geneva10)
-                        .textFieldStyle(.plain)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(Color.systemWhite)
-                .overlay(
-                    Rectangle()
-                        .stroke(Color.systemBlack, lineWidth: 2)
-                )
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
-                
-                // Statistiques modernisées
-                HStack(spacing: 0) {
-                    VStack(spacing: 6) {
-                        Text("\(allShifts.count)")
-                            .font(.custom("Chicago", size: 28))
-                            .fontWeight(.bold)
-                            .foregroundStyle(Color.systemBlack)
-                        Text("Shifts totaux")
-                            .font(.geneva9)
-                            .foregroundStyle(Color.systemGray)
+                // Calendrier mensuel avec cases ✅
+                VStack(spacing: 0) {
+                    // En-tête du calendrier avec navigation
+                    HStack(spacing: 0) {
+                        Button {
+                            changeMonth(by: -1)
+                        } label: {
+                            Text("◀")
+                                .font(.chicago12)
+                                .foregroundStyle(Color.systemWhite)
+                                .frame(width: 40)
+                        }
+                        .buttonStyle(.plain)
+                        
+                        Text(monthYearLabel)
+                            .font(.chicago14)
+                            .foregroundStyle(Color.systemWhite)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        Button {
+                            changeMonth(by: 1)
+                        } label: {
+                            Text("▶")
+                                .font(.chicago12)
+                                .foregroundStyle(Color.systemWhite)
+                                .frame(width: 40)
+                        }
+                        .buttonStyle(.plain)
+                        
+                        HStack(spacing: 6) {
+                            Text("\(shiftsInSelectedMonth.count)")
+                                .font(.chicago12)
+                                .fontWeight(.bold)
+                            Text("•")
+                                .font(.geneva9)
+                            Text(totalHoursInSelectedMonth)
+                                .font(.chicago12)
+                                .fontWeight(.bold)
+                        }
+                        .foregroundStyle(Color.systemWhite)
+                        .padding(.trailing, 12)
                     }
-                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Color.systemBlack)
                     
-                    Rectangle()
-                        .fill(Color.systemBlack)
-                        .frame(width: 2)
-                        .padding(.vertical, 12)
-                    
-                    VStack(spacing: 6) {
-                        Text(totalHours)
-                            .font(.custom("Chicago", size: 28))
-                            .fontWeight(.bold)
-                            .foregroundStyle(Color.systemBlack)
-                        Text("Heures de travail")
-                            .font(.geneva9)
-                            .foregroundStyle(Color.systemGray)
+                    // Jours de la semaine
+                    HStack(spacing: 0) {
+                        ForEach(weekdaySymbols, id: \.self) { day in
+                            Text(day)
+                                .font(.chicago12)
+                                .foregroundStyle(Color.systemBlack)
+                                .frame(maxWidth: .infinity)
+                        }
                     }
-                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background(Color.systemBeige)
+                    .overlay(
+                        Rectangle()
+                            .stroke(Color.systemBlack, lineWidth: 1)
+                    )
+                    
+                    // Grille du calendrier
+                    VStack(spacing: 0) {
+                        ForEach(0..<numberOfWeeks, id: \.self) { weekIndex in
+                            HStack(spacing: 0) {
+                                ForEach(0..<7, id: \.self) { dayIndex in
+                                    let dayNumber = getDayNumber(for: weekIndex, dayIndex: dayIndex)
+                                    
+                                    ZStack {
+                                        if let day = dayNumber {
+                                            let hasShift = dayHasShift(day: day)
+                                            
+                                            VStack(spacing: 2) {
+                                                Text("\(day)")
+                                                    .font(.chicago12)
+                                                    .foregroundStyle(hasShift ? Color.systemBlack : Color.systemGray)
+                                                
+                                                if hasShift {
+                                                    Text("✅")
+                                                        .font(.system(size: 12))
+                                                } else {
+                                                    Text(" ")
+                                                        .font(.system(size: 12))
+                                                }
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        } else {
+                                            Color.clear
+                                        }
+                                    }
+                                    .frame(height: 44)
+                                    .background(dayNumber != nil ? Color.systemWhite : Color.systemBeige.opacity(0.3))
+                                    .overlay(
+                                        Rectangle()
+                                            .stroke(Color.systemBlack, lineWidth: 0.5)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
-                .padding(.vertical, 20)
-                .background(Color.systemBeige)
                 .overlay(
                     Rectangle()
                         .stroke(Color.systemBlack, lineWidth: 2)
@@ -110,15 +156,15 @@ struct ManageDataView: View {
                 .padding(.top, 12)
                 
                 // Liste des shifts avec message si vide
-                if filteredShifts.isEmpty {
+                if shiftsForSelectedMonth.isEmpty {
                     VStack(spacing: 16) {
                         Spacer()
-                        Text(searchText.isEmpty ? "📋" : "🔍")
+                        Text("📋")
                             .font(.system(size: 64))
-                        Text(searchText.isEmpty ? "Aucune donnée" : "Aucun résultat")
+                        Text("Aucun shift")
                             .font(.chicago14)
                             .foregroundStyle(Color.systemBlack)
-                        Text(searchText.isEmpty ? "Importez des captures d'écran" : "Essayez une autre recherche")
+                        Text("Aucun horaire pour ce mois")
                             .font(.geneva10)
                             .foregroundStyle(Color.systemGray)
                         Spacer()
@@ -128,14 +174,14 @@ struct ManageDataView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 0) {
-                            ForEach(filteredShifts) { shift in
+                            ForEach(shiftsForSelectedMonth) { shift in
                                 ShiftRowView(shift: shift) {
                                     selectedShiftToEdit = shift
                                 } onDelete: {
                                     selectedShiftToDelete = shift
                                 }
                                 
-                                if shift != filteredShifts.last {
+                                if shift != shiftsForSelectedMonth.last {
                                     Rectangle()
                                         .fill(Color.systemBlack)
                                         .frame(height: 2)
@@ -210,7 +256,7 @@ struct ManageDataView: View {
             }
         } message: {
             if let shift = selectedShiftToDelete {
-                Text("Voulez-vous vraiment supprimer ce shift (\(shift.segment) - \(shift.date.mediumFrench)) ?")
+                Text("Voulez-vous vraiment supprimer ce shift (\(shift.segment) - \(shift.date.formatted(date: .abbreviated, time: .omitted))) ?")
             }
         }
         .alert("Effacer toutes les données", isPresented: $showingDeleteAllAlert) {
@@ -225,6 +271,103 @@ struct ManageDataView: View {
         .sheet(item: $selectedShiftToEdit) { shift in
             EditShiftView(viewModel: viewModel, shift: shift, isPresented: .constant(true))
         }
+    }
+    
+    /// Label du mois et année sélectionné (ex: "Décembre 2025")
+    private var monthYearLabel: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: selectedCalendarDate).capitalized
+    }
+    
+    /// Shifts dans le mois sélectionné
+    private var shiftsInSelectedMonth: [Shift] {
+        let calendar = Calendar.current
+        return allShifts.filter { shift in
+            calendar.isDate(shift.date, equalTo: selectedCalendarDate, toGranularity: .month)
+        }
+    }
+    
+    /// Total d'heures pour le mois sélectionné
+    private var totalHoursInSelectedMonth: String {
+        let total = shiftsInSelectedMonth.reduce(0.0) { $0 + $1.duration }
+        let hours = Int(total / 3600)
+        let minutes = Int((total.truncatingRemainder(dividingBy: 3600)) / 60)
+        
+        if minutes == 0 {
+            return "\(hours)h"
+        }
+        return String(format: "%dh%02d", hours, minutes)
+    }
+    
+    /// Nombre de semaines dans le mois sélectionné
+    private var numberOfWeeks: Int {
+        let calendar = Calendar.current
+        let range = calendar.range(of: .weekOfMonth, in: .month, for: selectedCalendarDate)!
+        return range.count
+    }
+    
+    /// Premier jour du mois sélectionné (jour de la semaine, 1 = Lundi)
+    private var firstWeekdayOfMonth: Int {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month], from: selectedCalendarDate)
+        let firstDay = calendar.date(from: components)!
+        let weekday = calendar.component(.weekday, from: firstDay)
+        
+        // Convertir au format européen (1 = Lundi)
+        return weekday == 1 ? 7 : weekday - 1
+    }
+    
+    /// Nombre de jours dans le mois sélectionné
+    private var numberOfDaysInMonth: Int {
+        let calendar = Calendar.current
+        let range = calendar.range(of: .day, in: .month, for: selectedCalendarDate)!
+        return range.count
+    }
+    
+    /// Change de mois (navigation)
+    private func changeMonth(by value: Int) {
+        let calendar = Calendar.current
+        if let newDate = calendar.date(byAdding: .month, value: value, to: selectedCalendarDate) {
+            selectedCalendarDate = newDate
+        }
+    }
+    
+    // MARK: - Propriétés du calendrier
+    
+    /// Symboles des jours de la semaine (L M M J V S D)
+    private var weekdaySymbols: [String] {
+        ["L", "M", "M", "J", "V", "S", "D"]
+    }
+    
+    /// Retourne le numéro du jour pour une position donnée dans le calendrier
+    private func getDayNumber(for weekIndex: Int, dayIndex: Int) -> Int? {
+        let position = weekIndex * 7 + dayIndex + 1
+        let dayNumber = position - firstWeekdayOfMonth + 1
+        
+        guard dayNumber >= 1 && dayNumber <= numberOfDaysInMonth else {
+            return nil
+        }
+        
+        return dayNumber
+    }
+    
+    /// Vérifie si un jour donné a au moins un shift enregistré
+    private func dayHasShift(day: Int) -> Bool {
+        let calendar = Calendar.current
+        
+        for shift in allShifts {
+            // Vérifier si le shift est dans le mois sélectionné
+            if calendar.isDate(shift.date, equalTo: selectedCalendarDate, toGranularity: .month) {
+                let shiftDay = calendar.component(.day, from: shift.date)
+                if shiftDay == day {
+                    return true
+                }
+            }
+        }
+        
+        return false
     }
     
     private var totalHours: String {
@@ -253,7 +396,7 @@ struct ShiftRowView: View {
                     .foregroundStyle(Color.systemBlack)
                 
                 HStack(spacing: 8) {
-                    Text(shift.date.shortDate)
+                    Text(shift.date.formatted(date: .abbreviated, time: .omitted))
                         .font(.geneva9)
                         .foregroundStyle(Color.systemGray)
                     
