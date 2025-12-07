@@ -100,7 +100,7 @@ struct SmallWidgetView: View {
                         .foregroundStyle(Color.primary)
                         .lineLimit(1)
                     
-                    Text(longestShiftStats.totalHours)
+                    Text("\(longestShiftStats.percentage)%")
                         .font(.system(size: 26, weight: .bold, design: .monospaced))
                         .foregroundStyle(Color.blue)
                 }
