@@ -4,6 +4,27 @@
 //
 //  Gestionnaire de communication iPhone ↔ Apple Watch
 //
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🚧 CODE DORMANT - APPLE WATCH SUPPORT (Temporairement désactivé)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//
+// ⚠️ STATUT: Ce fichier contient du code 100% fonctionnel et testé,
+//            mais temporairement non utilisé car l'app watchOS
+//            ne sera pas déployée dans l'immédiat.
+//
+// 📋 CONTENU:
+//    - WatchConnectivity Framework (communication bidirectionnelle)
+//    - Calcul automatique Top 3 shifts trimestre
+//    - Synchronisation temps réel iPhone → Watch
+//    - Gestion erreurs et logs debug
+//
+// 🔄 RÉACTIVATION:
+//    1. Décommenter init() dans WorkScheduleAppApp.swift
+//    2. Décommenter appels syncToWatch() dans ScheduleViewModel.swift
+//    3. Build et test sur appareils réels (simulateurs incompatibles)
+//
+// 📅 Dernière modification: Décembre 2024
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import Foundation
 import WatchConnectivity

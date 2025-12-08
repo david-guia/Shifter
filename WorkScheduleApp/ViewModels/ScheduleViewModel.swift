@@ -172,8 +172,9 @@ class ScheduleViewModel: ObservableObject {
             // Rafraîchir les widgets
             WidgetCenter.shared.reloadAllTimelines()
             
-            // 🆕 Synchroniser avec Apple Watch
-            syncToWatch()
+            // MARK: - 🚧 Apple Watch Support (Désactivé temporairement)
+            // TODO: Décommenter quand watchOS sera déployé
+            // syncToWatch()
             
             isLoading = false
         } catch {
@@ -281,8 +282,9 @@ class ScheduleViewModel: ObservableObject {
             // Rafraîchir les widgets
             WidgetCenter.shared.reloadAllTimelines()
             
-            // 🆕 Synchroniser avec Apple Watch
-            syncToWatch()
+            // 🚧 Apple Watch Support (Désactivé temporairement)
+            // TODO: Décommenter quand watchOS sera déployé
+            // syncToWatch()
         } catch {
             handleError(error)
         }
@@ -307,8 +309,9 @@ class ScheduleViewModel: ObservableObject {
             // Rafraîchir les widgets
             WidgetCenter.shared.reloadAllTimelines()
             
-            // 🆕 Synchroniser avec Apple Watch
-            syncToWatch()
+            // 🚧 Apple Watch Support (Désactivé temporairement)
+            // TODO: Décommenter quand watchOS sera déployé
+            // syncToWatch()
         } catch {
             handleError(error)
         }
@@ -523,21 +526,22 @@ class ScheduleViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Apple Watch Sync
+    // MARK: - 🚧 Apple Watch Support (Désactivé temporairement)
+    // TODO: Décommenter toute cette section quand watchOS sera déployé
     
     /// Synchronise les statistiques Top 3 avec l'Apple Watch
-    private func syncToWatch() {
-        guard let schedule = schedules.first else {
-            print("⚠️ Aucun schedule à synchroniser")
-            return
-        }
-        
-        // Récupérer tous les shifts
-        let allShifts = schedule.shifts
-        
-        // Envoyer via WatchConnectivity
-        WatchConnectivityManager.shared.syncTop3FromShifts(allShifts)
-    }
+    // private func syncToWatch() {
+    //     guard let schedule = schedules.first else {
+    //         print("⚠️ Aucun schedule à synchroniser")
+    //         return
+    //     }
+    //     
+    //     // Récupérer tous les shifts
+    //     let allShifts = schedule.shifts
+    //     
+    //     // Envoyer via WatchConnectivity
+    //     WatchConnectivityManager.shared.syncTop3FromShifts(allShifts)
+    // }
 }
 
 // MARK: - Export Models

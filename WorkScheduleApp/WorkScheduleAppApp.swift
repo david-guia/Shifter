@@ -12,10 +12,11 @@ import SwiftData
 struct WorkScheduleAppApp: App {
     @State private var sharedImagePath: String?
     
-    // 🆕 Initialiser WatchConnectivity au lancement
-    init() {
-        _ = WatchConnectivityManager.shared
-    }
+    // MARK: - 🚧 Apple Watch Support (Commenté temporairement)
+    // TODO: Décommenter quand watchOS sera déployé
+    // init() {
+    //     _ = WatchConnectivityManager.shared
+    // }
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
