@@ -532,6 +532,8 @@ private var daysRemaining: Int {
 
 ## 🚀 Installation et Configuration
 
+> 📖 **[Guide d'Installation Complet (INSTALLATION.md)](INSTALLATION.md)** - Instructions détaillées pour certificat gratuit
+
 ### Prérequis
 
 - **macOS** : Sonoma 14.0+ (pour Xcode)
