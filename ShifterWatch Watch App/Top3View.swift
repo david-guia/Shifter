@@ -3,6 +3,7 @@
 //  ShifterWatch Watch App
 //
 //  Vue principale affichant le Top 3 des shifts
+//  Style system.css - Classic macOS
 //
 
 import SwiftUI
@@ -11,24 +12,17 @@ struct Top3View: View {
     @EnvironmentObject var dataManager: WatchDataManager
     
     /// État d'affichage : true = heures, false = pourcentages
-    @State private var showHours: Bool = true
+    @State private var showHours: Bool = false
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                // En-tête trimestre
-                Text(dataManager.quarterLabel)
-                    .font(.system(size: 14, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.white)
-                    .padding(.top, 8)
-                
-                // Total d'heures
-                Text(formatTotalHours(dataManager.totalHours))
-                    .font(.system(size: 12, design: .monospaced))
-                    .foregroundStyle(.gray)
-                    .padding(.bottom, 4)
-                
-                // Top 3 shifts
+        ZStack {
+            // 🖥️ Background beige authentique system.css
+            Color(red: 0.933, green: 0.933, blue: 0.933) // #EEEEEE
+                .ignoresSafeArea()
+            
+            ScrollView {
+                VStack(spacing: 6) {
+                    // Top 3 shifts
                 if dataManager.top3Shifts.isEmpty {
                     emptyStateView
                 } else {
@@ -43,44 +37,62 @@ struct Top3View: View {
                     }
                 }
                 
-                // Indicateur mise à jour
-                if let lastUpdate = dataManager.lastUpdate {
-                    Text("Mis à jour \(lastUpdate, style: .relative)")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.gray)
-                        .padding(.top, 8)
+                // 🖱️ Indicateur tactile style system.css
+                HStack(spacing: 3) {
+                    Image(systemName: "hand.tap.fill")
+                        .font(.system(size: 7))
+                    Text("tap = % ↔ h")
+                        .font(.system(size: 8, weight: .bold, design: .monospaced))
                 }
+                .foregroundStyle(.black)
+                .padding(.top, 2)
             }
-            .padding(.horizontal, 8)
+            .padding(.horizontal, 4)
+            .padding(.top, 4)
         }
-        .navigationTitle("Top 3")
-        .navigationBarTitleDisplayMode(.inline)
         .onTapGesture {
             // Toggle heures ↔ pourcentages
-            withAnimation(.spring(response: 0.3)) {
+            withAnimation(.easeInOut(duration: 0.15)) {
                 showHours.toggle()
             }
         }
+        } // Fermeture ZStack
     }
     
     // MARK: - Empty State
     
     private var emptyStateView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "clock.badge.questionmark")
-                .font(.system(size: 40))
-                .foregroundStyle(.gray)
-            
-            Text("Aucune donnée")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.white)
-            
-            Text("Importez des shifts sur iPhone")
-                .font(.system(size: 11))
-                .foregroundStyle(.gray)
-                .multilineTextAlignment(.center)
+        VStack(spacing: 8) {
+            // 🖥️ Fenêtre dialogue system.css
+            VStack(spacing: 6) {
+                Image(systemName: "clock.badge.questionmark")
+                    .font(.system(size: 20))
+                    .foregroundStyle(.black)
+                
+                Text("Aucune donnée")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundStyle(.black)
+                
+                Text("Importez des shifts\nsur iPhone")
+                    .font(.system(size: 8, design: .monospaced))
+                    .foregroundStyle(.black.opacity(0.7))
+                    .multilineTextAlignment(.center)
+            }
+            .padding(12)
+            .background(Color.white)
+            .overlay(
+                // Bordure noire épaisse system.css
+                Rectangle()
+                    .strokeBorder(.black, lineWidth: 3)
+            )
+            .overlay(
+                // Inset blanc interne
+                Rectangle()
+                    .strokeBorder(.white, lineWidth: 1)
+                    .padding(1)
+            )
         }
-        .padding(.vertical, 40)
+        .padding(.vertical, 16)
     }
     
     // MARK: - Helpers
@@ -102,62 +114,90 @@ struct Top3CardView: View {
     let showHours: Bool
     
     var body: some View {
-        VStack(spacing: 4) {
-            // Badge de classement
+        VStack(spacing: 6) {
+            // 🎖️ En-tête centré
             HStack {
+                Spacer()
                 Text(medalEmoji)
-                    .font(.system(size: 24))
-                
-                Text("\(rank)")
-                    .font(.system(size: 14, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.white)
-                
+                    .font(.system(size: 22))
+                Text(segment)
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .foregroundStyle(.black)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                 Spacer()
             }
             
-            // Nom du segment
-            Text(segment)
-                .font(.system(size: 13, weight: .semibold, design: .monospaced))
-                .foregroundStyle(.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            // Séparateur noir
+            Rectangle()
+                .fill(.black)
+                .frame(height: 1)
             
-            // Heures OU Pourcentage (toggle)
-            HStack {
+            // Valeur unique centrée (TRÈS grande)
+            VStack(spacing: 0) {
                 if showHours {
-                    // Affichage heures
                     Text(formatHours(hours))
-                        .font(.system(size: 20, weight: .bold, design: .monospaced))
-                        .foregroundStyle(rankColor)
+                        .font(.system(size: 28, weight: .bold, design: .monospaced))
+                        .foregroundStyle(.black)
                 } else {
-                    // Affichage pourcentage
                     Text(String(format: "%.0f%%", percentage))
-                        .font(.system(size: 20, weight: .bold, design: .monospaced))
-                        .foregroundStyle(rankColor)
-                }
-                
-                Spacer()
-                
-                // Indicateur opposé (petit)
-                if showHours {
-                    Text(String(format: "%.0f%%", percentage))
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(.gray)
-                } else {
-                    Text(formatHours(hours))
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(.gray)
+                        .font(.system(size: 28, weight: .bold, design: .monospaced))
+                        .foregroundStyle(.black)
                 }
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 4)
         }
-        .padding(12)
-        .background(cardBackground)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(rankColor.opacity(0.3), lineWidth: 1)
-        )
+        .padding(.vertical, 10)
+        .padding(.horizontal, 8)
+        .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            // 🪟 Effet inset 3D system.css avec coins arrondis
+            ZStack {
+                // Bordure extérieure noire arrondie
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(.black, lineWidth: 2)
+                
+                // Ombre intérieure (top-left)
+                VStack(spacing: 0) {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.black.opacity(0.3))
+                        .frame(height: 1)
+                        .padding(.horizontal, 2)
+                    Spacer()
+                }
+                .padding(2)
+                
+                HStack(spacing: 0) {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.black.opacity(0.3))
+                        .frame(width: 1)
+                        .padding(.vertical, 2)
+                    Spacer()
+                }
+                .padding(2)
+                
+                // Highlight blanc (bottom-right)
+                VStack(spacing: 0) {
+                    Spacer()
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.white)
+                        .frame(height: 1)
+                        .padding(.horizontal, 2)
+                }
+                .padding(2)
+                
+                HStack(spacing: 0) {
+                    Spacer()
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.white)
+                        .frame(width: 1)
+                        .padding(.vertical, 2)
+                }
+                .padding(2)
+            }
+        )
     }
     
     // MARK: - Computed Properties
@@ -171,17 +211,22 @@ struct Top3CardView: View {
         }
     }
     
-    private var rankColor: Color {
+    private var medalBackgroundColor: Color {
         switch rank {
-        case 1: return .yellow
-        case 2: return .gray
-        case 3: return .orange
-        default: return .blue
+        case 1: return Color(red: 1.0, green: 0.95, blue: 0.6) // Or pâle
+        case 2: return Color(red: 0.85, green: 0.85, blue: 0.85) // Argent
+        case 3: return Color(red: 1.0, green: 0.8, blue: 0.6) // Bronze
+        default: return Color(red: 0.7, green: 0.85, blue: 1.0) // Bleu clair
         }
     }
     
-    private var cardBackground: Color {
-        Color.black.opacity(0.3)
+    private var rankColor: Color {
+        switch rank {
+        case 1: return Color(red: 0.8, green: 0.6, blue: 0.0) // Or foncé
+        case 2: return Color(red: 0.5, green: 0.5, blue: 0.5) // Gris
+        case 3: return Color(red: 0.8, green: 0.4, blue: 0.0) // Orange
+        default: return Color(red: 0.0, green: 0.4, blue: 0.8) // Bleu
+        }
     }
     
     // MARK: - Helpers

@@ -25,6 +25,21 @@ class WatchDataManager: NSObject, ObservableObject {
         super.init()
         setupSession()
         loadCachedData()
+        
+        // 🧪 DONNÉES DE TEST pour simulateur (retirer en production)
+        #if targetEnvironment(simulator)
+        if top3Shifts.isEmpty {
+            print("🧪 Chargement données de test simulateur...")
+            top3Shifts = [
+                (segment: "Shift 1", hours: 156.5, percentage: 42.3),
+                (segment: "Shift 2", hours: 120.0, percentage: 32.4),
+                (segment: "Shift 3", hours: 93.5, percentage: 25.3)
+            ]
+            quarterLabel = "Q1 2025"
+            totalHours = 370.0
+            lastUpdate = Date()
+        }
+        #endif
     }
     
     // MARK: - Setup
@@ -113,6 +128,7 @@ extension WatchDataManager: WCSessionDelegate {
     /// Réception du contexte applicatif depuis iPhone
     func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
         print("📲 Réception données iPhone...")
+        print("   Context: \(applicationContext)")
         
         DispatchQueue.main.async {
             // Parser top3

@@ -7,6 +7,7 @@
 
 import Foundation
 import WatchConnectivity
+import SwiftData
 
 /// Gestionnaire de synchronisation des données avec l'Apple Watch
 class WatchConnectivityManager: NSObject, ObservableObject {
@@ -26,9 +27,11 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             return
         }
         
+        print("🔄 Initialisation WatchConnectivity...")
         let session = WCSession.default
         session.delegate = self
         session.activate()
+        print("✅ WatchConnectivity activée")
     }
     
     // MARK: - Sync vers Watch
@@ -39,6 +42,10 @@ class WatchConnectivityManager: NSObject, ObservableObject {
     ///   - quarterLabel: Label du trimestre (ex: "Q2 2025")
     ///   - totalHours: Total d'heures du trimestre
     func sendTop3ToWatch(top3: [(segment: String, hours: Double, percentage: Double)], quarterLabel: String, totalHours: Double) {
+        print("📤 Tentative envoi Watch: \(top3.count) items, \(quarterLabel), \(totalHours)h")
+        print("   Paired: \(WCSession.default.isPaired), Installed: \(WCSession.default.isWatchAppInstalled)")
+        print("   Activation: \(WCSession.default.activationState.rawValue)")
+        
         guard WCSession.default.activationState == .activated else {
             print("⚠️ Session WatchConnectivity non activée")
             return
@@ -63,6 +70,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         do {
             try WCSession.default.updateApplicationContext(context)
             print("✅ Top 3 envoyé à la Watch: \(quarterLabel)")
+            print("   Data: \(context)")
         } catch {
             print("❌ Erreur envoi Watch: \(error.localizedDescription)")
         }
