@@ -12,13 +12,13 @@
 
 ## 🎯 Objectif du Projet
 
-**Shifter** est une application iOS native spécifiquement conçue pour les **employés utilisant WorkJam** qui souhaitent une **segmentation détaillée de leurs heures de travail**. Particulièrement adaptée aux secteurs retail, restauration et services, elle permet d'**importer automatiquement** des captures d'écran de plannings WorkJam via OCR, d'analyser précisément la **répartition horaire par type de shift** (Sales, Runner, PZ On Point, etc.), et de visualiser des **statistiques détaillées** (mensuel/trimestriel/annuel) via des **widgets iOS** natifs.
+**Shifter** est une application iOS native spécifiquement conçue pour les **employés utilisant WorkJam** qui souhaitent une **segmentation détaillée de leurs heures de travail**. Particulièrement adaptée aux secteurs retail, restauration et services, elle permet d'**importer automatiquement** des captures d'écran de plannings WorkJam via OCR, d'analyser précisément la **répartition horaire par type de shift** (Shift 1, Shift 2, Shift 3, etc.), et de visualiser des **statistiques détaillées** (mensuel/trimestriel/annuel) via des **widgets iOS** natifs.
 
 ### Problème Résolu
 
 Les employés utilisant **WorkJam** pour leurs horaires reçoivent leurs plannings sous forme de captures d'écran, mais l'application ne propose **aucune analyse détaillée par segment**. Shifter élimine :
 - ❌ La saisie manuelle fastidieuse des horaires depuis WorkJam
-- ❌ L'impossibilité d'analyser la répartition horaire par type de shift (Sales 1, Runner 1, PZ On Point, etc.)
+- ❌ L'impossibilité d'analyser la répartition horaire par type de shift (Shift 1, Shift 2, Shift 3, etc.)
 - ❌ La difficulté à comparer ses performances entre périodes (mois/trimestre/année)
 - ❌ L'absence de vision synthétique des heures par segment
 - ❌ Le risque de perte de données lors des réinstallations
@@ -26,7 +26,7 @@ Les employés utilisant **WorkJam** pour leurs horaires reçoivent leurs plannin
 ### Solution Apportée
 
 ✅ **Import OCR ultra-rapide depuis WorkJam** : Capture d'écran → Reconnaissance texte → Shifts importés avec segments automatiquement  
-✅ **Segmentation détaillée par type de shift** : Analyse précise de la répartition horaire (Sales 1, Runner 1, PZ On Point, Pause repas, etc.)  
+✅ **Segmentation détaillée par type de shift** : Analyse précise de la répartition horaire (Shift 1, Shift 2, Shift 3, Pause, etc.)  
 ✅ **Statistiques intelligentes** : Analyse comparative par mois/trimestre/année avec % et delta par segment  
 ✅ **Widgets iOS natifs** : Accès instantané aux 3 segments prioritaires depuis l'écran d'accueil  
 ✅ **Backup automatique** : Restauration des données après réinstallation  
@@ -190,7 +190,7 @@ final class Shift: Identifiable {
     var startTime: Date            // Heure de début
     var endTime: Date              // Heure de fin
     var location: String           // Lieu de travail
-    var segment: String            // Type de shift (Sales 1, PZ On Point...)
+    var segment: String            // Type de shift (Shift 1, Shift 2, Shift 3...)
     var notes: String
     var isConfirmed: Bool
     
@@ -234,14 +234,14 @@ Service de reconnaissance de texte avec **636 lignes** de logique complexe.
 // Texte OCR brut :
 """
 lundi 25 novembre
-9h-17h Sales 1 Apple Store Opéra
-17h-18h Pause repas
+9h-17h Shift 1 Lieu de travail A
+17h-18h Pause
 """
 
 // Résultat parsé :
 [
-  (date: 2024-11-25, start: 09:00, end: 17:00, location: "Apple Store Opéra", segment: "Sales 1"),
-  (date: 2024-11-25, start: 17:00, end: 18:00, location: "Apple Store Opéra", segment: "Pause repas")
+  (date: 2024-11-25, start: 09:00, end: 17:00, location: "Lieu de travail A", segment: "Shift 1"),
+  (date: 2024-11-25, start: 17:00, end: 18:00, location: "Lieu de travail A", segment: "Pause")
 ]
 ```
 
@@ -367,7 +367,7 @@ modelContainer = try ModelContainer(for: schema, configurations: [modelConfigura
 ┌───────────────────────┐
 │ Q2 2025   46h / 160h  │
 │                       │
-│ Runner 1              │
+│ Shift 1               │
 │ 46%                   │ ← Pourcentage (priorité espace limité)
 │                       │
 │ +2h vs Q1             │
@@ -379,9 +379,9 @@ modelContainer = try ModelContainer(for: schema, configurations: [modelConfigura
 ┌─────────────────────────────────────────────────────────────┐
 │ Q2 2025                                     46h / 160h      │
 │                                                             │
-│ 1. Runner 1          7h30    46%    +2h vs Q1              │
-│ 2. Sales 1           5h00    31%    -1h vs Q1              │
-│ 3. PZ On Point       3h45    23%    +0.5h vs Q1            │
+│ 1. Shift 1           7h30    46%    +2h vs Q1              │
+│ 2. Shift 2           5h00    31%    -1h vs Q1              │
+│ 3. Shift 3           3h45    23%    +0.5h vs Q1            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -391,19 +391,19 @@ modelContainer = try ModelContainer(for: schema, configurations: [modelConfigura
 │ Q2 2025                                     46h / 160h      │
 │                                                             │
 │ ┌─────────────────────────────────────────────────────────┐ │
-│ │ 1. Runner 1                                             │ │
+│ │ 1. Shift 1                                              │ │
 │ │    7h30 • 46%                                           │ │
 │ │    +2h vs Q1                                            │ │
 │ └─────────────────────────────────────────────────────────┘ │
 │                                                             │
 │ ┌─────────────────────────────────────────────────────────┐ │
-│ │ 2. Sales 1                                              │ │
+│ │ 2. Shift 2                                              │ │
 │ │    5h00 • 31%                                           │ │
 │ │    -1h vs Q1                                            │ │
 │ └─────────────────────────────────────────────────────────┘ │
 │                                                             │
 │ ┌─────────────────────────────────────────────────────────┐ │
-│ │ 3. PZ On Point                                          │ │
+│ │ 3. Shift 3                                              │ │
 │ │    3h45 • 23%                                           │ │
 │ │    +0.5h vs Q1                                          │ │
 │ └─────────────────────────────────────────────────────────┘ │
@@ -481,10 +481,10 @@ extension Color {
 
 ```swift
 // Trimestre actuel (Q2 2025)
-Runner 1: 7h30
+Shift 1: 7h30
 
 // Trimestre précédent (Q1 2025)
-Runner 1: 5h30
+Shift 1: 5h30
 
 // Delta
 +2h vs Q1  (7h30 - 5h30 = +2h)
@@ -596,11 +596,11 @@ private var daysRemaining: Int {
 **Format Attendu** :
 ```
 lundi 25 novembre
-9h-17h Sales 1 Apple Store Opéra
-17h-18h Pause repas
+9h-17h Shift 1 Lieu de travail A
+17h-18h Pause
 
 mardi 26 novembre
-10:00 AM–6:00 PM Runner 1 Apple Store Opéra
+10:00 AM–6:00 PM Shift 2 Lieu de travail A
 ```
 
 ### 2. Filtrage par Période
