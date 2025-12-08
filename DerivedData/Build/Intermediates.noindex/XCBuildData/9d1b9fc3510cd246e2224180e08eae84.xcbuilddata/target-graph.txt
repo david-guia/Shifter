@@ -1,8 +1,0 @@
-Target dependency graph (4 targets)
-Target 'WorkScheduleApp' in project 'WorkScheduleApp'
-➜ Explicit dependency on target 'ShifterShareExtension' in project 'WorkScheduleApp'
-➜ Explicit dependency on target 'ShifterWidgetExtension' in project 'WorkScheduleApp'
-➜ Explicit dependency on target 'ShifterWatch Watch App' in project 'WorkScheduleApp'
-Target 'ShifterWatch Watch App' in project 'WorkScheduleApp' (no dependencies)
-Target 'ShifterWidgetExtension' in project 'WorkScheduleApp' (no dependencies)
-Target 'ShifterShareExtension' in project 'WorkScheduleApp' (no dependencies)

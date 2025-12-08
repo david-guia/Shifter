@@ -1,1 +1,0 @@
-ShifterWatch Watch App.debug.dylib

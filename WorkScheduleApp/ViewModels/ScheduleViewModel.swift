@@ -8,8 +8,6 @@
 import Foundation
 import SwiftUI
 import SwiftData
-import PhotosUI
-import UniformTypeIdentifiers
 import WidgetKit
 
 @MainActor

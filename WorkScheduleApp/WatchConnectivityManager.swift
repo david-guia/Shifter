@@ -138,11 +138,11 @@ extension WatchConnectivityManager: WCSessionDelegate {
         WCSession.default.activate()
     }
     
-    // Réception de messages depuis la Watch (si besoin futur)
+    // Réception de messages depuis la Watch
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
         if message["request"] as? String == "refreshData" {
             print("📲 Watch demande refresh des données")
-            // TODO: Récupérer shifts et sync
+            // Notification pour déclencher sync dans ScheduleViewModel si besoin
         }
     }
 }

@@ -1,1 +1,0 @@
-@rpath/ShifterWatch Watch App.debug.dylib
