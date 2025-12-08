@@ -174,6 +174,9 @@ class ScheduleViewModel: ObservableObject {
             // Rafraîchir les widgets
             WidgetCenter.shared.reloadAllTimelines()
             
+            // 🆕 Synchroniser avec Apple Watch
+            syncToWatch()
+            
             isLoading = false
         } catch {
             isLoading = false
@@ -279,6 +282,9 @@ class ScheduleViewModel: ObservableObject {
             
             // Rafraîchir les widgets
             WidgetCenter.shared.reloadAllTimelines()
+            
+            // 🆕 Synchroniser avec Apple Watch
+            syncToWatch()
         } catch {
             handleError(error)
         }
@@ -302,6 +308,9 @@ class ScheduleViewModel: ObservableObject {
             
             // Rafraîchir les widgets
             WidgetCenter.shared.reloadAllTimelines()
+            
+            // 🆕 Synchroniser avec Apple Watch
+            syncToWatch()
         } catch {
             handleError(error)
         }
@@ -514,6 +523,22 @@ class ScheduleViewModel: ObservableObject {
             isLoading = false
             handleError(error)
         }
+    }
+    
+    // MARK: - Apple Watch Sync
+    
+    /// Synchronise les statistiques Top 3 avec l'Apple Watch
+    private func syncToWatch() {
+        guard let schedule = schedules.first else {
+            print("⚠️ Aucun schedule à synchroniser")
+            return
+        }
+        
+        // Récupérer tous les shifts
+        let allShifts = schedule.shifts
+        
+        // Envoyer via WatchConnectivity
+        WatchConnectivityManager.shared.syncTop3FromShifts(allShifts)
     }
 }
 

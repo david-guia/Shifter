@@ -1,0 +1,140 @@
+//
+//  WatchConnectivityManager.swift
+//  WorkScheduleApp
+//
+//  Gestionnaire de communication iPhone ↔ Apple Watch
+//
+
+import Foundation
+import WatchConnectivity
+
+/// Gestionnaire de synchronisation des données avec l'Apple Watch
+class WatchConnectivityManager: NSObject, ObservableObject {
+    static let shared = WatchConnectivityManager()
+    
+    private override init() {
+        super.init()
+        setupSession()
+    }
+    
+    // MARK: - Setup
+    
+    /// Initialise la session WatchConnectivity
+    private func setupSession() {
+        guard WCSession.isSupported() else {
+            print("⚠️ WatchConnectivity non supporté sur cet appareil")
+            return
+        }
+        
+        let session = WCSession.default
+        session.delegate = self
+        session.activate()
+    }
+    
+    // MARK: - Sync vers Watch
+    
+    /// Envoie les statistiques trimestrielles à la Watch
+    /// - Parameters:
+    ///   - top3: Top 3 des shifts [(segment, heures, pourcentage)]
+    ///   - quarterLabel: Label du trimestre (ex: "Q2 2025")
+    ///   - totalHours: Total d'heures du trimestre
+    func sendTop3ToWatch(top3: [(segment: String, hours: Double, percentage: Double)], quarterLabel: String, totalHours: Double) {
+        guard WCSession.default.activationState == .activated else {
+            print("⚠️ Session WatchConnectivity non activée")
+            return
+        }
+        
+        // Convertir en dictionnaire
+        let top3Data = top3.map { shift in
+            [
+                "segment": shift.segment,
+                "hours": shift.hours,
+                "percentage": shift.percentage
+            ] as [String: Any]
+        }
+        
+        let context: [String: Any] = [
+            "top3": top3Data,
+            "quarterLabel": quarterLabel,
+            "totalHours": totalHours,
+            "lastUpdate": Date().timeIntervalSince1970
+        ]
+        
+        do {
+            try WCSession.default.updateApplicationContext(context)
+            print("✅ Top 3 envoyé à la Watch: \(quarterLabel)")
+        } catch {
+            print("❌ Erreur envoi Watch: \(error.localizedDescription)")
+        }
+    }
+    
+    /// Calcule et envoie le Top 3 depuis les shifts
+    /// - Parameter shifts: Tous les shifts de l'app
+    func syncTop3FromShifts(_ shifts: [Shift]) {
+        // Filtrer shifts du trimestre fiscal en cours
+        let currentQuarterShifts = shifts.filter { shift in
+            FiscalCalendarHelper.isInSameQuarter(shift.date, Date())
+        }
+        
+        // Exclure "Général"
+        let validShifts = currentQuarterShifts.filter { $0.segment != "Général" }
+        
+        // Calculer heures par segment
+        var segmentHours: [String: Double] = [:]
+        for shift in validShifts {
+            let hours = shift.duration / 3600
+            segmentHours[shift.segment, default: 0] += hours
+        }
+        
+        // Total d'heures
+        let totalHours = segmentHours.values.reduce(0, +)
+        
+        guard totalHours > 0 else {
+            print("⚠️ Aucune donnée à envoyer (trimestre vide)")
+            return
+        }
+        
+        // Top 3 par heures
+        let top3 = segmentHours
+            .map { (segment: $0.key, hours: $0.value, percentage: ($0.value / totalHours) * 100) }
+            .sorted { $0.hours > $1.hours }
+            .prefix(3)
+            .map { $0 }
+        
+        // Label du trimestre
+        let quarterLabel = FiscalCalendarHelper.quarterLabel(for: Date())
+        
+        // Envoyer à la Watch
+        sendTop3ToWatch(top3: top3, quarterLabel: quarterLabel, totalHours: totalHours)
+    }
+}
+
+// MARK: - WCSessionDelegate
+
+extension WatchConnectivityManager: WCSessionDelegate {
+    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        if let error = error {
+            print("❌ Erreur activation WatchConnectivity: \(error.localizedDescription)")
+        } else {
+            print("✅ WatchConnectivity activé: \(activationState.rawValue)")
+        }
+    }
+    
+    func sessionDidBecomeInactive(_ session: WCSession) {
+        print("⚠️ Session WatchConnectivity inactive")
+    }
+    
+    func sessionDidDeactivate(_ session: WCSession) {
+        print("⚠️ Session WatchConnectivity désactivée")
+        // Réactiver pour la nouvelle session
+        WCSession.default.activate()
+    }
+    
+    // Réception de messages depuis la Watch (si besoin futur)
+    func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
+        if message["request"] as? String == "refreshData" {
+            print("📲 Watch demande refresh des données")
+            // TODO: Récupérer shifts et sync
+        }
+    }
+}
