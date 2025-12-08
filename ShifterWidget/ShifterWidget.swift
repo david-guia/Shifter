@@ -304,12 +304,141 @@ struct ShifterWidget: Widget {
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
-            ShifterWidgetEntryView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+            if #available(iOS 16.0, *) {
+                ShifterWidgetContent(entry: entry)
+            } else {
+                ShifterWidgetEntryView(entry: entry)
+                    .containerBackground(.fill.tertiary, for: .widget)
+            }
         }
         .configurationDisplayName("Shifter")
         .description("Top 3 shifts + progression du quarter fiscal")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies([
+            .systemSmall, .systemMedium, .systemLarge,
+            .accessoryCircular, .accessoryRectangular, .accessoryInline
+        ])
+    }
+}
+
+// MARK: - Widget Content Switcher
+
+@available(iOS 16.0, *)
+struct ShifterWidgetContent: View {
+    @Environment(\.widgetFamily) var family
+    let entry: ShifterEntry
+    
+    var body: some View {
+        switch family {
+        case .accessoryCircular:
+            LockScreenCircularView(entry: entry)
+        case .accessoryRectangular:
+            LockScreenRectangularView(entry: entry)
+        case .accessoryInline:
+            LockScreenInlineView(entry: entry)
+        default:
+            ShifterWidgetEntryView(entry: entry)
+                .containerBackground(.fill.tertiary, for: .widget)
+        }
+    }
+}
+
+// MARK: - Lock Screen Views
+
+@available(iOS 16.0, *)
+struct LockScreenCircularView: View {
+    let entry: ShifterEntry
+    
+    var body: some View {
+        ZStack {
+            // Cercle de progression (pourcentage du top shift)
+            Circle()
+                .stroke(Color.gray.opacity(0.3), lineWidth: 6)
+            
+            if let topShift = entry.top3Shifts.first {
+                Circle()
+                    .trim(from: 0, to: CGFloat(topShift.percentage) / 100)
+                    .stroke(Color.blue, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
+            
+            // Texte central : Nom du shift + pourcentage
+            VStack(spacing: 1) {
+                if let topShift = entry.top3Shifts.first {
+                    Text(topShift.segment)
+                        .font(.system(size: 11, weight: .semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                    Text("\(topShift.percentage)%")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.blue)
+                } else {
+                    Text("—")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        .widgetAccentable()
+    }
+}
+
+@available(iOS 16.0, *)
+struct LockScreenRectangularView: View {
+    let entry: ShifterEntry
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            // Header
+            HStack {
+                Text("Shifter Q\(entry.quarterStats.currentQuarter)")
+                    .font(.system(size: 14, weight: .semibold))
+                Spacer()
+                Text("\(entry.quarterStats.progress)%")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.blue)
+            }
+            
+            // Barre de progression
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(height: 6)
+                    
+                    Rectangle()
+                        .fill(Color.blue)
+                        .frame(width: geometry.size.width * CGFloat(entry.quarterStats.progress) / 100, height: 6)
+                }
+            }
+            .frame(height: 6)
+            
+            // Top shift
+            if let topShift = entry.top3Shifts.first {
+                HStack {
+                    Text(topShift.segment)
+                        .font(.system(size: 12))
+                    Spacer()
+                    Text(String(format: "%.1fh", topShift.totalHours))
+                        .font(.system(size: 12, weight: .medium))
+                }
+            }
+        }
+        .widgetAccentable()
+    }
+}
+
+@available(iOS 16.0, *)
+struct LockScreenInlineView: View {
+    let entry: ShifterEntry
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "calendar")
+            Text("Q\(entry.quarterStats.currentQuarter):")
+            Text("\(Int(entry.quarterStats.totalHours))h")
+            Text("(\(entry.quarterStats.progress)%)")
+        }
+        .widgetAccentable()
     }
 }
 
