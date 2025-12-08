@@ -378,7 +378,9 @@ struct LockScreenCircularView: View {
                 }
             }
         }
-        .widgetAccentable()
+        .containerBackground(for: .widget) {
+            Color.clear
+        }
     }
 }
 
@@ -423,7 +425,9 @@ struct LockScreenRectangularView: View {
                 }
             }
         }
-        .widgetAccentable()
+        .containerBackground(for: .widget) {
+            Color.clear
+        }
     }
 }
 
@@ -438,7 +442,9 @@ struct LockScreenInlineView: View {
             Text("\(Int(entry.quarterStats.totalHours))h")
             Text("(\(entry.quarterStats.progress)%)")
         }
-        .widgetAccentable()
+        .containerBackground(for: .widget) {
+            Color.clear
+        }
     }
 }
 
