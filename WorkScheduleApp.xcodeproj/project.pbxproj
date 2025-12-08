@@ -10,6 +10,7 @@
 		2A0C28B32EE37EC400929A7E /* ShifterShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2A0C28A92EE37EC400929A7E /* ShifterShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2A12BCA22EE6F36C00BB11AA /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A12BCA12EE6F36C00BB11AA /* WatchConnectivityManager.swift */; };
 		2A4EA6912EE35E7C006F4D56 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A4EA6902EE35E7C006F4D56 /* AboutView.swift */; };
+		2A576F352EE7601300921266 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2A576F342EE7601300921266 /* LaunchScreen.storyboard */; };
 		2A7AB6412EE6EE31000BE7FA /* ShifterWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 2A7AB6372EE6EE2E000BE7FA /* ShifterWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2AA13CC32EDCED1F004C0E67 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2AA13CC22EDCED1A004C0E67 /* Assets.xcassets */; };
 		2AC002032EE4D036003B911F /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2AC002022EE4D036003B911F /* WidgetKit.framework */; };
@@ -87,6 +88,7 @@
 		2A0C28BD2EE380C900929A7E /* WorkScheduleApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WorkScheduleApp.entitlements; sourceTree = "<group>"; };
 		2A12BCA12EE6F36C00BB11AA /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
 		2A4EA6902EE35E7C006F4D56 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		2A576F342EE7601300921266 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		2A7AB6372EE6EE2E000BE7FA /* ShifterWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ShifterWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2AA13CC22EDCED1A004C0E67 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2AC002002EE4D036003B911F /* ShifterWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShifterWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -189,6 +191,7 @@
 		5E2 /* WorkScheduleApp */ = {
 			isa = PBXGroup;
 			children = (
+				2A576F342EE7601300921266 /* LaunchScreen.storyboard */,
 				2A12BCA12EE6F36C00BB11AA /* WatchConnectivityManager.swift */,
 				2A0C28BD2EE380C900929A7E /* WorkScheduleApp.entitlements */,
 				2AA13CC22EDCED1A004C0E67 /* Assets.xcassets */,
@@ -424,6 +427,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2AA13CC32EDCED1F004C0E67 /* Assets.xcassets in Resources */,
+				2A576F352EE7601300921266 /* LaunchScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
