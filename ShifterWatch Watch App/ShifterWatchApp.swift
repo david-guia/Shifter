@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct ShifterWatchApp: App {
+struct ShifterWatch_Watch_AppApp: App {
     @StateObject private var dataManager = WatchDataManager.shared
     
     var body: some Scene {

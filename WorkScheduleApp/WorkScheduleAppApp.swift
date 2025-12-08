@@ -12,6 +12,11 @@ import SwiftData
 struct WorkScheduleAppApp: App {
     @State private var sharedImagePath: String?
     
+    // 🆕 Initialiser WatchConnectivity au lancement
+    init() {
+        _ = WatchConnectivityManager.shared
+    }
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             WorkSchedule.self,
