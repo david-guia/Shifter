@@ -118,7 +118,7 @@ Shifter/
 │  3. OCRService.parseScheduleText(String) → Parsing Regex        │
 │     - Extraction dates (format: "lundi 25 novembre")            │
 │     - Extraction horaires (9h-17h, 10:00 AM–11:30 AM, etc.)     │
-│     - Extraction segments (Sales 1, PZ On Point, etc.)          │
+│     - Extraction segments (Shift 1, Shift 2, etc.)              │
 │     - Gestion indicateurs temporels ("hier", "Il y a X jours")  │
 └─────────────────────────────────────────────────────────────────┘
                             │

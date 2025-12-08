@@ -29,10 +29,10 @@ final class Shift: Identifiable {
     /// Heure de fin (stocke date+heure, seule l'heure est utilisée)
     var endTime: Date
     
-    /// Lieu de travail (ex: "Apple Store Opéra")
+    /// Lieu de travail (ex: "Lieu de travail A")
     var location: String
     
-    /// Catégorie/type de shift (ex: "Sales 1", "PZ On Point", "Pause repas")
+    /// Catégorie/type de shift (ex: "Shift 1", "Shift 2", "Pause")
     var segment: String
     
     var notes: String

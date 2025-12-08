@@ -302,9 +302,9 @@ struct ShiftStatisticsView: View {
 
 #Preview {
     let shifts = [
-        Shift(date: Date(), startTime: Date(), endTime: Date().addingTimeInterval(5400), location: "Test", segment: "Sales 1"),
-        Shift(date: Date(), startTime: Date(), endTime: Date().addingTimeInterval(5400), location: "Test", segment: "PZ On Point"),
-        Shift(date: Date(), startTime: Date(), endTime: Date().addingTimeInterval(3600), location: "Test", segment: "Pause repas")
+        Shift(date: Date(), startTime: Date(), endTime: Date().addingTimeInterval(5400), location: "Test", segment: "Shift 1"),
+        Shift(date: Date(), startTime: Date(), endTime: Date().addingTimeInterval(5400), location: "Test", segment: "Shift 2"),
+        Shift(date: Date(), startTime: Date(), endTime: Date().addingTimeInterval(3600), location: "Test", segment: "Pause")
     ]
     
     return ShiftStatisticsView(

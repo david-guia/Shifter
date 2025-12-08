@@ -53,7 +53,7 @@ class OCRService {
     
     /// Regex pour détecter les segments/catégories de travail
     private static let segmentRegex: NSRegularExpression? = {
-        let pattern = "Sales \\d+|PZ On Point|Pause repas|Learn and Grow|Runner \\d+|Break|Training|Meeting|Opening|Closing|Daily Download|Setup"
+        let pattern = "Shift \\d+|Pause|Break|Training|Meeting|Setup|Opening|Closing|General"
         return try? NSRegularExpression(pattern: pattern, options: .caseInsensitive)
     }()
     
@@ -274,7 +274,7 @@ class OCRService {
             
             // Dans la section segments, parser segment + horaire sur la même ligne
             if isInSegmentsSection {
-                // Chercher pattern: "Sales 1" suivi de "10:00 AM–11:30 AM"
+                // Chercher pattern: "Shift 1" suivi de "10:00 AM–11:30 AM"
                 if let segment = detectSegment(in: trimmedLine) {
                     currentSegment = segment
                     
