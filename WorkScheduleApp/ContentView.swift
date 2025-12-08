@@ -106,41 +106,39 @@ struct ContentView: View {
             
             VStack(spacing: 0) {
                 // MARK: - Header avec titre et bouton menu
-                HStack {
-                    HStack(spacing: 4) {
-                        Text("Shifter")
-                            .font(.custom("Chicago", size: 28))
-                            .fontWeight(.bold)
-                            .foregroundStyle(Color.systemBlack)
-                        
-                        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
-                            Text("v\(version)")
-                                .font(.chicago12)
-                                .foregroundStyle(Color.systemBlack.opacity(0.6))
-                                .padding(.top, 8)
-                        }
-                        
-                        // Badge du timer de certificat développeur
-                        HStack(spacing: 2) {
-                            Text(daysRemaining == 0 ? "⏱️" : "🕐")
-                                .font(.system(size: 10))
-                            Text("\(daysRemaining)j")
-                                .font(.geneva9)
-                                .fontWeight(.bold)
-                        }
-                        .foregroundStyle(expiryBadgeColor)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(expiryBadgeColor.opacity(0.2))
-                        .cornerRadius(4)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(expiryBadgeColor, lineWidth: 1)
-                        )
-                        .padding(.top, 8)
+                HStack(spacing: 0) {
+                    Text("Shifter")
+                        .font(.custom("Chicago", size: 28))
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.systemBlack)
+                    
+                    if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+                        Text(" v\(version)")
+                            .font(.chicago12)
+                            .foregroundStyle(Color.systemBlack.opacity(0.6))
+                            .padding(.top, 8)
                     }
                     
-                    Spacer()
+                    // Badge du timer de certificat développeur
+                    HStack(spacing: 2) {
+                        Text(daysRemaining == 0 ? "⏱️" : "🕐")
+                            .font(.system(size: 10))
+                        Text("\(daysRemaining)j")
+                            .font(.geneva9)
+                            .fontWeight(.bold)
+                    }
+                    .foregroundStyle(expiryBadgeColor)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(expiryBadgeColor.opacity(0.2))
+                    .cornerRadius(4)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(expiryBadgeColor, lineWidth: 1)
+                    )
+                    .padding(.top, 8)
+                    .padding(.leading, 4)
+                    .padding(.trailing, 8)
                     
                     Button {
                         showingMenu.toggle()
@@ -327,6 +325,7 @@ struct ContentView: View {
                                         .font(.chicago12)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
+                                .contentShape(Rectangle())
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 12)
                             }
@@ -348,6 +347,7 @@ struct ContentView: View {
                                         .font(.chicago12)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
+                                .contentShape(Rectangle())
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 12)
                             }
@@ -373,6 +373,7 @@ struct ContentView: View {
                                             .font(.chicago12)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                     }
+                                    .contentShape(Rectangle())
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 12)
                                 }
@@ -395,6 +396,7 @@ struct ContentView: View {
                                         .font(.chicago12)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
+                                .contentShape(Rectangle())
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 12)
                             }
@@ -417,6 +419,7 @@ struct ContentView: View {
                                             .font(.chicago12)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                     }
+                                    .contentShape(Rectangle())
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 12)
                                 }
@@ -439,6 +442,7 @@ struct ContentView: View {
                                         .font(.chicago12)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
+                                .contentShape(Rectangle())
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 12)
                             }

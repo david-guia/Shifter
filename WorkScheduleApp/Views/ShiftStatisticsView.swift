@@ -63,75 +63,73 @@ struct ShiftStatisticsView: View {
                 .background(Color.systemBlack)
                 
                 // Liste des segments
-                ScrollView {
-                    VStack(spacing: 0) {
-                        ForEach(Array(segmentStats.keys.sorted(by: { key1, key2 in
-                            guard let stats1 = segmentStats[key1], let stats2 = segmentStats[key2] else { return false }
-                            return stats1.percentage > stats2.percentage
-                        })), id: \.self) { segment in
-                            // Exclure "Général" de l'affichage
-                            if segment != "Général", let stats = segmentStats[segment] {
-                                let evolution = calculateEvolution(for: segment)
+                VStack(spacing: 0) {
+                    ForEach(Array(segmentStats.keys.sorted(by: { key1, key2 in
+                        guard let stats1 = segmentStats[key1], let stats2 = segmentStats[key2] else { return false }
+                        return stats1.percentage > stats2.percentage
+                    })), id: \.self) { segment in
+                        // Exclure "Général" de l'affichage
+                        if segment != "Général", let stats = segmentStats[segment] {
+                            let evolution = calculateEvolution(for: segment)
+                            
+                            HStack(spacing: 0) {
+                                Text(segment)
+                                    .font(.chicago12)
+                                    .foregroundStyle(Color.systemBlack)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.leading, 16)
                                 
-                                HStack(spacing: 0) {
-                                    Text(segment)
-                                        .font(.chicago12)
-                                        .foregroundStyle(Color.systemBlack)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .padding(.leading, 16)
-                                    
-                                    Text(formatHours(stats.hours))
-                                        .font(.chicago12)
-                                        .foregroundStyle(Color.systemBlack)
-                                        .frame(width: 70, alignment: .trailing)
-                                    
-                                    Text(String(format: "%.0f%%", stats.percentage))
-                                        .font(.chicago12)
-                                        .foregroundStyle(Color.systemBlack)
-                                        .frame(width: 50, alignment: .trailing)
-                                    
-                                    Text(formatEvolution(evolution))
-                                        .font(.chicago12)
-                                        .foregroundStyle(evolutionColor(evolution))
-                                        .frame(width: 70, alignment: .trailing)
-                                        .padding(.trailing, 16)
-                                }
-                                .padding(.vertical, 12)
-                                .background(Color.systemWhite)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .stroke(Color.systemBlack, lineWidth: 1)
-                                )
-                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                                Text(formatHours(stats.hours))
+                                    .font(.chicago12)
+                                    .foregroundStyle(Color.systemBlack)
+                                    .frame(width: 70, alignment: .trailing)
+                                
+                                Text(String(format: "%.0f%%", stats.percentage))
+                                    .font(.chicago12)
+                                    .foregroundStyle(Color.systemBlack)
+                                    .frame(width: 50, alignment: .trailing)
+                                
+                                Text(formatEvolution(evolution))
+                                    .font(.chicago12)
+                                    .foregroundStyle(evolutionColor(evolution))
+                                    .frame(width: 70, alignment: .trailing)
+                                    .padding(.trailing, 16)
                             }
+                            .padding(.vertical, 12)
+                            .background(Color.systemWhite)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(Color.systemBlack, lineWidth: 1)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
                         }
-                        
-                        // Ligne de total
-                        HStack(spacing: 0) {
-                            Text("TOTAL")
-                                .font(.chicago14)
-                                .foregroundStyle(Color.systemWhite)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.leading, 16)
-                            
-                            Text(formatHours(totalHours))
-                                .font(.chicago14)
-                                .foregroundStyle(Color.systemWhite)
-                                .frame(width: 70, alignment: .trailing)
-                            
-                            Text("100%")
-                                .font(.chicago14)
-                                .foregroundStyle(Color.systemWhite)
-                                .frame(width: 50, alignment: .trailing)
-                            
-                            Text("")
-                                .font(.chicago14)
-                                .frame(width: 70, alignment: .trailing)
-                                .padding(.trailing, 16)
-                        }
-                        .padding(.vertical, 14)
-                        .background(Color.systemBlack)
                     }
+                    
+                    // Ligne de total
+                    HStack(spacing: 0) {
+                        Text("TOTAL")
+                            .font(.chicago14)
+                            .foregroundStyle(Color.systemWhite)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.leading, 16)
+                        
+                        Text(formatHours(totalHours))
+                            .font(.chicago14)
+                            .foregroundStyle(Color.systemWhite)
+                            .frame(width: 70, alignment: .trailing)
+                        
+                        Text("100%")
+                            .font(.chicago14)
+                            .foregroundStyle(Color.systemWhite)
+                            .frame(width: 50, alignment: .trailing)
+                        
+                        Text("")
+                            .font(.chicago14)
+                            .frame(width: 70, alignment: .trailing)
+                            .padding(.trailing, 16)
+                    }
+                    .padding(.vertical, 14)
+                    .background(Color.systemBlack)
                 }
             }
             .overlay(
@@ -141,6 +139,8 @@ struct ShiftStatisticsView: View {
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .padding(.horizontal, 12)
             .padding(.bottom, 12)
+            
+            Spacer()
         }
         .onAppear {
             updateStatsIfNeeded()

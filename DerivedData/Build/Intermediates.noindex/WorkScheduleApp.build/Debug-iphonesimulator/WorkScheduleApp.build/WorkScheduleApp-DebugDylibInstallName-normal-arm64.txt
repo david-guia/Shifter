@@ -1,0 +1,1 @@
+@rpath/WorkScheduleApp.debug.dylib

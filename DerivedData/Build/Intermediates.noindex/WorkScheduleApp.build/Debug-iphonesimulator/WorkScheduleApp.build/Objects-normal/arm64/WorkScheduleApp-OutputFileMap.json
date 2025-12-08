@@ -1,0 +1,149 @@
+{
+  "" : {
+    "diagnostics" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkScheduleApp-primary.dia",
+    "emit-module-dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkScheduleApp-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkScheduleApp-primary-emit-module.dia",
+    "pch" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkScheduleApp-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkScheduleApp-primary.swiftdeps"
+  },
+  "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  },
+  "/Users/davidguia/Documents/GitHub/Shifter/WorkScheduleApp/ContentView.swift" : {
+    "const-values" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ContentView.d",
+    "diagnostics" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ContentView.dia",
+    "index-unit-output-path" : "/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ContentView.o",
+    "swift-dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ContentView~partial.swiftmodule"
+  },
+  "/Users/davidguia/Documents/GitHub/Shifter/WorkScheduleApp/Helpers/DateFormatterCache.swift" : {
+    "const-values" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/DateFormatterCache.swiftconstvalues",
+    "dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/DateFormatterCache.d",
+    "diagnostics" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/DateFormatterCache.dia",
+    "index-unit-output-path" : "/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/DateFormatterCache.o",
+    "llvm-bc" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/DateFormatterCache.bc",
+    "object" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/DateFormatterCache.o",
+    "swift-dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/DateFormatterCache.swiftdeps",
+    "swiftmodule" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/DateFormatterCache~partial.swiftmodule"
+  },
+  "/Users/davidguia/Documents/GitHub/Shifter/WorkScheduleApp/Helpers/FiscalCalendarHelper.swift" : {
+    "const-values" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/FiscalCalendarHelper.swiftconstvalues",
+    "dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/FiscalCalendarHelper.d",
+    "diagnostics" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/FiscalCalendarHelper.dia",
+    "index-unit-output-path" : "/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/FiscalCalendarHelper.o",
+    "llvm-bc" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/FiscalCalendarHelper.bc",
+    "object" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/FiscalCalendarHelper.o",
+    "swift-dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/FiscalCalendarHelper.swiftdeps",
+    "swiftmodule" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/FiscalCalendarHelper~partial.swiftmodule"
+  },
+  "/Users/davidguia/Documents/GitHub/Shifter/WorkScheduleApp/Models/Shift.swift" : {
+    "const-values" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/Shift.swiftconstvalues",
+    "dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/Shift.d",
+    "diagnostics" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/Shift.dia",
+    "index-unit-output-path" : "/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/Shift.o",
+    "llvm-bc" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/Shift.bc",
+    "object" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/Shift.o",
+    "swift-dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/Shift.swiftdeps",
+    "swiftmodule" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/Shift~partial.swiftmodule"
+  },
+  "/Users/davidguia/Documents/GitHub/Shifter/WorkScheduleApp/Models/WorkSchedule.swift" : {
+    "const-values" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkSchedule.swiftconstvalues",
+    "dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkSchedule.d",
+    "diagnostics" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkSchedule.dia",
+    "index-unit-output-path" : "/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkSchedule.o",
+    "llvm-bc" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkSchedule.bc",
+    "object" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkSchedule.o",
+    "swift-dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkSchedule.swiftdeps",
+    "swiftmodule" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkSchedule~partial.swiftmodule"
+  },
+  "/Users/davidguia/Documents/GitHub/Shifter/WorkScheduleApp/Services/OCRService.swift" : {
+    "const-values" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/OCRService.swiftconstvalues",
+    "dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/OCRService.d",
+    "diagnostics" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/OCRService.dia",
+    "index-unit-output-path" : "/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/OCRService.o",
+    "llvm-bc" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/OCRService.bc",
+    "object" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/OCRService.o",
+    "swift-dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/OCRService.swiftdeps",
+    "swiftmodule" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/OCRService~partial.swiftmodule"
+  },
+  "/Users/davidguia/Documents/GitHub/Shifter/WorkScheduleApp/ViewModels/ScheduleViewModel.swift" : {
+    "const-values" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ScheduleViewModel.swiftconstvalues",
+    "dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ScheduleViewModel.d",
+    "diagnostics" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ScheduleViewModel.dia",
+    "index-unit-output-path" : "/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ScheduleViewModel.o",
+    "llvm-bc" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ScheduleViewModel.bc",
+    "object" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ScheduleViewModel.o",
+    "swift-dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ScheduleViewModel.swiftdeps",
+    "swiftmodule" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ScheduleViewModel~partial.swiftmodule"
+  },
+  "/Users/davidguia/Documents/GitHub/Shifter/WorkScheduleApp/Views/AboutView.swift" : {
+    "const-values" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/AboutView.swiftconstvalues",
+    "dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/AboutView.d",
+    "diagnostics" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/AboutView.dia",
+    "index-unit-output-path" : "/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/AboutView.o",
+    "llvm-bc" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/AboutView.bc",
+    "object" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/AboutView.o",
+    "swift-dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/AboutView.swiftdeps",
+    "swiftmodule" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/AboutView~partial.swiftmodule"
+  },
+  "/Users/davidguia/Documents/GitHub/Shifter/WorkScheduleApp/Views/ManageDataView.swift" : {
+    "const-values" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ManageDataView.swiftconstvalues",
+    "dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ManageDataView.d",
+    "diagnostics" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ManageDataView.dia",
+    "index-unit-output-path" : "/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ManageDataView.o",
+    "llvm-bc" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ManageDataView.bc",
+    "object" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ManageDataView.o",
+    "swift-dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ManageDataView.swiftdeps",
+    "swiftmodule" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ManageDataView~partial.swiftmodule"
+  },
+  "/Users/davidguia/Documents/GitHub/Shifter/WorkScheduleApp/Views/ShiftStatisticsView.swift" : {
+    "const-values" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ShiftStatisticsView.swiftconstvalues",
+    "dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ShiftStatisticsView.d",
+    "diagnostics" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ShiftStatisticsView.dia",
+    "index-unit-output-path" : "/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ShiftStatisticsView.o",
+    "llvm-bc" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ShiftStatisticsView.bc",
+    "object" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ShiftStatisticsView.o",
+    "swift-dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ShiftStatisticsView.swiftdeps",
+    "swiftmodule" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/ShiftStatisticsView~partial.swiftmodule"
+  },
+  "/Users/davidguia/Documents/GitHub/Shifter/WorkScheduleApp/Views/SystemCSSTheme.swift" : {
+    "const-values" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/SystemCSSTheme.swiftconstvalues",
+    "dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/SystemCSSTheme.d",
+    "diagnostics" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/SystemCSSTheme.dia",
+    "index-unit-output-path" : "/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/SystemCSSTheme.o",
+    "llvm-bc" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/SystemCSSTheme.bc",
+    "object" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/SystemCSSTheme.o",
+    "swift-dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/SystemCSSTheme.swiftdeps",
+    "swiftmodule" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/SystemCSSTheme~partial.swiftmodule"
+  },
+  "/Users/davidguia/Documents/GitHub/Shifter/WorkScheduleApp/WatchConnectivityManager.swift" : {
+    "const-values" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WatchConnectivityManager.swiftconstvalues",
+    "dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WatchConnectivityManager.d",
+    "diagnostics" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WatchConnectivityManager.dia",
+    "index-unit-output-path" : "/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WatchConnectivityManager.o",
+    "llvm-bc" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WatchConnectivityManager.bc",
+    "object" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WatchConnectivityManager.o",
+    "swift-dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WatchConnectivityManager.swiftdeps",
+    "swiftmodule" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WatchConnectivityManager~partial.swiftmodule"
+  },
+  "/Users/davidguia/Documents/GitHub/Shifter/WorkScheduleApp/WorkScheduleAppApp.swift" : {
+    "const-values" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkScheduleAppApp.swiftconstvalues",
+    "dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkScheduleAppApp.d",
+    "diagnostics" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkScheduleAppApp.dia",
+    "index-unit-output-path" : "/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkScheduleAppApp.o",
+    "llvm-bc" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkScheduleAppApp.bc",
+    "object" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkScheduleAppApp.o",
+    "swift-dependencies" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkScheduleAppApp.swiftdeps",
+    "swiftmodule" : "/Users/davidguia/Documents/GitHub/Shifter/DerivedData/Build/Intermediates.noindex/WorkScheduleApp.build/Debug-iphonesimulator/WorkScheduleApp.build/Objects-normal/arm64/WorkScheduleAppApp~partial.swiftmodule"
+  }
+}
