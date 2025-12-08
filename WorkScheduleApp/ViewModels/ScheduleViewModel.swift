@@ -83,11 +83,9 @@ class ScheduleViewModel: ObservableObject {
         do {
             // Étape 1: OCR - Extraction du texte de l'image
             let recognizedText = try await ocrService.recognizeText(from: image)
-            print("📄 Texte OCR détecté:\n\(recognizedText)\n")
             
             // Étape 2: Parsing - Analyse du texte pour extraire dates, horaires, segments
             let parsedShifts = ocrService.parseScheduleText(recognizedText)
-            print("📊 Shifts parsés: \(parsedShifts.count)")
             
             // Validation: au moins un shift détecté
             if parsedShifts.isEmpty {
@@ -148,17 +146,6 @@ class ScheduleViewModel: ObservableObject {
             }
             
             // Log pour débug
-            if duplicateCount > 0 {
-                print("⚠️ \(duplicateCount) shift(s) en doublon ignoré(s)")
-            }
-            print("✅ \(addedCount) shift(s) ajouté(s)")
-            
-            try context.save()
-            
-            fetchSchedules()
-            selectedSchedule = schedule
-            
-            // Afficher message d'alerte si doublons détectés
             if duplicateCount > 0 {
                 errorMessage = "\(addedCount) shift(s) ajouté(s)\n⚠️ \(duplicateCount) doublon(s) ignoré(s)"
                 showError = true
@@ -354,15 +341,13 @@ class ScheduleViewModel: ObservableObject {
     /// Appelé après chaque modification (import, ajout, suppression, etc.)
     private func saveAutoBackup() async {
         guard let jsonString = exportToJSON() else {
-            print("⚠️ Impossible de créer le backup")
             return
         }
         
         do {
             try jsonString.write(to: backupURL, atomically: true, encoding: .utf8)
-            print("✅ Backup automatique sauvegardé: \(backupURL.path)")
         } catch {
-            print("❌ Erreur sauvegarde backup: \(error.localizedDescription)")
+            // Backup échoué silencieusement (non-critique)
         }
     }
     
@@ -370,14 +355,11 @@ class ScheduleViewModel: ObservableObject {
     /// Appelé au lancement si aucune donnée SwiftData n'existe
     private func attemptAutoRestore() async {
         guard FileManager.default.fileExists(atPath: backupURL.path) else {
-            print("📁 Aucun backup trouvé")
             return
         }
         
         do {
             let jsonString = try String(contentsOf: backupURL, encoding: .utf8)
-            print("🔄 Restauration du backup...")
-            
             await importFromJSON(jsonString)
             
             // Afficher le message de restauration
@@ -390,7 +372,7 @@ class ScheduleViewModel: ObservableObject {
                 }
             }
         } catch {
-            print("❌ Erreur restauration backup: \(error.localizedDescription)")
+            // Restauration échouée silencieusement
         }
     }
     

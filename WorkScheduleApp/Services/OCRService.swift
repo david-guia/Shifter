@@ -169,7 +169,6 @@ class OCRService {
         
         return cacheQueue.sync {
             if let cached = parseCache[cacheKey] {
-                print("✨ Cache hit: \(cached.count) shifts récupérés du cache")
                 return cached
             }
             

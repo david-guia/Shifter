@@ -108,38 +108,38 @@ struct ContentView: View {
                 // MARK: - Header avec titre et bouton menu
                 HStack(spacing: 0) {
                     Text("Shifter")
-                        .font(.custom("Chicago", size: 28))
+                        .font(.custom("Chicago", size: 32))
                         .fontWeight(.bold)
                         .foregroundStyle(Color.systemBlack)
                     
                     if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
-                        Text(" v\(version)")
-                            .font(.chicago12)
+                        Text("  version : \(version)")
+                            .font(.system(size: 13, weight: .medium, design: .monospaced))
                             .foregroundStyle(Color.systemBlack.opacity(0.6))
-                            .padding(.top, 8)
+                            .padding(.leading, 2)
                     }
                     
                     // Badge du timer de certificat développeur
-                    HStack(spacing: 2) {
+                    HStack(spacing: 3) {
                         Text(daysRemaining == 0 ? "⏱️" : "🕐")
-                            .font(.system(size: 10))
+                            .font(.system(size: 12))
                         Text("\(daysRemaining)j")
-                            .font(.geneva9)
-                            .fontWeight(.bold)
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
                     }
                     .foregroundStyle(expiryBadgeColor)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
                     .background(expiryBadgeColor.opacity(0.2))
                     .cornerRadius(4)
                     .overlay(
                         RoundedRectangle(cornerRadius: 4)
                             .stroke(expiryBadgeColor, lineWidth: 1)
                     )
-                    .padding(.top, 8)
-                    .padding(.leading, 4)
-                    .padding(.trailing, 8)
+                    .padding(.leading, 24)
                     
+                    Spacer() // Pousse le menu vers la droite
+                    
+                    // Bouton menu aligné à droite
                     Button {
                         showingMenu.toggle()
                     } label: {

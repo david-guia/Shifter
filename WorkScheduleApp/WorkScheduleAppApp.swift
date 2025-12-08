@@ -51,36 +51,26 @@ struct WorkScheduleAppApp: App {
     
     private func checkForSharedImage() {
         let appGroupIdentifier = "group.com.davidguia.shifter"
-        print("🔍 Checking for shared image...")
         
         guard let userDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
-            print("❌ Cannot access App Group UserDefaults")
             return
         }
         
         guard let imagePath = userDefaults.string(forKey: "pendingImagePath") else {
-            print("ℹ️ No pending image")
             return
         }
-        
-        print("📷 Found image at: \(imagePath)")
         
         // Vérifier que l'image est récente (moins de 5 minutes)
         if let imageDate = userDefaults.object(forKey: "pendingImageDate") as? Date {
             let elapsed = Date().timeIntervalSince(imageDate)
-            print("⏱️ Image age: \(Int(elapsed)) seconds")
             
             if elapsed < 300 {
-                print("✅ Image is recent, processing...")
                 sharedImagePath = imagePath
-            } else {
-                print("⚠️ Image too old, ignoring")
             }
         }
         
         // Nettoyer les UserDefaults
         userDefaults.removeObject(forKey: "pendingImagePath")
         userDefaults.removeObject(forKey: "pendingImageDate")
-        print("🧹 Cleaned up UserDefaults")
     }
 }

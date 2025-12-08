@@ -12,7 +12,5 @@ import SwiftUI
 struct ShifterWidgetBundle: WidgetBundle {
     var body: some Widget {
         ShifterWidget()
-        ShifterWidgetControl()
-        ShifterWidgetLiveActivity()
     }
 }
