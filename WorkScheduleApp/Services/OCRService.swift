@@ -54,7 +54,8 @@ class OCRService {
     /// Regex pour détecter les segments/catégories de travail
     private static let segmentRegex: NSRegularExpression? = {
         // Détecte les segments WorkJam spécifiques + segments standards
-        let pattern = "(?:Shift|Sales|Runner|Setup)\\s+\\d+|PZ\\s+On\\s+Point|Pause\\s+repas|Daily\\s+Download|Learn\\s+and\\s+Grow|Avenues|Break|Training|Meeting|Opening|Closing"
+        // Setup peut être avec ou sans numéro
+        let pattern = "(?:Shift|Sales|Runner|Setup)(?:\\s+\\d+)?|PZ\\s+On\\s+Point|GB\\s+On\\s+Point|Cycle\\s+Counts|Connection|Roundtable|Onboarding|Visuals|Pause\\s+repas|Daily\\s+Download|Learn\\s+and\\s+Grow|Avenues|Break|Training|Meeting|Opening|Closing"
         return try? NSRegularExpression(pattern: pattern, options: .caseInsensitive)
     }()
     
@@ -195,18 +196,22 @@ class OCRService {
         var shifts: [(date: Date, startTime: Date, endTime: Date, segment: String)] = []
         let lines = text.components(separatedBy: .newlines)
         
+        #if DEBUG
         print("🔍 Parsing \(lines.count) lignes...")
+        #endif
         
         // ÉTAPE 1: Scanner TOUT le texte pour trouver l'indicateur temporel AVANT de parser les dates
         var globalRelativeIndicator: (days: Int?, months: Int?)? = nil
         for line in lines {
             if let (days, months) = detectRelativeTime(in: line) {
                 globalRelativeIndicator = (days: days, months: months)
+                #if DEBUG
                 if let d = days {
                     print("🕐 Indicateur temporel détecté (pré-scan): Il y a \(d) jour(s)")
                 } else if let m = months {
                     print("🕐 Indicateur temporel détecté (pré-scan): Il y a \(m) mois")
                 }
+                #endif
                 break // Prendre le premier trouvé
             }
         }
@@ -233,7 +238,9 @@ class OCRService {
             // Détection de la date principale (ex: "mercredi 26 novembre")
             // Utiliser l'indicateur global trouvé précédemment
             if let date = detectWorkJamDate(in: trimmedLine, relativeTimeIndicator: globalRelativeIndicator) {
+                #if DEBUG
                 print("📅 Date détectée: \(date) dans '\(trimmedLine)'")
+                #endif
                 // Si on avait des segments en attente, créer les shifts
                 if let mainDate = shiftMainDate, !segmentTimeRanges.isEmpty {
                     for segmentTime in segmentTimeRanges {
@@ -293,13 +300,17 @@ class OCRService {
             // Détection d'horaire format AM/PM (ex: "10:00 AM–11:30 AM")
             if let date = currentDate,
                let (start, end) = detectTimeRangeAMPM(in: trimmedLine, referenceDate: date) {
+                #if DEBUG
                 print("⏰ Horaire AM/PM détecté: \(start)-\(end) dans '\(trimmedLine)'")
+                #endif
                 shifts.append((date: date, startTime: start, endTime: end, segment: currentSegment))
             }
             // Détection d'horaire format 24h (ex: "09:00 - 17:00", "9h-17h")
             else if let date = currentDate,
                let (start, end) = detectTimeRange24H(in: trimmedLine, referenceDate: date) {
+                #if DEBUG
                 print("⏰ Horaire 24h détecté: \(start)-\(end) dans '\(trimmedLine)'")
+                #endif
                 shifts.append((date: date, startTime: start, endTime: end, segment: currentSegment))
             }
         }
@@ -316,7 +327,9 @@ class OCRService {
             }
         }
         
+        #if DEBUG
         print("✅ Total shifts extraits: \(shifts.count)")
+        #endif
         return shifts
     }
     
@@ -344,36 +357,50 @@ class OCRService {
             
             // Si on a un indicateur temporel relatif (ex: "Il y a 6 jours" ou "Il y a 5 mois"), l'utiliser en priorité
             if let indicator = relativeTimeIndicator {
+                #if DEBUG
                 print("🔍 DEBUG: relativeTimeIndicator = days:\(indicator.days ?? -1) months:\(indicator.months ?? -1)")
+                #endif
                 
                 // Cas 1: "Il y a X mois"
                 if let monthsAgo = indicator.months {
+                    #if DEBUG
                     print("🔍 DEBUG: Traitement mois - monthsAgo=\(monthsAgo)")
+                    #endif
                     // Reculer de X mois depuis aujourd'hui pour obtenir l'année approximative
                     if let pastDate = calendar.date(byAdding: .month, value: -monthsAgo, to: currentDate) {
                         // Utiliser l'année de la date calculée, MAIS le mois et jour de la date parsée
                         var calculatedYear = calendar.component(.year, from: pastDate)
                         let calculatedMonth = calendar.component(.month, from: pastDate)
                         
+                        #if DEBUG
                         print("🔍 DEBUG: Date calculée (-\(monthsAgo) mois) = \(calculatedYear)/\(calculatedMonth)")
                         print("🔍 DEBUG: Date parsée = mois:\(month) jour:\(day)")
+                        #endif
                         
                         // Si le mois parsé est proche du mois calculé (±2 mois), c'est la même année
                         // Sinon, ajuster l'année
                         let monthDiff = abs(month - calculatedMonth)
+                        #if DEBUG
                         print("🔍 DEBUG: Différence de mois = \(monthDiff)")
+                        #endif
                         
                         if monthDiff > 6 {
                             // Si le mois parsé est beaucoup plus tard dans l'année, c'est l'année précédente
                             if month > calculatedMonth {
                                 calculatedYear -= 1
+                                #if DEBUG
                                 print("🔍 DEBUG: Mois parsé > calculé et diff>6 → année -1 = \(calculatedYear)")
+                                #endif
                             } else {
                                 calculatedYear += 1
+                                #if DEBUG
                                 print("🔍 DEBUG: Mois parsé < calculé et diff>6 → année +1 = \(calculatedYear)")
+                                #endif
                             }
                         } else {
+                            #if DEBUG
                             print("🔍 DEBUG: Différence < 6 mois → même année = \(calculatedYear)")
+                            #endif
                         }
                         
                         var components = DateComponents()
@@ -381,10 +408,14 @@ class OCRService {
                         components.month = month // Utiliser le mois PARSÉ (juin dans ton cas)
                         components.day = day
                         
+                        #if DEBUG
                         print("🔍 DEBUG: DateComponents finale = \(calculatedYear)/\(month)/\(day)")
+                        #endif
                         
                         if let finalDate = calendar.date(from: components) {
+                            #if DEBUG
                             print("📅 Année corrigée via indicateur temporel (mois): \(calculatedYear)/\(month)/\(day) (Il y a \(monthsAgo) mois)")
+                            #endif
                             return finalDate
                         }
                     }
@@ -402,7 +433,9 @@ class OCRService {
                         components.day = day
                         
                         if let finalDate = calendar.date(from: components) {
+                            #if DEBUG
                             print("📅 Année corrigée via indicateur temporel (jours): \(targetYear) (Il y a \(daysAgo) jours)")
+                            #endif
                             return finalDate
                         }
                     }
@@ -528,8 +561,10 @@ class OCRService {
         // Ne plus accepter n'importe quel texte comme segment
         // Si c'est une ligne connue sans horaire, on peut l'accepter
         let knownSegments = [
-            "Pause repas", "Daily Download", "Learn and Grow", "Avenues",
-            "PZ On Point", "Break", "Training", "Meeting", "Opening", "Closing"
+            "Setup", "Pause repas", "Daily Download", "Learn and Grow", "Avenues",
+            "PZ On Point", "GB On Point", "Cycle Counts", "Connection",
+            "Roundtable", "Onboarding", "Visuals",
+            "Break", "Training", "Meeting", "Opening", "Closing"
         ]
         
         for known in knownSegments {

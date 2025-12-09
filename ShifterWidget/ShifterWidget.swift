@@ -262,17 +262,14 @@ struct LargeWidgetView: View {
                 
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
-                        // Background
                         RoundedRectangle(cornerRadius: 4)
                             .fill(Color(uiColor: .systemGray5))
                             .frame(height: 12)
                         
-                        // Progress
                         RoundedRectangle(cornerRadius: 4)
                             .fill(Color.blue)
                             .frame(width: geometry.size.width * (entry.quarterStats.progress / 100), height: 12)
                         
-                        // Border
                         RoundedRectangle(cornerRadius: 4)
                             .stroke(Color.primary.opacity(0.2), lineWidth: 2)
                             .frame(height: 12)
@@ -389,44 +386,29 @@ struct LockScreenRectangularView: View {
     let entry: ShifterEntry
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            // Header
-            HStack {
-                Text("Shifter Q\(entry.quarterStats.currentQuarter)")
-                    .font(.system(size: 14, weight: .semibold))
+        if let topShift = entry.top3Shifts.first {
+            HStack(spacing: 8) {
+                // Nom du shift
+                Text(topShift.segment)
+                    .font(.system(size: 16, weight: .bold))
+                    .lineLimit(1)
+                
                 Spacer()
-                Text("\(entry.quarterStats.progress)%")
-                    .font(.system(size: 14, weight: .bold))
+                
+                // Pourcentage géant
+                Text("\(topShift.percentage)%")
+                    .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.blue)
             }
-            
-            // Barre de progression
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(height: 6)
-                    
-                    Rectangle()
-                        .fill(Color.blue)
-                        .frame(width: geometry.size.width * CGFloat(entry.quarterStats.progress) / 100, height: 6)
-                }
+            .containerBackground(for: .widget) {
+                Color.clear
             }
-            .frame(height: 6)
-            
-            // Top shift
-            if let topShift = entry.top3Shifts.first {
-                HStack {
-                    Text(topShift.segment)
-                        .font(.system(size: 12))
-                    Spacer()
-                    Text(String(format: "%.1fh", topShift.totalHours))
-                        .font(.system(size: 12, weight: .medium))
+        } else {
+            Text("Aucune donnée")
+                .font(.system(size: 14))
+                .containerBackground(for: .widget) {
+                    Color.clear
                 }
-            }
-        }
-        .containerBackground(for: .widget) {
-            Color.clear
         }
     }
 }

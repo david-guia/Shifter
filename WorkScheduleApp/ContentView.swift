@@ -122,7 +122,7 @@ struct ContentView: View {
                         if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("\(version)")
-                                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                    .font(.system(size: 14, weight: .medium, design: .monospaced))
                                     .foregroundStyle(Color.systemBlack.opacity(0.6))
                                 
                                 // Badge du timer de certificat développeur
@@ -152,7 +152,7 @@ struct ContentView: View {
                         showingMenu.toggle()
                     } label: {
                         Text("⋮")
-                            .font(.system(size: 24, weight: .bold))
+                            .font(.system(size: 28, weight: .bold))
                             .foregroundStyle(Color.systemBlack)
                             .frame(width: 44, height: 44)
                     }
@@ -269,7 +269,7 @@ struct ContentView: View {
                     Spacer()
                     VStack(spacing: 16) {
                         Text("📊")
-                            .font(.system(size: 64))
+                            .font(.system(size: 72))
                         Text("Aucune donnée")
                             .font(.chicago14)
                             .foregroundStyle(Color.systemBlack)
@@ -296,7 +296,7 @@ struct ContentView: View {
                     
                     HStack(spacing: 12) {
                         Text("✅")
-                            .font(.system(size: 20))
+                            .font(.system(size: 24))
                         Text("Données restaurées automatiquement")
                             .font(.chicago12)
                             .foregroundStyle(Color.systemWhite)
@@ -332,7 +332,7 @@ struct ContentView: View {
                             PhotosPicker(selection: $selectedItems, matching: .images) {
                                 HStack {
                                     Text("📸")
-                                        .font(.system(size: 16))
+                                        .font(.system(size: 20))
                                     Text("Images")
                                         .font(.chicago12)
                                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -354,7 +354,7 @@ struct ContentView: View {
                             } label: {
                                 HStack {
                                     Text("📄")
-                                        .font(.system(size: 16))
+                                        .font(.system(size: 20))
                                     Text("PDF")
                                         .font(.chicago12)
                                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -716,7 +716,9 @@ struct ContentView: View {
             }
             
         case .failure(let error):
+            #if DEBUG
             print("❌ Erreur sélection PDF: \(error.localizedDescription)")
+            #endif
         }
     }
     

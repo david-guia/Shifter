@@ -40,9 +40,9 @@ struct Top3View: View {
                 // 🖱️ Indicateur tactile style system.css
                 HStack(spacing: 3) {
                     Image(systemName: "hand.tap.fill")
-                        .font(.system(size: 7))
+                        .font(.system(size: 11))
                     Text("tap = % ↔ h")
-                        .font(.system(size: 8, weight: .bold, design: .monospaced))
+                        .font(.system(size: 12, weight: .bold, design: .monospaced))
                 }
                 .foregroundStyle(.black)
                 .padding(.top, 2)
@@ -66,15 +66,15 @@ struct Top3View: View {
             // 🖥️ Fenêtre dialogue system.css
             VStack(spacing: 6) {
                 Image(systemName: "clock.badge.questionmark")
-                    .font(.system(size: 20))
+                    .font(.system(size: 24))
                     .foregroundStyle(.black)
                 
                 Text("Aucune donnée")
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
                     .foregroundStyle(.black)
                 
                 Text("Importez des shifts\nsur iPhone")
-                    .font(.system(size: 8, design: .monospaced))
+                    .font(.system(size: 10, design: .monospaced))
                     .foregroundStyle(.black.opacity(0.7))
                     .multilineTextAlignment(.center)
             }
@@ -119,9 +119,9 @@ struct Top3CardView: View {
             HStack {
                 Spacer()
                 Text(medalEmoji)
-                    .font(.system(size: 22))
+                    .font(.system(size: 30))
                 Text(segment)
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .font(.system(size: 16, weight: .bold, design: .monospaced))
                     .foregroundStyle(.black)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
@@ -137,11 +137,11 @@ struct Top3CardView: View {
             VStack(spacing: 0) {
                 if showHours {
                     Text(formatHours(hours))
-                        .font(.system(size: 28, weight: .bold, design: .monospaced))
+                        .font(.system(size: 38, weight: .bold, design: .monospaced))
                         .foregroundStyle(.black)
                 } else {
                     Text(String(format: "%.0f%%", percentage))
-                        .font(.system(size: 28, weight: .bold, design: .monospaced))
+                        .font(.system(size: 38, weight: .bold, design: .monospaced))
                         .foregroundStyle(.black)
                 }
             }

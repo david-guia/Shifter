@@ -44,15 +44,21 @@ class WatchConnectivityManager: NSObject, ObservableObject {
     /// Initialise la session WatchConnectivity
     private func setupSession() {
         guard WCSession.isSupported() else {
+            #if DEBUG
             print("⚠️ WatchConnectivity non supporté sur cet appareil")
+            #endif
             return
         }
         
+        #if DEBUG
         print("🔄 Initialisation WatchConnectivity...")
+        #endif
         let session = WCSession.default
         session.delegate = self
         session.activate()
+        #if DEBUG
         print("✅ WatchConnectivity activée")
+        #endif
     }
     
     // MARK: - Sync vers Watch
@@ -63,12 +69,16 @@ class WatchConnectivityManager: NSObject, ObservableObject {
     ///   - quarterLabel: Label du trimestre (ex: "Q2 2025")
     ///   - totalHours: Total d'heures du trimestre
     func sendTop3ToWatch(top3: [(segment: String, hours: Double, percentage: Double)], quarterLabel: String, totalHours: Double) {
+        #if DEBUG
         print("📤 Tentative envoi Watch: \(top3.count) items, \(quarterLabel), \(totalHours)h")
         print("   Paired: \(WCSession.default.isPaired), Installed: \(WCSession.default.isWatchAppInstalled)")
         print("   Activation: \(WCSession.default.activationState.rawValue)")
+        #endif
         
         guard WCSession.default.activationState == .activated else {
+            #if DEBUG
             print("⚠️ Session WatchConnectivity non activée")
+            #endif
             return
         }
         
@@ -90,10 +100,14 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         
         do {
             try WCSession.default.updateApplicationContext(context)
+            #if DEBUG
             print("✅ Top 3 envoyé à la Watch: \(quarterLabel)")
             print("   Data: \(context)")
+            #endif
         } catch {
+            #if DEBUG
             print("❌ Erreur envoi Watch: \(error.localizedDescription)")
+            #endif
         }
     }
     
@@ -119,7 +133,9 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         let totalHours = segmentHours.values.reduce(0, +)
         
         guard totalHours > 0 else {
+            #if DEBUG
             print("⚠️ Aucune donnée à envoyer (trimestre vide)")
+            #endif
             return
         }
         
@@ -142,19 +158,25 @@ class WatchConnectivityManager: NSObject, ObservableObject {
 
 extension WatchConnectivityManager: WCSessionDelegate {
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        #if DEBUG
         if let error = error {
             print("❌ Erreur activation WatchConnectivity: \(error.localizedDescription)")
         } else {
             print("✅ WatchConnectivity activé: \(activationState.rawValue)")
         }
+        #endif
     }
     
     func sessionDidBecomeInactive(_ session: WCSession) {
+        #if DEBUG
         print("⚠️ Session WatchConnectivity inactive")
+        #endif
     }
     
     func sessionDidDeactivate(_ session: WCSession) {
+        #if DEBUG
         print("⚠️ Session WatchConnectivity désactivée")
+        #endif
         // Réactiver pour la nouvelle session
         WCSession.default.activate()
     }
@@ -162,7 +184,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
     // Réception de messages depuis la Watch
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
         if message["request"] as? String == "refreshData" {
+            #if DEBUG
             print("📲 Watch demande refresh des données")
+            #endif
             // Notification pour déclencher sync dans ScheduleViewModel si besoin
         }
     }

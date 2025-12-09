@@ -20,11 +20,11 @@ extension Color {
 // MARK: - Fonts System.css (Chicago style)
 
 extension Font {
-    static let chicago10 = Font.system(size: 10, weight: .bold, design: .monospaced)
-    static let chicago12 = Font.system(size: 12, weight: .bold, design: .monospaced)
-    static let chicago14 = Font.system(size: 14, weight: .bold, design: .monospaced)
-    static let geneva9 = Font.system(size: 9, design: .monospaced)
-    static let geneva10 = Font.system(size: 10, design: .monospaced)
+    static let chicago10 = Font.system(size: 13, weight: .bold, design: .monospaced)
+    static let chicago12 = Font.system(size: 15, weight: .bold, design: .monospaced)
+    static let chicago14 = Font.system(size: 17, weight: .bold, design: .monospaced)
+    static let geneva9 = Font.system(size: 12, design: .monospaced)
+    static let geneva10 = Font.system(size: 13, design: .monospaced)
 }
 
 // MARK: - Composants System.css

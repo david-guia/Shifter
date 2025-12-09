@@ -158,9 +158,8 @@ class ScheduleViewModel: ObservableObject {
             // Rafraîchir les widgets
             WidgetCenter.shared.reloadAllTimelines()
             
-            // MARK: - 🚧 Apple Watch Support (Désactivé temporairement)
-            // TODO: Décommenter quand watchOS sera déployé
-            // syncToWatch()
+            // Synchroniser avec Apple Watch
+            syncToWatch()
             
             isLoading = false
         } catch {
@@ -268,9 +267,8 @@ class ScheduleViewModel: ObservableObject {
             // Rafraîchir les widgets
             WidgetCenter.shared.reloadAllTimelines()
             
-            // 🚧 Apple Watch Support (Désactivé temporairement)
-            // TODO: Décommenter quand watchOS sera déployé
-            // syncToWatch()
+            // Synchroniser avec Apple Watch
+            syncToWatch()
         } catch {
             handleError(error)
         }
@@ -295,9 +293,8 @@ class ScheduleViewModel: ObservableObject {
             // Rafraîchir les widgets
             WidgetCenter.shared.reloadAllTimelines()
             
-            // 🚧 Apple Watch Support (Désactivé temporairement)
-            // TODO: Décommenter quand watchOS sera déployé
-            // syncToWatch()
+            // Synchroniser avec Apple Watch
+            syncToWatch()
         } catch {
             handleError(error)
         }
@@ -441,12 +438,16 @@ class ScheduleViewModel: ObservableObject {
                 do {
                     try FileManager.default.copyItem(at: zipURLFromCoordinator, to: zipURL)
                 } catch {
+                    #if DEBUG
                     print("❌ Erreur copie ZIP: \(error)")
+                    #endif
                 }
             }
             
             if let error = coordinatorError {
+                #if DEBUG
                 print("❌ Erreur coordination: \(error)")
+                #endif
                 try? FileManager.default.removeItem(at: workDir)
                 return nil
             }
@@ -454,10 +455,14 @@ class ScheduleViewModel: ObservableObject {
             // Nettoyer le dossier de travail
             try? FileManager.default.removeItem(at: workDir)
             
+            #if DEBUG
             print("✅ ZIP créé: \(zipURL.path)")
+            #endif
             return zipURL
         } catch {
+            #if DEBUG
             print("❌ Erreur export ZIP: \(error)")
+            #endif
             try? FileManager.default.removeItem(at: workDir)
             return nil
         }
@@ -513,22 +518,23 @@ class ScheduleViewModel: ObservableObject {
         }
     }
     
-    // MARK: - 🚧 Apple Watch Support (Désactivé temporairement)
-    // TODO: Décommenter toute cette section quand watchOS sera déployé
+    // MARK: - Apple Watch Support
     
     /// Synchronise les statistiques Top 3 avec l'Apple Watch
-    // private func syncToWatch() {
-    //     guard let schedule = schedules.first else {
-    //         print("⚠️ Aucun schedule à synchroniser")
-    //         return
-    //     }
-    //     
-    //     // Récupérer tous les shifts
-    //     let allShifts = schedule.shifts
-    //     
-    //     // Envoyer via WatchConnectivity
-    //     WatchConnectivityManager.shared.syncTop3FromShifts(allShifts)
-    // }
+    private func syncToWatch() {
+        guard let schedule = schedules.first else {
+            #if DEBUG
+            print("⚠️ Aucun schedule à synchroniser")
+            #endif
+            return
+        }
+        
+        // Récupérer tous les shifts
+        let allShifts = schedule.shifts
+        
+        // Envoyer via WatchConnectivity
+        WatchConnectivityManager.shared.syncTop3FromShifts(allShifts)
+    }
 }
 
 // MARK: - Export Models

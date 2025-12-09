@@ -45,21 +45,17 @@ struct AboutView: View {
                     VStack(spacing: 20) {
                         // MARK: - Logo et nom de l'app
                         VStack(spacing: 12) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.systemWhite)
-                                    .frame(width: 100, height: 100)
-                                    .overlay(
-                                        Circle()
-                                            .stroke(Color.systemBlack, lineWidth: 3)
-                                    )
-                                
-                                Image("AppIconImage")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 80, height: 80)
-                                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                            }
+                            // Logo rond comme sur Apple Watch
+                            Image("AppIconImage")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 100, height: 100)
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.systemBlack, lineWidth: 3)
+                                )
+                                .shadow(color: .black.opacity(0.2), radius: 4, x: 2, y: 2)
                             
                             Text("Shifter")
                                 .font(.custom("Chicago", size: 32))
