@@ -56,12 +56,8 @@ struct AboutView: View {
                                         .stroke(Color.systemBlack, lineWidth: 3)
                                 )
                                 .shadow(color: .black.opacity(0.2), radius: 4, x: 2, y: 2)
-                            
-                            Text("Shifter")
-                                .font(.custom("Chicago", size: 32))
-                                .fontWeight(.bold)
-                                .foregroundStyle(Color.systemBlack)
-                            
+
+                            // Title removed for a cleaner look (per user request)
                             Text("Version \(appVersion) (Build \(buildNumber))")
                                 .font(.geneva10)
                                 .foregroundStyle(Color.systemGray)
@@ -75,10 +71,10 @@ struct AboutView: View {
                                 .foregroundStyle(Color.systemBlack)
                             
                             Text("Importez vos captures d'écran WorkJam\net visualisez vos statistiques")
-                                .font(.system(size: 13))
+                                .font(.system(size: 16))
                                 .foregroundStyle(Color.systemGray)
                                 .multilineTextAlignment(.center)
-                                .lineSpacing(3)
+                                .lineSpacing(4)
                         }
                         .padding(.horizontal, 32)
                         
@@ -89,7 +85,7 @@ struct AboutView: View {
                             .padding(.horizontal, 40)
                         
                         // MARK: - Informations
-                        VStack(spacing: 10) {
+                        VStack(spacing: 14) {
                             InfoRow(icon: "📱", text: "iOS 18+")
                             
                             Button {
@@ -99,19 +95,11 @@ struct AboutView: View {
                             } label: {
                                 HStack(spacing: 12) {
                                     Text("🎨")
-                                        .font(.system(size: 18))
-                                    HStack(spacing: 0) {
-                                        Text("Design inspiré macOS classique (")
-                                            .font(.system(size: 13))
-                                            .foregroundStyle(Color.systemBlack)
-                                        Text("GitHub")
-                                            .font(.system(size: 13))
-                                            .foregroundStyle(Color.blue)
-                                            .underline()
-                                        Text(")")
-                                            .font(.system(size: 13))
-                                            .foregroundStyle(Color.systemBlack)
-                                    }
+                                        .font(.system(size: 22))
+                                    Text("Design macOS Classic (system.css)")
+                                        .font(.system(size: 16))
+                                        .foregroundStyle(Color.blue)
+                                        .underline()
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 48)
@@ -136,36 +124,67 @@ struct AboutView: View {
                             }
                         }
                         
+                        Spacer()
+                        
+                        // Ligne séparatrice (emplacement du trait rouge)
                         Rectangle()
                             .fill(Color.systemBlack)
                             .frame(height: 2)
                             .padding(.horizontal, 40)
-                        
+                            .padding(.bottom, 8)
+
                         // MARK: - Copyright
                         Text("© 2025 David Guia")
-                            .font(.geneva9)
+                            .font(.geneva10)
                             .foregroundStyle(Color.systemGray)
-                            .padding(.bottom, 16)
+                            .padding(.bottom, 4)
                     }
                 }
                 
-                // MARK: - Bouton Fermer
-                Button {
-                    dismiss()
-                } label: {
-                    Text("Fermer")
-                        .font(.chicago12)
-                        .foregroundStyle(Color.systemBlack)
+                // MARK: - Boutons en bas
+                VStack(spacing: 12) {
+                    // Bouton GitHub
+                    Button {
+                        if let url = URL(string: "https://github.com/david-guia/Shifter") {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Text("🔗")
+                                .font(.system(size: 20))
+                            Text("Voir sur GitHub")
+                                .font(.chicago12)
+                                .foregroundStyle(Color.blue)
+                        }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
+                        .padding(.vertical, 12)
                         .background(Color.systemWhite)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.systemBlack, lineWidth: 2)
+                                .stroke(Color.blue, lineWidth: 2)
                         )
                         .cornerRadius(8)
+                    }
+                    .buttonStyle(.plain)
+                    
+                    // Bouton Fermer
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Fermer")
+                            .font(.chicago12)
+                            .foregroundStyle(Color.systemBlack)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.systemWhite)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.systemBlack, lineWidth: 2)
+                            )
+                            .cornerRadius(8)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 20)
             }
@@ -183,9 +202,9 @@ struct InfoRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Text(icon)
-                .font(.system(size: 18))
+                .font(.system(size: 22))
             Text(text)
-                .font(.system(size: 13))
+                .font(.system(size: 16))
                 .foregroundStyle(color ?? Color.systemBlack)
                 .fontWeight(color != nil ? .bold : .regular)
         }

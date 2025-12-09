@@ -59,11 +59,6 @@ struct ShiftStatisticsView: View {
             }
             .padding(.vertical, 12)
             .background(Color.systemBlack)
-            .overlay(
-                Rectangle()
-                    .stroke(Color.systemBlack, lineWidth: 2)
-            )
-            .padding(.horizontal, 12)
             
             // Contenu SCROLLABLE au milieu
             ScrollView {
@@ -100,15 +95,10 @@ struct ShiftStatisticsView: View {
                             }
                             .padding(.vertical, 12)
                             .background(Color.systemWhite)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .stroke(Color.systemBlack, lineWidth: 1)
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
                         }
                     }
                 }
-                .padding(.horizontal, 12)
+                .padding(.horizontal, 0)
             }
             
             // Total FIXE en bas
@@ -136,13 +126,14 @@ struct ShiftStatisticsView: View {
             }
             .padding(.vertical, 14)
             .background(Color.systemBlack)
-            .overlay(
-                Rectangle()
-                    .stroke(Color.systemBlack, lineWidth: 2)
-            )
-            .padding(.horizontal, 12)
-            .padding(.bottom, 12)
         }
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.systemBlack, lineWidth: 3)
+        )
+        .padding(.horizontal, 12)
+        .padding(.bottom, 12)
         .onAppear {
             updateStatsIfNeeded()
         }
