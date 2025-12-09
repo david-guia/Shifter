@@ -33,42 +33,45 @@ struct ShiftStatisticsView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Tableau avec évolution (titre supprimé pour gagner de l'espace)
-            VStack(spacing: 0) {
-                // En-tête
-                HStack(spacing: 0) {
-                    Text("Shift")
-                        .font(.chicago14)
-                        .foregroundStyle(Color.systemWhite)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.leading, 16)
-                    
-                    Text("Heures")
-                        .font(.chicago14)
-                        .foregroundStyle(Color.systemWhite)
-                        .frame(width: 70, alignment: .trailing)
-                    
-                    Text("%")
-                        .font(.chicago14)
-                        .foregroundStyle(Color.systemWhite)
-                        .frame(width: 50, alignment: .trailing)
-                    
-                    Text("Δ")
-                        .font(.chicago14)
-                        .foregroundStyle(Color.systemWhite)
-                        .frame(width: 70, alignment: .trailing)
-                        .padding(.trailing, 16)
-                }
-                .padding(.vertical, 12)
-                .background(Color.systemBlack)
+            // En-tête FIXE en haut
+            HStack(spacing: 0) {
+                Text("Shift")
+                    .font(.chicago14)
+                    .foregroundStyle(Color.systemWhite)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 16)
                 
-                // Liste des segments
+                Text("Heures")
+                    .font(.chicago14)
+                    .foregroundStyle(Color.systemWhite)
+                    .frame(width: 70, alignment: .trailing)
+                
+                Text("%")
+                    .font(.chicago14)
+                    .foregroundStyle(Color.systemWhite)
+                    .frame(width: 50, alignment: .trailing)
+                
+                Text("Δ")
+                    .font(.chicago14)
+                    .foregroundStyle(Color.systemWhite)
+                    .frame(width: 70, alignment: .trailing)
+                    .padding(.trailing, 16)
+            }
+            .padding(.vertical, 12)
+            .background(Color.systemBlack)
+            .overlay(
+                Rectangle()
+                    .stroke(Color.systemBlack, lineWidth: 2)
+            )
+            .padding(.horizontal, 12)
+            
+            // Contenu SCROLLABLE au milieu
+            ScrollView {
                 VStack(spacing: 0) {
                     ForEach(Array(segmentStats.keys.sorted(by: { key1, key2 in
                         guard let stats1 = segmentStats[key1], let stats2 = segmentStats[key2] else { return false }
                         return stats1.percentage > stats2.percentage
                     })), id: \.self) { segment in
-                        // Exclure "Général" de l'affichage
                         if segment != "Général", let stats = segmentStats[segment] {
                             let evolution = calculateEvolution(for: segment)
                             
@@ -104,39 +107,39 @@ struct ShiftStatisticsView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 4))
                         }
                     }
-                    
-                    // Ligne de total
-                    HStack(spacing: 0) {
-                        Text("TOTAL")
-                            .font(.chicago14)
-                            .foregroundStyle(Color.systemWhite)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.leading, 16)
-                        
-                        Text(formatHours(totalHours))
-                            .font(.chicago14)
-                            .foregroundStyle(Color.systemWhite)
-                            .frame(width: 70, alignment: .trailing)
-                        
-                        Text("100%")
-                            .font(.chicago14)
-                            .foregroundStyle(Color.systemWhite)
-                            .frame(width: 50, alignment: .trailing)
-                        
-                        Text("")
-                            .font(.chicago14)
-                            .frame(width: 70, alignment: .trailing)
-                            .padding(.trailing, 16)
-                    }
-                    .padding(.vertical, 14)
-                    .background(Color.systemBlack)
                 }
+                .padding(.horizontal, 12)
             }
+            
+            // Total FIXE en bas
+            HStack(spacing: 0) {
+                Text("TOTAL")
+                    .font(.chicago14)
+                    .foregroundStyle(Color.systemWhite)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 16)
+                
+                Text(formatHours(totalHours))
+                    .font(.chicago14)
+                    .foregroundStyle(Color.systemWhite)
+                    .frame(width: 70, alignment: .trailing)
+                
+                Text("100%")
+                    .font(.chicago14)
+                    .foregroundStyle(Color.systemWhite)
+                    .frame(width: 50, alignment: .trailing)
+                
+                Text("")
+                    .font(.chicago14)
+                    .frame(width: 70, alignment: .trailing)
+                    .padding(.trailing, 16)
+            }
+            .padding(.vertical, 14)
+            .background(Color.systemBlack)
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                Rectangle()
                     .stroke(Color.systemBlack, lineWidth: 2)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 8))
             .padding(.horizontal, 12)
             .padding(.bottom, 12)
         }

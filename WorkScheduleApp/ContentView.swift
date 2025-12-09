@@ -256,15 +256,13 @@ struct ContentView: View {
                 
                 // Si des données existent, afficher les statistiques filtrées
                 if let schedule = viewModel.schedules.first {
-                    ScrollView {
-                        ShiftStatisticsView(
-                            shifts: filteredShifts,
-                            allShifts: schedule.shifts,
-                            selectedPeriod: selectedPeriod,
-                            selectedDate: selectedDate
-                        )
-                        .padding(.top, 8)
-                    }
+                    ShiftStatisticsView(
+                        shifts: filteredShifts,
+                        allShifts: schedule.shifts,
+                        selectedPeriod: selectedPeriod,
+                        selectedDate: selectedDate
+                    )
+                    .padding(.top, 8)
                 } else {
                     Spacer()
                     VStack(spacing: 16) {
