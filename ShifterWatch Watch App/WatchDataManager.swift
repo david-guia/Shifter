@@ -125,6 +125,17 @@ extension WatchDataManager: WCSessionDelegate {
         }
     }
     
+    #if os(iOS)
+    func sessionDidBecomeInactive(_ session: WCSession) {
+        print("⚠️ Session WatchConnectivity inactive")
+    }
+    
+    func sessionDidDeactivate(_ session: WCSession) {
+        print("⚠️ Session WatchConnectivity désactivée")
+        session.activate()
+    }
+    #endif
+    
     /// Réception du contexte applicatif depuis iPhone
     func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
         print("📲 Réception données iPhone...")

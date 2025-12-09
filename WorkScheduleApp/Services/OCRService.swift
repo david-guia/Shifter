@@ -16,7 +16,7 @@ class OCRService {
     
     /// Cache des résultats de parsing pour éviter de reparser le même texte
     /// Limite: 20 entrées maximum pour éviter une croissance infinie
-    private var parseCache: [String: [(date: Date, startTime: Date, endTime: Date, location: String, segment: String)]] = [:]
+    private var parseCache: [String: [(date: Date, startTime: Date, endTime: Date, segment: String)]] = [:]
     private let cacheQueue = DispatchQueue(label: "com.shifter.ocr.cache", attributes: .concurrent)
     
     // MARK: - Regex statiques pré-compilées (optimisation performance)
@@ -53,7 +53,8 @@ class OCRService {
     
     /// Regex pour détecter les segments/catégories de travail
     private static let segmentRegex: NSRegularExpression? = {
-        let pattern = "Shift \\d+|Pause|Break|Training|Meeting|Setup|Opening|Closing|General"
+        // Détecte les segments WorkJam spécifiques + segments standards
+        let pattern = "(?:Shift|Sales|Runner|Setup)\\s+\\d+|PZ\\s+On\\s+Point|Pause\\s+repas|Daily\\s+Download|Learn\\s+and\\s+Grow|Avenues|Break|Training|Meeting|Opening|Closing"
         return try? NSRegularExpression(pattern: pattern, options: .caseInsensitive)
     }()
     
@@ -162,8 +163,8 @@ class OCRService {
     
     /// Parse le texte OCR pour extraire les shifts avec toutes leurs informations
     /// Utilise un cache pour éviter de reparser le même texte plusieurs fois
-    /// Retourne: [(date, startTime, endTime, location, segment)]
-    func parseScheduleText(_ text: String) -> [(date: Date, startTime: Date, endTime: Date, location: String, segment: String)] {
+    /// Retourne: [(date, startTime, endTime, segment)]
+    func parseScheduleText(_ text: String) -> [(date: Date, startTime: Date, endTime: Date, segment: String)] {
         // Vérifier le cache en premier (optimisation)
         let cacheKey = text.trimmingCharacters(in: .whitespacesAndNewlines)
         
@@ -189,9 +190,9 @@ class OCRService {
     }
     
     /// Effectue le parsing réel du texte OCR
-    /// Analyse ligne par ligne pour détecter dates, horaires, lieux et segments
-    private func performParsing(_ text: String) -> [(date: Date, startTime: Date, endTime: Date, location: String, segment: String)] {
-        var shifts: [(date: Date, startTime: Date, endTime: Date, location: String, segment: String)] = []
+    /// Analyse ligne par ligne pour détecter dates, horaires et segments
+    private func performParsing(_ text: String) -> [(date: Date, startTime: Date, endTime: Date, segment: String)] {
+        var shifts: [(date: Date, startTime: Date, endTime: Date, segment: String)] = []
         let lines = text.components(separatedBy: .newlines)
         
         print("🔍 Parsing \(lines.count) lignes...")
@@ -212,7 +213,6 @@ class OCRService {
         
         // Variables de contexte pour le parsing ligne par ligne
         var currentDate: Date?
-        var currentLocation = "Non spécifié"
         var currentSegment = "Général"
         var isInSegmentsSection = false
         
@@ -241,7 +241,6 @@ class OCRService {
                             date: mainDate,
                             startTime: segmentTime.start,
                             endTime: segmentTime.end,
-                            location: currentLocation,
                             segment: segmentTime.segment
                         ))
                     }
@@ -259,15 +258,9 @@ class OCRService {
                 continue
             }
             
-            // Détection de la section EMPLACEMENT
+            // Détection de la section EMPLACEMENT (désactivée)
             if trimmedLine.uppercased().contains("EMPLACEMENT") {
                 isInSegmentsSection = false
-                continue
-            }
-            
-            // Détection de lieu
-            if let location = detectLocation(in: trimmedLine) {
-                currentLocation = location
                 continue
             }
             
@@ -278,7 +271,8 @@ class OCRService {
                     currentSegment = segment
                     
                     // Chercher l'horaire sur la même ligne ou ligne suivante
-                    if let (start, end) = detectTimeRangeAMPM(in: trimmedLine) {
+                    if let mainDate = shiftMainDate,
+                       let (start, end) = detectTimeRangeAMPM(in: trimmedLine, referenceDate: mainDate) {
                         segmentTimeRanges.append((segment: segment, start: start, end: end))
                         currentSegment = "Général" // Reset
                         continue
@@ -287,7 +281,8 @@ class OCRService {
                 
                 // Si on a déjà un segment en cours, chercher l'horaire
                 if currentSegment != "Général" {
-                    if let (start, end) = detectTimeRangeAMPM(in: trimmedLine) {
+                    if let mainDate = shiftMainDate,
+                       let (start, end) = detectTimeRangeAMPM(in: trimmedLine, referenceDate: mainDate) {
                         segmentTimeRanges.append((segment: currentSegment, start: start, end: end))
                         currentSegment = "Général" // Reset
                         continue
@@ -296,16 +291,16 @@ class OCRService {
             }
             
             // Détection d'horaire format AM/PM (ex: "10:00 AM–11:30 AM")
-            if let (start, end) = detectTimeRangeAMPM(in: trimmedLine),
-               let date = currentDate {
+            if let date = currentDate,
+               let (start, end) = detectTimeRangeAMPM(in: trimmedLine, referenceDate: date) {
                 print("⏰ Horaire AM/PM détecté: \(start)-\(end) dans '\(trimmedLine)'")
-                shifts.append((date: date, startTime: start, endTime: end, location: currentLocation, segment: currentSegment))
+                shifts.append((date: date, startTime: start, endTime: end, segment: currentSegment))
             }
             // Détection d'horaire format 24h (ex: "09:00 - 17:00", "9h-17h")
-            else if let (start, end) = detectTimeRange24H(in: trimmedLine),
-               let date = currentDate {
+            else if let date = currentDate,
+               let (start, end) = detectTimeRange24H(in: trimmedLine, referenceDate: date) {
                 print("⏰ Horaire 24h détecté: \(start)-\(end) dans '\(trimmedLine)'")
-                shifts.append((date: date, startTime: start, endTime: end, location: currentLocation, segment: currentSegment))
+                shifts.append((date: date, startTime: start, endTime: end, segment: currentSegment))
             }
         }
         
@@ -316,7 +311,6 @@ class OCRService {
                     date: mainDate,
                     startTime: segmentTime.start,
                     endTime: segmentTime.end,
-                    location: currentLocation,
                     segment: segmentTime.segment
                 ))
             }
@@ -511,18 +505,58 @@ class OCRService {
     }
     
     private func detectSegment(in text: String) -> String? {
-        // Utiliser regex statique pr\u00e9-compil\u00e9e pour segments
+        // Utiliser regex statique pré-compilée pour segments
         if let regex = Self.segmentRegex,
            let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) {
-            return (text as NSString).substring(with: match.range)
+            let detectedSegment = (text as NSString).substring(with: match.range)
+            // Normaliser les espaces multiples et capitalisation
+            let normalized = detectedSegment
+                .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+                .trimmingCharacters(in: .whitespaces)
+            
+            // Normaliser "Shift X" avec majuscule
+            if normalized.lowercased().hasPrefix("shift") {
+                let components = normalized.components(separatedBy: .whitespaces)
+                if components.count == 2, let number = Int(components[1]) {
+                    return "Shift \(number)"
+                }
+            }
+            
+            return normalized
         }
         
-        // Si c'est une ligne qui ne contient pas d'horaire mais du texte, c'est probablement un segment
-        if !text.contains("AM") && !text.contains("PM") && !text.contains(":") && text.count > 3 {
-            // Nettoyer le texte des caractères spéciaux
-            let cleaned = text.trimmingCharacters(in: CharacterSet.letters.inverted)
-            if !cleaned.isEmpty {
-                return cleaned
+        // Ne plus accepter n'importe quel texte comme segment
+        // Si c'est une ligne connue sans horaire, on peut l'accepter
+        let knownSegments = [
+            "Pause repas", "Daily Download", "Learn and Grow", "Avenues",
+            "PZ On Point", "Break", "Training", "Meeting", "Opening", "Closing"
+        ]
+        
+        for known in knownSegments {
+            if text.lowercased().contains(known.lowercased()) {
+                return known
+            }
+        }
+        
+        // Détecter "Shift X", "Sales X", "Runner X", "Setup X" avec variations
+        let patterns = [
+            ("shift", "Shift"),
+            ("sales", "Sales"),
+            ("runner", "Runner"),
+            ("setup", "Setup")
+        ]
+        
+        for (keyword, prefix) in patterns {
+            if text.lowercased().contains(keyword) {
+                let pattern = "\(keyword)\\s+(\\d+)"
+                if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+                   let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+                   match.numberOfRanges > 1 {
+                    let numberRange = match.range(at: 1)
+                    if let number = Int((text as NSString).substring(with: numberRange)) {
+                        return "\(prefix) \(number)"
+                    }
+                }
             }
         }
         
@@ -542,8 +576,8 @@ class OCRService {
         return nil
     }
     
-    private func detectTimeRangeAMPM(in text: String) -> (Date, Date)? {
-        // Utiliser regex statique pr\u00e9-compil\u00e9e
+    private func detectTimeRangeAMPM(in text: String, referenceDate: Date = Date()) -> (Date, Date)? {
+        // Utiliser regex statique pré-compilée
         guard let regex = Self.timeRangeAMPMRegex,
               let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) else {
             return nil
@@ -573,39 +607,34 @@ class OCRService {
         }
         
         let calendar = Calendar.current
-        let today = Date()
         
-        guard let startTime = calendar.date(bySettingHour: startHour24, minute: startMin, second: 0, of: today),
-              let endTime = calendar.date(bySettingHour: endHour24, minute: endMin, second: 0, of: today) else {
+        guard let startTime = calendar.date(bySettingHour: startHour24, minute: startMin, second: 0, of: referenceDate),
+              let endTime = calendar.date(bySettingHour: endHour24, minute: endMin, second: 0, of: referenceDate) else {
             return nil
         }
         
         return (startTime, endTime)
     }
     
-    private func detectTimeRange24H(in text: String) -> (Date, Date)? {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
+    private func detectTimeRange24H(in text: String, referenceDate: Date = Date()) -> (Date, Date)? {
+        let calendar = Calendar.current
         
         // Essayer regex1 (format avec h: optionnel)
         if let regex = Self.timeRange24HRegex1,
            let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) {
                 
-                let startHour = (text as NSString).substring(with: match.range(at: 1))
+                let startHour = Int((text as NSString).substring(with: match.range(at: 1))) ?? 0
                 let startMin = match.numberOfRanges > 2 && match.range(at: 2).location != NSNotFound
-                    ? (text as NSString).substring(with: match.range(at: 2))
-                    : "00"
+                    ? Int((text as NSString).substring(with: match.range(at: 2))) ?? 0
+                    : 0
                 
-                let endHour = (text as NSString).substring(with: match.range(at: 3))
+                let endHour = Int((text as NSString).substring(with: match.range(at: 3))) ?? 0
                 let endMin = match.numberOfRanges > 4 && match.range(at: 4).location != NSNotFound
-                    ? (text as NSString).substring(with: match.range(at: 4))
-                    : "00"
+                    ? Int((text as NSString).substring(with: match.range(at: 4))) ?? 0
+                    : 0
                 
-                let startString = "\(startHour):\(startMin)"
-                let endString = "\(endHour):\(endMin)"
-                
-                if let startTime = formatter.date(from: startString),
-                   let endTime = formatter.date(from: endString) {
+                if let startTime = calendar.date(bySettingHour: startHour, minute: startMin, second: 0, of: referenceDate),
+                   let endTime = calendar.date(bySettingHour: endHour, minute: endMin, second: 0, of: referenceDate) {
                     return (startTime, endTime)
                 }
             }
@@ -614,17 +643,14 @@ class OCRService {
         if let regex = Self.timeRange24HRegex2,
            let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) {
             
-            let startHour = (text as NSString).substring(with: match.range(at: 1))
-            let startMin = (text as NSString).substring(with: match.range(at: 2))
+            let startHour = Int((text as NSString).substring(with: match.range(at: 1))) ?? 0
+            let startMin = Int((text as NSString).substring(with: match.range(at: 2))) ?? 0
             
-            let endHour = (text as NSString).substring(with: match.range(at: 3))
-            let endMin = (text as NSString).substring(with: match.range(at: 4))
+            let endHour = Int((text as NSString).substring(with: match.range(at: 3))) ?? 0
+            let endMin = Int((text as NSString).substring(with: match.range(at: 4))) ?? 0
             
-            let startString = "\(startHour):\(startMin)"
-            let endString = "\(endHour):\(endMin)"
-            
-            if let startTime = formatter.date(from: startString),
-               let endTime = formatter.date(from: endString) {
+            if let startTime = calendar.date(bySettingHour: startHour, minute: startMin, second: 0, of: referenceDate),
+               let endTime = calendar.date(bySettingHour: endHour, minute: endMin, second: 0, of: referenceDate) {
                 return (startTime, endTime)
             }
         }

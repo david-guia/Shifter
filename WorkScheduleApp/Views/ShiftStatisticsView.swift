@@ -139,8 +139,6 @@ struct ShiftStatisticsView: View {
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .padding(.horizontal, 12)
             .padding(.bottom, 12)
-            
-            Spacer()
         }
         .onAppear {
             updateStatsIfNeeded()

@@ -124,7 +124,6 @@ class ScheduleViewModel: ObservableObject {
                     Calendar.current.isDate(existing.date, inSameDayAs: parsed.date) &&
                     Calendar.current.isDate(existing.startTime, equalTo: parsed.startTime, toGranularity: .minute) &&
                     Calendar.current.isDate(existing.endTime, equalTo: parsed.endTime, toGranularity: .minute) &&
-                    existing.location == parsed.location &&
                     existing.segment == parsed.segment
                 }
                 
@@ -133,7 +132,7 @@ class ScheduleViewModel: ObservableObject {
                         date: parsed.date,
                         startTime: parsed.startTime,
                         endTime: parsed.endTime,
-                        location: parsed.location,
+                        location: "—", // Valeur par défaut (non utilisée)
                         segment: parsed.segment
                     )
                     shift.schedule = schedule
@@ -388,9 +387,7 @@ class ScheduleViewModel: ObservableObject {
                     date: shift.date,
                     startTime: shift.startTime,
                     endTime: shift.endTime,
-                    location: shift.location,
-                    segment: shift.segment,
-                    notes: shift.notes
+                    segment: shift.segment
                 )
             }
         )
@@ -419,41 +416,49 @@ class ScheduleViewModel: ObservableObject {
         // Créer un répertoire temporaire
         let tempDir = FileManager.default.temporaryDirectory
         let zipURL = tempDir.appendingPathComponent("\(filename).zip")
-        let jsonURL = tempDir.appendingPathComponent("\(filename).json")
+        
+        // Créer un dossier temporaire pour le contenu à zipper
+        let workDir = tempDir.appendingPathComponent("shifter_export_\(UUID().uuidString)")
         
         do {
-            // Écrire le JSON dans un fichier temporaire
-            try jsonData.write(to: jsonURL)
+            // Créer le dossier de travail
+            try FileManager.default.createDirectory(at: workDir, withIntermediateDirectories: true)
             
-            // Créer l'archive ZIP en utilisant l'API native
+            // Écrire le JSON dans le dossier de travail
+            let jsonFileInWorkDir = workDir.appendingPathComponent("\(filename).json")
+            try jsonData.write(to: jsonFileInWorkDir)
+            
+            // Supprimer le ZIP existant si présent
+            if FileManager.default.fileExists(atPath: zipURL.path) {
+                try FileManager.default.removeItem(at: zipURL)
+            }
+            
+            // Créer l'archive ZIP avec NSFileCoordinator
             let coordinator = NSFileCoordinator()
-            var error: NSError?
+            var coordinatorError: NSError?
             
-            coordinator.coordinate(readingItemAt: jsonURL, options: .forUploading, error: &error) { zipURLFromCoordinator in
+            coordinator.coordinate(readingItemAt: workDir, options: [.forUploading], error: &coordinatorError) { zipURLFromCoordinator in
                 do {
-                    // Supprimer le ZIP existant si présent
-                    if FileManager.default.fileExists(atPath: zipURL.path) {
-                        try FileManager.default.removeItem(at: zipURL)
-                    }
-                    
-                    // Copier le fichier zippé
                     try FileManager.default.copyItem(at: zipURLFromCoordinator, to: zipURL)
                 } catch {
-                    print("Erreur lors de la création du ZIP: \(error)")
+                    print("❌ Erreur copie ZIP: \(error)")
                 }
             }
             
-            if let error = error {
-                print("Erreur coordination: \(error)")
+            if let error = coordinatorError {
+                print("❌ Erreur coordination: \(error)")
+                try? FileManager.default.removeItem(at: workDir)
                 return nil
             }
             
-            // Nettoyer le fichier JSON temporaire
-            try? FileManager.default.removeItem(at: jsonURL)
+            // Nettoyer le dossier de travail
+            try? FileManager.default.removeItem(at: workDir)
             
+            print("✅ ZIP créé: \(zipURL.path)")
             return zipURL
         } catch {
-            print("Erreur lors de l'export ZIP: \(error)")
+            print("❌ Erreur export ZIP: \(error)")
+            try? FileManager.default.removeItem(at: workDir)
             return nil
         }
     }
@@ -487,9 +492,9 @@ class ScheduleViewModel: ObservableObject {
                     date: shiftData.date,
                     startTime: shiftData.startTime,
                     endTime: shiftData.endTime,
-                    location: shiftData.location,
+                    location: "Non spécifié",
                     segment: shiftData.segment,
-                    notes: shiftData.notes,
+                    notes: "",
                     isConfirmed: true
                 )
                 shift.schedule = schedule
@@ -537,7 +542,5 @@ struct ShiftExport: Codable {
     let date: Date
     let startTime: Date
     let endTime: Date
-    let location: String
     let segment: String
-    let notes: String
 }

@@ -98,6 +98,14 @@ struct ContentView: View {
         }
     }
     
+    // Logo Shifter avec fallback
+    private var logoView: some View {
+        Image("ShifterLogo")
+            .resizable()
+            .scaledToFit()
+            .frame(height: 45)
+    }
+    
     var body: some View {
         ZStack {
             // Couleur de fond beige style macOS classique
@@ -105,37 +113,37 @@ struct ContentView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // MARK: - Header avec titre et bouton menu
-                HStack(spacing: 0) {
-                    Text("Shifter")
-                        .font(.custom("Chicago", size: 32))
-                        .fontWeight(.bold)
-                        .foregroundStyle(Color.systemBlack)
-                    
-                    if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
-                        Text("  version : \(version)")
-                            .font(.system(size: 13, weight: .medium, design: .monospaced))
-                            .foregroundStyle(Color.systemBlack.opacity(0.6))
-                            .padding(.leading, 2)
+                // MARK: - Header avec titre et bouton menu (FIXE)
+                HStack(alignment: .center, spacing: 0) {
+                    // Groupe logo + infos à gauche
+                    HStack(spacing: 6) {
+                        logoView
+                        
+                        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("\(version)")
+                                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                    .foregroundStyle(Color.systemBlack.opacity(0.6))
+                                
+                                // Badge du timer de certificat développeur
+                                HStack(spacing: 3) {
+                                    Text(daysRemaining == 0 ? "⏱️" : "🕐")
+                                        .font(.system(size: 10))
+                                    Text("\(daysRemaining)j")
+                                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                                }
+                                .foregroundStyle(expiryBadgeColor)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(expiryBadgeColor.opacity(0.2))
+                                .cornerRadius(3)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 3)
+                                        .stroke(expiryBadgeColor, lineWidth: 1)
+                                )
+                            }
+                        }
                     }
-                    
-                    // Badge du timer de certificat développeur
-                    HStack(spacing: 3) {
-                        Text(daysRemaining == 0 ? "⏱️" : "🕐")
-                            .font(.system(size: 12))
-                        Text("\(daysRemaining)j")
-                            .font(.system(size: 11, weight: .bold, design: .rounded))
-                    }
-                    .foregroundStyle(expiryBadgeColor)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(expiryBadgeColor.opacity(0.2))
-                    .cornerRadius(4)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(expiryBadgeColor, lineWidth: 1)
-                    )
-                    .padding(.leading, 24)
                     
                     Spacer() // Pousse le menu vers la droite
                     
@@ -159,8 +167,9 @@ struct ContentView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 20)
                 .padding(.bottom, 16)
+                .background(Color.systemBeige) // Fond fixe
                 
-                // MARK: - Sélecteur de période et navigation temporelle
+                // MARK: - Sélecteur de période et navigation temporelle (FIXE)
                 
                 // Afficher uniquement si des données existent
                 if viewModel.schedules.first != nil {
@@ -240,19 +249,22 @@ struct ContentView: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 12)
+                    .background(Color.systemBeige) // Fond fixe
                 }
                 
-                // MARK: - Zone d'affichage des statistiques
+                // MARK: - Zone d'affichage des statistiques (SCROLLABLE)
                 
                 // Si des données existent, afficher les statistiques filtrées
                 if let schedule = viewModel.schedules.first {
-                    ShiftStatisticsView(
-                        shifts: filteredShifts,
-                        allShifts: schedule.shifts,
-                        selectedPeriod: selectedPeriod,
-                        selectedDate: selectedDate
-                    )
+                    ScrollView {
+                        ShiftStatisticsView(
+                            shifts: filteredShifts,
+                            allShifts: schedule.shifts,
+                            selectedPeriod: selectedPeriod,
+                            selectedDate: selectedDate
+                        )
                         .padding(.top, 8)
+                    }
                 } else {
                     Spacer()
                     VStack(spacing: 16) {
