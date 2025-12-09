@@ -1,12 +1,14 @@
 # 📱 Shifter
 
-> Application iOS pour la gestion et l'analyse d'horaires de travail avec importation OCR automatique et widgets interactifs
+> Application iOS pour la gestion et l'analyse d'horaires de travail avec importation OCR automatique, widgets interactifs et support Apple Watch
 
 [![Swift 5.9+](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
 [![iOS 18.0+](https://img.shields.io/badge/iOS-18.0+-blue.svg)](https://www.apple.com/ios/)
+[![watchOS 11.0+](https://img.shields.io/badge/watchOS-11.0+-red.svg)](https://www.apple.com/watchos/)
 [![SwiftUI](https://img.shields.io/badge/SwiftUI-Latest-green.svg)](https://developer.apple.com/xcode/swiftui/)
 [![SwiftData](https://img.shields.io/badge/SwiftData-Latest-purple.svg)](https://developer.apple.com/xcode/swiftdata/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.3.0-brightgreen.svg)](https://github.com/david-guia/Shifter/releases/tag/v1.3.0)
 
 ---
 
@@ -28,9 +30,11 @@ Les employés utilisant **WorkJam** pour leurs horaires reçoivent leurs plannin
 ✅ **Import OCR ultra-rapide depuis WorkJam** : Capture d'écran → Reconnaissance texte → Shifts importés avec segments automatiquement  
 ✅ **Segmentation détaillée par type de shift** : Analyse précise de la répartition horaire (Shift 1, Shift 2, Shift 3, Pause, etc.)  
 ✅ **Statistiques intelligentes** : Analyse comparative par mois/trimestre/année avec % et delta par segment  
-✅ **Widgets iOS natifs** : Accès instantané aux 3 segments prioritaires depuis l'écran d'accueil  
+✅ **Widgets iOS natifs** : Accès instantané aux 3 segments prioritaires depuis l'écran d'accueil et écran verrouillé  
+✅ **Apple Watch Support** : Synchronisation automatique iPhone ↔ Watch avec statistiques trimestrielles  
 ✅ **Backup automatique** : Restauration des données après réinstallation  
 ✅ **Interface rétro-moderne** : Inspirée de system.css (esthétique macOS classique)  
+✅ **Performance optimisée** : 0 logs en production, regex pré-compilées, cache intelligent  
 
 ---
 
@@ -56,37 +60,44 @@ Les employés utilisant **WorkJam** pour leurs horaires reçoivent leurs plannin
 
 | Composant | Technologie | Rôle |
 |-----------|-------------|------|
-| **Framework UI** | SwiftUI | Interface déclarative native iOS |
+| **Framework UI** | SwiftUI | Interface déclarative native iOS + watchOS |
 | **Persistance** | SwiftData | ORM moderne avec ModelContainer partagé |
 | **OCR** | Vision Framework | Reconnaissance de texte dans les images |
-| **Widgets** | WidgetKit | Widgets natifs iOS (Small/Medium/Large) |
-| **Partage de données** | App Groups | Conteneur partagé app ↔ widget |
+| **Widgets** | WidgetKit | Widgets natifs iOS (Home + Lock Screen) |
+| **Apple Watch** | WatchConnectivity | Synchronisation iPhone ↔ Watch |
+| **Partage de données** | App Groups | Conteneur partagé app ↔ widget ↔ watch |
 | **Cache** | UserDefaults + JSON | Backup automatique et restauration |
 
 ### Structure du Projet
 
 ```
 Shifter/
-├── WorkScheduleApp/                    # Application principale
-│   ├── WorkScheduleAppApp.swift        # Point d'entrée avec ModelContainer
+├── WorkScheduleApp/                    # Application principale iOS
+│   ├── WorkScheduleAppApp.swift        # Point d'entrée avec ModelContainer + WatchConnectivity
 │   ├── ContentView.swift               # Vue principale (statistiques + filtres)
+│   ├── WatchConnectivityManager.swift  # Gestion synchronisation iPhone ↔ Watch
 │   ├── Models/
 │   │   ├── WorkSchedule.swift          # Modèle SwiftData (collection de shifts)
 │   │   └── Shift.swift                 # Modèle SwiftData (shift individuel)
 │   ├── ViewModels/
-│   │   └── ScheduleViewModel.swift     # Logique métier (OCR, backup, export)
+│   │   └── ScheduleViewModel.swift     # Logique métier (OCR, backup, export, sync Watch)
 │   ├── Views/
 │   │   ├── ManageDataView.swift        # Gestion des shifts (liste/suppression)
 │   │   ├── ShiftStatisticsView.swift   # Statistiques détaillées par segment
-│   │   └── SystemCSSTheme.swift        # Thème visuel system.css
+│   │   ├── SystemCSSTheme.swift        # Thème visuel system.css
+│   │   └── AboutView.swift             # Page À Propos avec logo rond
 │   ├── Services/
-│   │   └── OCRService.swift            # Service de reconnaissance de texte (636 lignes)
+│   │   └── OCRService.swift            # Service de reconnaissance de texte (696 lignes)
 │   └── Helpers/
 │       ├── FiscalCalendarHelper.swift  # Logique trimestres fiscaux (Q1-Q4)
 │       └── DateFormatterCache.swift    # Cache pour formatage de dates
 │
+├── ShifterWatch Watch App/             # Application Apple Watch
+│   ├── WatchDataManager.swift          # Réception données depuis iPhone
+│   └── Top3View.swift                  # Interface Watch (Top 3 shifts trimestriels)
+│
 ├── ShifterWidget/                      # Widget iOS (WidgetKit)
-│   ├── ShifterWidget.swift             # Vues Small/Medium/Large + TimelineProvider
+│   ├── ShifterWidget.swift             # Vues Home Screen + Lock Screen + TimelineProvider
 │   ├── WidgetDataProvider.swift        # Accès SwiftData depuis le widget
 │   └── ShifterWidgetBundle.swift       # Configuration du widget
 │
@@ -129,6 +140,7 @@ Shifter/
 │     - Sauvegarde dans ModelContainer (App Group)                │
 │     - Backup JSON automatique (Documents/)                      │
 │     - Actualisation widget (WidgetCenter.reloadAllTimelines())  │
+│     - Synchronisation Apple Watch (WatchConnectivityManager)    │
 └─────────────────────────────────────────────────────────────────┘
                             │
                             ▼
@@ -143,9 +155,24 @@ Shifter/
                 │                               │
                 ▼                               ▼
     ┌───────────────────┐         ┌───────────────────────┐
-    │  Application      │         │  Widget iOS           │
+    │  Application iOS  │         │  Widget iOS           │
     │  (Statistiques)   │         │  (Top 3 Shifts)       │
     └───────────────────┘         └───────────────────────┘
+                │
+                ▼
+    ┌───────────────────────────────────────────┐
+    │  WatchConnectivityManager                 │
+    │  - Synchronisation iPhone ↔ Watch         │
+    │  - Envoi Top 3 + trimestre actuel         │
+    └───────────────────────────────────────────┘
+                │
+                ▼
+    ┌───────────────────────────────────────────┐
+    │  Apple Watch                              │
+    │  - Affichage Top 3 shifts                 │
+    │  - Statistiques trimestrielles            │
+    │  - Design macOS Classic                   │
+    └───────────────────────────────────────────┘
 ```
 
 ---
@@ -224,9 +251,11 @@ Service de reconnaissance de texte avec **636 lignes** de logique complexe.
 
 #### Optimisations Avancées
 
-1. **Regex pré-compilées** (static) : Évite la recompilation à chaque parsing
+1. **Regex pré-compilées** (`static let`) : Évite la recompilation à chaque parsing
 2. **Cache de parsing** : Stocke jusqu'à 20 résultats récents
 3. **Queue concurrente** : Thread-safe avec `DispatchQueue.concurrent`
+4. **Logs conditionnels** : `#if DEBUG` pour 0 logs en production
+5. **20 segments OCR** : Setup, Cycle Counts, GB On Point, Connection, Roundtable, Onboarding, Visuals, etc.
 
 #### Exemple de Parsing
 
@@ -273,6 +302,9 @@ func importScheduleFromImage(_ image: UIImage) async {
     
     // 5. Actualisation widget
     WidgetCenter.shared.reloadAllTimelines()
+    
+    // 6. Synchronisation Apple Watch
+    syncToWatch()
 }
 ```
 
@@ -328,9 +360,15 @@ ShifterWidget.swift
 │   └── getTimeline()          → Entrées timeline (rafraîchissement horaire)
 │
 ├── ShifterWidgetEntryView
-│   ├── SmallWidgetView        → Segment #1 avec %
-│   ├── MediumWidgetView       → Top 3 segments (liste compacte)
-│   └── LargeWidgetView        → Top 3 segments (cartes détaillées)
+│   ├── Home Screen Widgets
+│   │   ├── SmallWidgetView        → Segment #1 avec %
+│   │   ├── MediumWidgetView       → Top 3 segments (liste compacte)
+│   │   └── LargeWidgetView        → Top 3 segments (cartes détaillées)
+│   │
+│   └── Lock Screen Widgets
+│       ├── CircularView           → % segment principal
+│       ├── RectangularView        → Nom shift + %
+│       └── InlineView             → Label trimestre
 │
 └── WidgetDataProvider
     ├── getTop3ShiftsWithStats() → [(segment, heures, %, delta)]
@@ -414,14 +452,84 @@ modelContainer = try ModelContainer(for: schema, configurations: [modelConfigura
 
 **Déclencheurs de rafraîchissement** :
 - Import de nouveaux shifts → `WidgetCenter.shared.reloadAllTimelines()`
-- Suppression de shift → `WidgetCenter.shared.reloadAllTimelines()`
-- Suppression complète → `WidgetCenter.shared.reloadAllTimelines()`
+- Suppression de shift → `WidgetCenter.shared.reloadAllTimelines()` + `syncToWatch()`
+- Suppression complète → `WidgetCenter.shared.reloadAllTimelines()` + `syncToWatch()`
 - Timeline automatique → Toutes les heures
 
 **Filtrage Widget** :
 - Exclut segment `"Général"` (comme l'app principale)
 - Garde uniquement les shifts du trimestre fiscal en cours
 - Calcule delta vs trimestre précédent
+
+---
+
+## ⌚ Apple Watch Support (v1.3.0+)
+
+### WatchConnectivityManager
+
+Gestion de la synchronisation bidirectionnelle iPhone ↔ Apple Watch.
+
+**Fonctionnalités**
+- ✅ **Synchronisation automatique** : Top 3 shifts envoyés après chaque import/suppression
+- ✅ **Données trimestrielles** : Label trimestre fiscal (Q1-Q4) + heures totales
+- ✅ **Optimisé pour Watch** : Filtrage segments pertinents (exclut "Général")
+- ✅ **Logs conditionnels** : Debug activé uniquement en mode développement
+
+**Architecture de Synchronisation**
+
+```swift
+// iPhone → Watch
+WatchConnectivityManager.shared.syncTop3FromShifts(allShifts)
+    ↓
+WCSession.default.updateApplicationContext([
+    "top3": [
+        ["segment": "Shift 1", "hours": 46.5, "percentage": 42.3],
+        ["segment": "Shift 2", "hours": 35.0, "percentage": 31.8],
+        ["segment": "Shift 3", "hours": 28.5, "percentage": 25.9]
+    ],
+    "quarterLabel": "Q2 2025",
+    "totalHours": 110.0
+])
+    ↓
+// Watch → WatchDataManager.session(_:didReceiveApplicationContext:)
+```
+
+### Interface Apple Watch
+
+**Top3View.swift** - Design macOS Classic adapté à watchOS
+
+```
+┌──────────────────────────────┐
+│  Q2 2025      110.0h         │
+│                              │
+│  ┌────────────────────────┐  │
+│  │ Shift 1                │  │
+│  │ 46.5h   42.3%          │  │
+│  └────────────────────────┘  │
+│                              │
+│  ┌────────────────────────┐  │
+│  │ Shift 2                │  │
+│  │ 35.0h   31.8%          │  │
+│  └────────────────────────┘  │
+│                              │
+│  ┌────────────────────────┐  │
+│  │ Shift 3                │  │
+│  │ 28.5h   25.9%          │  │
+│  └────────────────────────┘  │
+└──────────────────────────────┘
+```
+
+**Caractéristiques Design**
+- Fond beige `#EEEEEE` (macOS Classic)
+- Bordures noires 2px
+- Coins arrondis 8px
+- Polices augmentées pour lisibilité watchOS
+- Données simulateur pour tests (mode DEBUG)
+
+**Rafraîchissement**
+- Automatique via `WCSessionDelegate.session(_:didReceiveApplicationContext:)`
+- Aucune action manuelle requise
+- Persistance locale avec `@AppStorage`
 
 ---
 
@@ -664,11 +772,13 @@ View (SwiftUI) → ViewModel (@Published) → Model (SwiftData)
 
 ### Optimisations Implémentées
 
-1. **Index SwiftData** : Requêtes 3x plus rapides
-2. **Cache OCR** : Évite parsing redondant (20 entrées)
-3. **Regex statiques** : Pré-compilation (gain 40% CPU)
-4. **DateFormatterCache** : Formatage dates optimisé
-5. **Logs de production supprimés** : 14 `print()` éliminés
+1. **Index SwiftData** : Requêtes 3x plus rapides sur `date` et `segment`
+2. **Cache OCR** : Évite parsing redondant (20 entrées max)
+3. **Regex statiques** : Pré-compilation avec `static let` (gain 40% CPU)
+4. **DateFormatterCache** : Réutilisation formatters (évite allocations répétées)
+5. **Logs production** : 40 `print()` enveloppés dans `#if DEBUG` (0 logs en Release)
+6. **Compilation wholemodule** : Optimisations cross-fichiers activées
+7. **WatchConnectivity optimisé** : Envoi différentiel uniquement si données changées
 
 ### Tests
 
@@ -694,6 +804,7 @@ View (SwiftUI) → ViewModel (@Published) → Model (SwiftData)
 |----------|-------|----------|
 | **Icône ancienne après update** | Cache iOS | Supprimer app + Redémarrer iPhone + Réinstaller |
 | **Widget vide malgré données** | App Group non configuré | Vérifier entitlements des 3 targets |
+| **Watch vide malgré données** | WatchConnectivity non activé | Vérifier activation dans WorkScheduleAppApp.swift |
 | **OCR ne détecte rien** | Image floue/illisible | Améliorer qualité capture d'écran |
 | **App crash au lancement** | Certificat expiré (>7j) | Rebuilder depuis Xcode avec nouveau certificat |
 | **Backup non restauré** | Certificat différent | Backup manuel JSON uniquement |
@@ -702,23 +813,34 @@ View (SwiftUI) → ViewModel (@Published) → Model (SwiftData)
 
 ## 🗺️ Roadmap
 
-### Version 1.1 (Prochaine)
+### ✅ Version 1.3.0 (Actuelle - 9 Déc 2025)
+- [x] Support Apple Watch complet (WatchConnectivity)
+- [x] Synchronisation automatique iPhone ↔ Watch
+- [x] Widgets Lock Screen iOS 16+
+- [x] 7 nouveaux segments OCR détectés
+- [x] Optimisations performance (40 print() en DEBUG)
+- [x] Polices iOS augmentées (+25-33%)
+- [x] Logo About arrondi (design Watch)
+
+### Version 1.4 (Prochaine - Q1 2026)
 - [ ] Support TestFlight (distribution beta)
+- [ ] Complications Apple Watch
 - [ ] Notifications push pour shifts à venir
 - [ ] Export PDF des statistiques
-- [ ] Mode sombre natif
+- [ ] Mode sombre natif iOS + watchOS
 
-### Version 1.2
+### Version 1.5 (Q2 2026)
 - [ ] Synchronisation iCloud
 - [ ] Support multi-plannings
 - [ ] Graphiques de tendances
 - [ ] Widget interactif (boutons)
+- [ ] Siri Shortcuts
 
-### Version 2.0
+### Version 2.0 (Q3-Q4 2026)
 - [ ] Publication App Store
-- [ ] Support watchOS
 - [ ] Intégration Calendrier iOS
 - [ ] Machine Learning pour prédictions horaires
+- [ ] API REST pour intégrations tierces
 
 ---
 
@@ -770,12 +892,14 @@ SOFTWARE.
 - [SwiftData](https://developer.apple.com/documentation/swiftdata)
 - [WidgetKit](https://developer.apple.com/documentation/widgetkit)
 - [Vision Framework](https://developer.apple.com/documentation/vision)
+- [WatchConnectivity](https://developer.apple.com/documentation/watchconnectivity)
 - [App Groups](https://developer.apple.com/documentation/bundleresources/entitlements/com_apple_security_application-groups)
 
 ### Articles de Référence
 - [Building Widgets with SwiftUI](https://developer.apple.com/design/human-interface-guidelines/widgets)
 - [OCR with Vision Framework](https://developer.apple.com/documentation/vision/recognizing_text_in_images)
 - [SwiftData Best Practices](https://developer.apple.com/videos/play/wwdc2023/10154/)
+- [WatchConnectivity Programming Guide](https://developer.apple.com/documentation/watchconnectivity/wcsession)
 
 ---
 
