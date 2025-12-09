@@ -798,19 +798,6 @@ View (SwiftUI) → ViewModel (@Published) → Model (SwiftData)
 
 ---
 
-## 🐛 Problèmes Connus
-
-| Problème | Cause | Solution |
-|----------|-------|----------|
-| **Icône ancienne après update** | Cache iOS | Supprimer app + Redémarrer iPhone + Réinstaller |
-| **Widget vide malgré données** | App Group non configuré | Vérifier entitlements des 3 targets |
-| **Watch vide malgré données** | WatchConnectivity non activé | Vérifier activation dans WorkScheduleAppApp.swift |
-| **OCR ne détecte rien** | Image floue/illisible | Améliorer qualité capture d'écran |
-| **App crash au lancement** | Certificat expiré (>7j) | Rebuilder depuis Xcode avec nouveau certificat |
-| **Backup non restauré** | Certificat différent | Backup manuel JSON uniquement |
-
----
-
 ## 🗺️ Roadmap
 
 ### ✅ Version 1.3.0 (Actuelle - 9 Déc 2025)
