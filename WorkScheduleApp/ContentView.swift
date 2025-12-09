@@ -6,6 +6,10 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
+#if canImport(ZIPFoundation)
+import ZIPFoundation
+#endif
 import SwiftData
 import PhotosUI
 
@@ -313,6 +317,33 @@ struct ContentView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .animation(.spring(response: 0.3), value: viewModel.showRestoredMessage)
             }
+
+            // Toast d'ajout de shift
+            if let msg = viewModel.addedShiftMessage {
+                VStack {
+                    Spacer()
+
+                    HStack(spacing: 12) {
+                        Text("✅")
+                            .font(.system(size: 20))
+                        Text(msg)
+                            .font(.chicago12)
+                            .foregroundStyle(Color.systemWhite)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Color.black.opacity(0.85))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.systemBlack, lineWidth: 2)
+                    )
+                    .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+                    .padding(.bottom, 80)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(.easeOut(duration: 0.25), value: viewModel.addedShiftMessage)
+            }
             
             // Menu contextuel
             if showingMenu {
@@ -528,6 +559,24 @@ struct ContentView: View {
             viewModel.setModelContext(modelContext)
             updateFilteredShifts()
         }
+        .onReceive(viewModel.$schedules) { _ in
+            // Publisher plus fiable: quand le ViewModel publie des schedules, recalculer
+            updateFilteredShifts()
+        }
+        .onChange(of: showingManageSheet) { _, newValue in
+            // Quand la feuille de gestion se ferme, forcer un refresh (utile après ajout manuel)
+            if !newValue {
+                updateFilteredShifts()
+            }
+        }
+        .onChange(of: selectedDate) { _, _ in
+            // Recalculer quand l'utilisateur change de date / mois
+            updateFilteredShifts()
+        }
+        .onChange(of: selectedPeriod) { _, _ in
+            // Recalculer quand l'utilisateur change la période (Mois/Trimestre/Année)
+            updateFilteredShifts()
+        }
         .sheet(isPresented: $showingExportSheet) {
             if let url = exportFileURL {
                 ExportShareView(fileURL: url, isPresented: $showingExportSheet)
@@ -714,9 +763,7 @@ struct ContentView: View {
             }
             
         case .failure(let error):
-            #if DEBUG
-            print("❌ Erreur sélection PDF: \(error.localizedDescription)")
-            #endif
+            AppLogger.shared.error("❌ Erreur sélection PDF: \(error.localizedDescription)")
         }
     }
     
@@ -743,6 +790,125 @@ struct ContentView: View {
                 .frame(width: 200, height: 80)
             }
         }
+    }
+}
+
+// MARK: - ZIP import handling
+extension ImportView {
+    /// Décompresse l'archive ZIP vers le dossier Documents/Shifter
+    /// Si l'archive contient un fichier JSON, tente d'appeler `viewModel.importFromJSON`
+    func handleImportedZip(_ zipURL: URL) async {
+#if canImport(ZIPFoundation)
+        let fileManager = FileManager.default
+        let docs = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let shifterDir = docs.appendingPathComponent("Shifter", isDirectory: true)
+
+        do {
+            // Créer le dossier Shifter s'il n'existe pas
+            if !fileManager.fileExists(atPath: shifterDir.path) {
+                try fileManager.createDirectory(at: shifterDir, withIntermediateDirectories: true)
+            }
+
+            // Destination temporaire pour l'extraction (utiliser tmp pour éviter de créer des sous-dossiers Shifter)
+            let tempDir = fileManager.temporaryDirectory
+            let dest = tempDir.appendingPathComponent("shifter_unzipped_\(UUID().uuidString)")
+            try fileManager.createDirectory(at: dest, withIntermediateDirectories: true)
+
+            // Décompresser avec ZIPFoundation
+            try fileManager.unzipItem(at: zipURL, to: dest)
+
+            // Parcourir récursivement les fichiers extraits pour trouver des JSON
+            var extractedURLs: [URL] = []
+            if let enumerator = fileManager.enumerator(at: dest, includingPropertiesForKeys: nil) {
+                // Use `nextObject()` loop instead of `for in` to avoid `makeIterator` usage in async context
+                while let next = enumerator.nextObject() as? URL {
+                    extractedURLs.append(next)
+                }
+            }
+
+            let jsonFiles = extractedURLs.filter { $0.pathExtension.lowercased() == "json" }
+
+            guard !jsonFiles.isEmpty else {
+                // Aucun JSON trouvé dans l'archive
+                await MainActor.run {
+                    zipImportError = "Aucun fichier JSON trouvé dans l'archive."
+                }
+                try? fileManager.removeItem(at: dest)
+                return
+            }
+
+            // Préférer un fichier nommé shifts_export_... si présent
+            let preferred = jsonFiles.first(where: { $0.lastPathComponent.hasPrefix("shifts_export_") }) ?? jsonFiles.first!
+
+            // Déplacer / renommer le fichier JSON extrait vers Documents/shifter_auto_backup.json (racine Documents)
+            let backupURL = docs.appendingPathComponent("shifter_auto_backup.json")
+            do {
+                // Supprimer l'ancien backup si présent
+                if fileManager.fileExists(atPath: backupURL.path) {
+                    try fileManager.removeItem(at: backupURL)
+                }
+
+                // Tenter un move pour renommer le fichier (préserve métadonnées)
+                do {
+                    try fileManager.moveItem(at: preferred, to: backupURL)
+                } catch {
+                    // Si move échoue (cross-device), copier le contenu puis supprimer l'original
+                    let jsonContent = try String(contentsOf: preferred, encoding: .utf8)
+                    try jsonContent.write(to: backupURL, atomically: true, encoding: .utf8)
+                    try? fileManager.removeItem(at: preferred)
+                }
+
+                // Importer immédiatement depuis le backup écrit
+                let importedJSON = try String(contentsOf: backupURL, encoding: .utf8)
+                await viewModel.importFromJSON(importedJSON)
+
+                // Si le dossier `Shifter` existe mais est vide, le supprimer pour éviter un dossier vide dans Fichiers
+                if fileManager.fileExists(atPath: shifterDir.path) {
+                    if let children = try? fileManager.contentsOfDirectory(atPath: shifterDir.path), children.isEmpty {
+                        #if DEBUG
+                        print("🔧 Supprimer dossier vide: \(shifterDir.path)")
+                        #endif
+                        try? fileManager.removeItem(at: shifterDir)
+                    }
+                }
+
+                // Nettoyer le dossier temporaire d'extraction
+                try? fileManager.removeItem(at: dest)
+
+                // Signaler succès
+                await MainActor.run {
+                    zipImportError = nil
+                    zipImportSuccess = true
+                }
+                #if DEBUG
+                print("✅ ZIP import réussi, backup écrit à: \(backupURL.path)")
+                #endif
+            } catch {
+                await MainActor.run {
+                    zipImportError = "Impossible de lire/déplacer le JSON: \(error.localizedDescription)"
+                }
+                    try? fileManager.removeItem(at: dest)
+                return
+            }
+
+            // Nettoyer le dossier temporaire
+            try? fileManager.removeItem(at: dest)
+
+            // Signaler succès
+            await MainActor.run {
+                zipImportSuccess = true
+            }
+        } catch {
+            await MainActor.run {
+                zipImportError = "Erreur décompression: \(error.localizedDescription)"
+            }
+        }
+#else
+        // ZIPFoundation non disponible -> afficher erreur guidant l'utilisateur
+        await MainActor.run {
+            zipImportError = "ZIPFoundation manquant. Ajoutez le package SPM https://github.com/weichsel/ZIPFoundation puis reconstruisez."
+        }
+#endif
     }
 }
 
@@ -885,6 +1051,9 @@ struct ImportView: View {
     @ObservedObject var viewModel: ScheduleViewModel
     @Binding var isPresented: Bool
     @State private var jsonText = ""
+    @State private var showingZipImporter = false
+    @State private var zipImportError: String?
+    @State private var zipImportSuccess: Bool = false
     
     var body: some View {
         ZStack {
@@ -976,6 +1145,38 @@ struct ImportView: View {
                 
                 // Boutons en bas
                 VStack(spacing: 16) {
+                    // Importer un fichier ZIP (contenant un export JSON ou des ressources)
+                    Button {
+                        showingZipImporter = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            Text("📦")
+                                .font(.system(size: 20))
+                            Text("Importer un .zip")
+                                .font(.chicago14)
+                        }
+                        .foregroundStyle(Color.systemBlack)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.systemWhite)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.systemBlack, lineWidth: 3)
+                        )
+                        .cornerRadius(8)
+                    }
+                    .fileImporter(isPresented: $showingZipImporter, allowedContentTypes: [UTType.zip], allowsMultipleSelection: false) { result in
+                        switch result {
+                        case .success(let urls):
+                            guard let url = urls.first else { return }
+                            Task {
+                                await handleImportedZip(url)
+                            }
+                        case .failure(let error):
+                            zipImportError = "Erreur sélection fichier: \(error.localizedDescription)"
+                        }
+                    }
+
                     Button {
                         Task {
                             await viewModel.importFromJSON(jsonText)
@@ -1021,6 +1222,18 @@ struct ImportView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 32)
+            }
+
+            // Alert messages for ZIP import
+            .alert("Erreur", isPresented: Binding(get: { zipImportError != nil }, set: { if !$0 { zipImportError = nil } })) {
+                Button("OK", role: .cancel) { zipImportError = nil }
+            } message: {
+                Text(zipImportError ?? "Erreur inconnue")
+            }
+            .alert("Import terminé", isPresented: $zipImportSuccess) {
+                Button("OK", role: .cancel) { zipImportSuccess = false }
+            } message: {
+                Text("L'archive a été décompressée dans le dossier \"Shifter\" de Fichiers.")
             }
             
             // Loading overlay

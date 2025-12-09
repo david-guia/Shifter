@@ -10,24 +10,36 @@ import WebKit
 
 struct ShifterLogoView: View {
     let height: CGFloat
-    
+    @State private var svgString: String? = nil
+
     init(height: CGFloat = 40) {
         self.height = height
     }
-    
+
     var body: some View {
-        if let svgPath = Bundle.main.path(forResource: "shifter", ofType: "svg"),
-           let svgData = try? Data(contentsOf: URL(fileURLWithPath: svgPath)),
-           let svgString = String(data: svgData, encoding: .utf8) {
-            
-            SVGImageView(svgString: svgString, height: height)
-                .frame(height: height)
-        } else {
-            // Fallback si le SVG ne charge pas
-            Text("Shifter")
-                .font(.custom("Chicago", size: 32))
-                .fontWeight(.bold)
-                .foregroundStyle(Color.systemBlack)
+        Group {
+            if let svgString {
+                SVGImageView(svgString: svgString, height: height)
+                    .frame(height: height)
+            } else {
+                // Fallback si le SVG ne charge pas encore
+                Text("Shifter")
+                    .font(.custom("Chicago", size: 32))
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.systemBlack)
+            }
+        }
+        .task {
+            // Charger le SVG en arrière-plan pour éviter de bloquer la UI
+            if svgString == nil, let svgURL = Bundle.main.url(forResource: "shifter", withExtension: "svg") {
+                DispatchQueue.global(qos: .utility).async {
+                    if let data = try? Data(contentsOf: svgURL), let str = String(data: data, encoding: .utf8) {
+                        DispatchQueue.main.async {
+                            svgString = str
+                        }
+                    }
+                }
+            }
         }
     }
 }

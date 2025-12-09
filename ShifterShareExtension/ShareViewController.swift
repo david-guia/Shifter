@@ -16,23 +16,17 @@ class ShareViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        #if DEBUG
-        print("🟢 ShareViewController loaded!")
-        #endif
+        AppLogger.shared.debug("🟢 ShareViewController loaded!")
         view.backgroundColor = UIColor(red: 0.96, green: 0.95, blue: 0.91, alpha: 1.0) // systemBeige
         
         // Extraire l'image partagée
         if let extensionItem = extensionContext?.inputItems.first as? NSExtensionItem,
            let itemProvider = extensionItem.attachments?.first {
             
-            #if DEBUG
-            print("📦 Found item provider")
-            #endif
+            AppLogger.shared.debug("📦 Found item provider")
             handleImageProvider(itemProvider)
         } else {
-            #if DEBUG
-            print("❌ No extension item found")
-            #endif
+            AppLogger.shared.error("❌ No extension item found")
             showError("Aucune image détectée")
         }
     }
@@ -42,28 +36,35 @@ class ShareViewController: UIViewController {
         if itemProvider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
             itemProvider.loadItem(forTypeIdentifier: UTType.image.identifier, options: nil) { [weak self] (item, error) in
                 guard let self = self else { return }
-                
-                DispatchQueue.main.async {
-                    if let error = error {
+
+                if let error = error {
+                    DispatchQueue.main.async {
                         self.showError("Erreur: \(error.localizedDescription)")
-                        return
                     }
-                    
+                    return
+                }
+
+                // Charger / convertir l'image en arrière-plan pour éviter de bloquer l'UI
+                DispatchQueue.global(qos: .userInitiated).async {
                     var imageToProcess: UIImage?
-                    
+
                     // Gérer différents types de données
                     if let image = item as? UIImage {
                         imageToProcess = image
                     } else if let url = item as? URL {
-                        imageToProcess = UIImage(contentsOfFile: url.path)
+                        if let data = try? Data(contentsOf: url) {
+                            imageToProcess = UIImage(data: data)
+                        }
                     } else if let data = item as? Data {
                         imageToProcess = UIImage(data: data)
                     }
-                    
-                    if let image = imageToProcess {
-                        self.saveImageToSharedContainer(image)
-                    } else {
-                        self.showError("Format d'image non supporté")
+
+                    DispatchQueue.main.async {
+                        if let image = imageToProcess {
+                            self.saveImageToSharedContainer(image)
+                        } else {
+                            self.showError("Format d'image non supporté")
+                        }
                     }
                 }
             }
@@ -74,16 +75,12 @@ class ShareViewController: UIViewController {
     
     private func saveImageToSharedContainer(_ image: UIImage) {
         guard let sharedContainer = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) else {
-            #if DEBUG
-            print("❌ Cannot access App Group container")
-            #endif
+            AppLogger.shared.error("❌ Cannot access App Group container")
             showError("Erreur d'accès au conteneur partagé")
             return
         }
         
-        #if DEBUG
-        print("📁 Shared container: \(sharedContainer.path)")
-        #endif
+        AppLogger.shared.debug("📁 Shared container: \(sharedContainer.path)")
         
         // Créer un nom de fichier unique
         let fileName = "shared_image_\(UUID().uuidString).png"
@@ -93,32 +90,22 @@ class ShareViewController: UIViewController {
         if let imageData = image.pngData() {
             do {
                 try imageData.write(to: fileURL)
-                #if DEBUG
-                print("✅ Image saved to: \(fileURL.path)")
-                #endif
+                AppLogger.shared.info("✅ Image saved to: \(fileURL.path)")
                 
                 // Notifier l'app principale
                 UserDefaults(suiteName: appGroupIdentifier)?.set(fileURL.path, forKey: "pendingImagePath")
-                #if DEBUG
-                print("✅ Path saved to UserDefaults")
-                #endif
+                AppLogger.shared.debug("✅ Path saved to UserDefaults")
                 
                 UserDefaults(suiteName: appGroupIdentifier)?.set(Date(), forKey: "pendingImageDate")
-                #if DEBUG
-                print("✅ Date saved: \(Date())")
-                #endif
+                AppLogger.shared.debug("✅ Date saved: \(Date())")
                 
                 showSuccess()
             } catch {
-                #if DEBUG
-                print("❌ Write error: \(error)")
-                #endif
+                AppLogger.shared.error("❌ Write error: \(error)")
                 showError("Erreur de sauvegarde: \(error.localizedDescription)")
             }
         } else {
-            #if DEBUG
-            print("❌ Cannot convert image to PNG")
-            #endif
+            AppLogger.shared.error("❌ Cannot convert image to PNG")
             showError("Impossible de convertir l'image")
         }
     }
