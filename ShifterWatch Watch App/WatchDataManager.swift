@@ -29,7 +29,9 @@ class WatchDataManager: NSObject, ObservableObject {
         // 🧪 DONNÉES DE TEST pour simulateur (retirer en production)
         #if targetEnvironment(simulator)
         if top3Shifts.isEmpty {
+            #if DEBUG
             print("🧪 Chargement données de test simulateur...")
+            #endif
             top3Shifts = [
                 (segment: "Shift 1", hours: 156.5, percentage: 42.3),
                 (segment: "Shift 2", hours: 120.0, percentage: 32.4),
@@ -47,7 +49,9 @@ class WatchDataManager: NSObject, ObservableObject {
     /// Initialise la session WatchConnectivity
     private func setupSession() {
         guard WCSession.isSupported() else {
+            #if DEBUG
             print("⚠️ WatchConnectivity non supporté")
+            #endif
             return
         }
         
@@ -79,7 +83,9 @@ class WatchDataManager: NSObject, ObservableObject {
             defaults.set(lastUpdate.timeIntervalSince1970, forKey: "cachedLastUpdate")
         }
         
+        #if DEBUG
         print("💾 Données cachées localement")
+        #endif
     }
     
     /// Charge les données depuis UserDefaults
@@ -105,7 +111,9 @@ class WatchDataManager: NSObject, ObservableObject {
         }
         
         if !top3Shifts.isEmpty {
+            #if DEBUG
             print("📂 \(top3Shifts.count) shifts chargés depuis cache")
+            #endif
         }
     }
 }
@@ -118,28 +126,36 @@ extension WatchDataManager: WCSessionDelegate {
             self.isConnected = activationState == .activated
         }
         
+        #if DEBUG
         if let error = error {
             print("❌ Erreur activation: \(error.localizedDescription)")
         } else {
             print("✅ WatchConnectivity activé sur Watch")
         }
+        #endif
     }
     
     #if os(iOS)
     func sessionDidBecomeInactive(_ session: WCSession) {
+        #if DEBUG
         print("⚠️ Session WatchConnectivity inactive")
+        #endif
     }
-    
+
     func sessionDidDeactivate(_ session: WCSession) {
+        #if DEBUG
         print("⚠️ Session WatchConnectivity désactivée")
+        #endif
         session.activate()
     }
     #endif
     
     /// Réception du contexte applicatif depuis iPhone
     func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
+        #if DEBUG
         print("📲 Réception données iPhone...")
         print("   Context: \(applicationContext)")
+        #endif
         
         DispatchQueue.main.async {
             // Parser top3
@@ -169,8 +185,10 @@ extension WatchDataManager: WCSessionDelegate {
             
             // Cacher les données
             self.cacheData()
-            
+
+            #if DEBUG
             print("✅ Top 3 reçu: \(self.top3Shifts.count) shifts")
+            #endif
         }
     }
 }

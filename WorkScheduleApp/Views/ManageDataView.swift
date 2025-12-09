@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 struct ManageDataView: View {
     @Environment(\.dismiss) private var dismiss
@@ -16,6 +17,7 @@ struct ManageDataView: View {
     @State private var selectedShiftToDelete: Shift?
     @State private var selectedShiftToEdit: Shift?
     @State private var selectedCalendarDate = Date()
+    @State private var showingAddShiftSheet = false
     
     private var allShifts: [Shift] {
         guard let schedule = viewModel.schedules.first else { return [] }
@@ -201,6 +203,26 @@ struct ManageDataView: View {
                 // Boutons en bas
                 VStack(spacing: 12) {
                     Button {
+                        showingAddShiftSheet = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            Text("➕")
+                                .font(.system(size: 18))
+                            Text("Ajouter un shift")
+                                .font(.chicago14)
+                        }
+                        .foregroundStyle(Color.systemBlack)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.systemWhite)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.systemBlack, lineWidth: 3)
+                        )
+                        .cornerRadius(8)
+                    }
+                    .buttonStyle(.plain)
+                    Button {
                         showingDeleteAllAlert = true
                     } label: {
                         HStack(spacing: 12) {
@@ -270,6 +292,9 @@ struct ManageDataView: View {
         }
         .sheet(item: $selectedShiftToEdit) { shift in
             EditShiftView(viewModel: viewModel, shift: shift, isPresented: .constant(true))
+        }
+        .sheet(isPresented: $showingAddShiftSheet) {
+            ManualShiftView(viewModel: viewModel, isPresented: $showingAddShiftSheet, parentIsPresented: $isPresented)
         }
     }
     
@@ -379,6 +404,184 @@ struct ManageDataView: View {
             return "\(hours)h"
         }
         return String(format: "%dh%02d", hours, minutes)
+    }
+}
+
+// MARK: - Manual Shift View (embedded to avoid adding new target file)
+struct ManualShiftView: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var viewModel: ScheduleViewModel
+    @Binding var isPresented: Bool
+    // Binding optionnel vers la feuille parente (ManageDataView) pour pouvoir la fermer après enregistrement
+    private var parentIsPresented: Binding<Bool>? = nil
+    // Le champ "nom" a été remplacé par un picker `segment` renommé en "Shift"
+    @State private var date: Date = Date()
+    @State private var startTime: Date = Date()
+    @State private var endTime: Date = Calendar.current.date(byAdding: .hour, value: 8, to: Date()) ?? Date()
+    @State private var segment: String = "Général"
+    @State private var customShiftName: String = ""
+    @State private var notes: String = ""
+    
+    let segments: [String]
+
+    init(viewModel: ScheduleViewModel, isPresented: Binding<Bool>, parentIsPresented: Binding<Bool>? = nil) {
+        self.viewModel = viewModel
+        self._isPresented = isPresented
+        self.parentIsPresented = parentIsPresented
+        // Liste restreinte demandée + variantes numérotées générées pour Sales/Runner/Setup
+        var list: [String] = []
+        list.append("Aucun")
+
+        // Sales (variantes numérotées 1..3) — base "Sales" retirée
+        for i in 1...3 { list.append("Sales \(i)") }
+
+        // Runner (uniquement variante 1) — base et Runner 2 retirés
+        list.append("Runner 1")
+
+        // Setup (base seule) — variantes numérotées retirées
+        list.append("Setup")
+
+        // Autres segments demandés
+        list.append(contentsOf: [
+            "PZ On Point",
+            "GB On Point",
+            "Cycle Counts",
+            "Connection",
+            "Roundtable",
+            "Onboarding",
+            "Visuals",
+            "Pause repas",
+            "Daily Download",
+            "Learn and Grow",
+            "Avenues"
+        ])
+
+        self.segments = list
+        if let first = self.segments.first {
+            self._segment = State(initialValue: first)
+        }
+
+        // Définir les heures par défaut: 08:00 -> 19:00 sur la journée sélectionnée
+        let calendar = Calendar.current
+        let now = Date()
+        var startComps = calendar.dateComponents([.year, .month, .day], from: now)
+        startComps.hour = 8
+        startComps.minute = 0
+        var endComps = calendar.dateComponents([.year, .month, .day], from: now)
+        endComps.hour = 19
+        endComps.minute = 0
+
+        let defaultStart = calendar.date(from: startComps) ?? now
+        let defaultEnd = calendar.date(from: endComps) ?? calendar.date(byAdding: .hour, value: 11, to: defaultStart) ?? now
+
+        self._startTime = State(initialValue: defaultStart)
+        self._endTime = State(initialValue: defaultEnd)
+    }
+
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 0) {
+                Form {
+                Section(header: Text("Détails")) {
+                    // Picker 'Shift' (liste restreinte)
+                    Picker("Shift", selection: $segment) {
+                        ForEach(segments, id: \.self) { s in
+                            Text(s)
+                        }
+                    }
+
+                    // Si 'Aucun' sélectionné, afficher un champ pour nom personnalisé
+                    if segment == "Aucun" {
+                        TextField("Nom personnalisé", text: $customShiftName)
+                            .textFieldStyle(.roundedBorder)
+                            .padding(.vertical, 4)
+                    }
+
+                    DatePicker("Jour", selection: $date, displayedComponents: .date)
+
+                    HStack {
+                        DatePicker("Début", selection: $startTime, displayedComponents: .hourAndMinute)
+                        DatePicker("Fin", selection: $endTime, displayedComponents: .hourAndMinute)
+                    }
+                }
+
+                // Section 'Notes' supprimée à la demande (champ inutile en bas de l'écran)
+                }
+                .scrollContentBackground(.hidden)
+                .background(Color.systemBeige)
+
+                // Espace vide pour aérer la feuille
+                Spacer(minLength: 120)
+            }
+            .background(Color.systemBeige.ignoresSafeArea())
+            .navigationTitle("Ajouter un shift")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Annuler") {
+                        isPresented = false
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Enregistrer") {
+                        saveShift()
+                    }
+                    .disabled(!isValid())
+                }
+            }
+        }
+    }
+
+    private func isValid() -> Bool {
+        // Si 'Aucun' est sélectionné, le nom personnalisé doit être non vide
+        if segment == "Aucun" {
+            return startTime < endTime && !customShiftName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+        return startTime < endTime
+    }
+
+    private func saveShift() {
+        guard let schedule = viewModel.schedules.first else {
+            isPresented = false
+            return
+        }
+
+        // Combine selected day with chosen times so the shift is anchored to the chosen date
+        let calendar = Calendar.current
+        func combine(day: Date, time: Date) -> Date {
+            let dayComponents = calendar.dateComponents([.year, .month, .day], from: day)
+            let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: time)
+            var comps = DateComponents()
+            comps.year = dayComponents.year
+            comps.month = dayComponents.month
+            comps.day = dayComponents.day
+            comps.hour = timeComponents.hour
+            comps.minute = timeComponents.minute
+            comps.second = timeComponents.second
+            return calendar.date(from: comps) ?? time
+        }
+
+        let combinedStart = combine(day: date, time: startTime)
+        var combinedEnd = combine(day: date, time: endTime)
+
+        // If end is before or equal to start, assume shift ends next day
+        if combinedEnd <= combinedStart {
+            if let next = calendar.date(byAdding: .day, value: 1, to: combinedEnd) {
+                combinedEnd = next
+            }
+        }
+
+        // Si 'Aucun', utiliser le nom personnalisé comme segment
+        let finalSegment = segment == "Aucun" ? customShiftName.trimmingCharacters(in: .whitespacesAndNewlines) : segment
+
+        viewModel.addManualShift(to: schedule, date: date, startTime: combinedStart, endTime: combinedEnd, location: "", segment: finalSegment, notes: notes)
+        viewModel.syncToWatch()
+        WidgetCenter.shared.reloadAllTimelines()
+
+        // Fermer la feuille d'ajout
+        isPresented = false
+        // Fermer aussi la feuille parente (ManageDataView) pour revenir directement à l'écran principal
+        parentIsPresented?.wrappedValue = false
     }
 }
 

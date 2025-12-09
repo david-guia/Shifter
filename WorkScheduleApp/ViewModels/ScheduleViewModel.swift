@@ -27,6 +27,8 @@ class ScheduleViewModel: ObservableObject {
     
     /// Indicateur pour afficher le toast de restauration automatique
     @Published var showRestoredMessage = false
+    /// Message court affiché en toast après actions (ex: ajout manuel)
+    @Published var addedShiftMessage: String?
     
     // MARK: - Propriétés privées
     
@@ -225,6 +227,14 @@ class ScheduleViewModel: ObservableObject {
             fetchSchedules()
             Task {
                 await saveAutoBackup()
+            }
+            // Afficher un petit toast de confirmation
+            addedShiftMessage = "Shift ajouté"
+            Task {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                await MainActor.run {
+                    self.addedShiftMessage = nil
+                }
             }
         } catch {
             handleError(error)
@@ -438,16 +448,12 @@ class ScheduleViewModel: ObservableObject {
                 do {
                     try FileManager.default.copyItem(at: zipURLFromCoordinator, to: zipURL)
                 } catch {
-                    #if DEBUG
-                    print("❌ Erreur copie ZIP: \(error)")
-                    #endif
+                    AppLogger.shared.error("❌ Erreur copie ZIP: \(error)")
                 }
             }
             
             if let error = coordinatorError {
-                #if DEBUG
-                print("❌ Erreur coordination: \(error)")
-                #endif
+                AppLogger.shared.error("❌ Erreur coordination: \(error)")
                 try? FileManager.default.removeItem(at: workDir)
                 return nil
             }
@@ -455,14 +461,10 @@ class ScheduleViewModel: ObservableObject {
             // Nettoyer le dossier de travail
             try? FileManager.default.removeItem(at: workDir)
             
-            #if DEBUG
-            print("✅ ZIP créé: \(zipURL.path)")
-            #endif
+            AppLogger.shared.info("✅ ZIP créé: \(zipURL.path)")
             return zipURL
         } catch {
-            #if DEBUG
-            print("❌ Erreur export ZIP: \(error)")
-            #endif
+            AppLogger.shared.error("❌ Erreur export ZIP: \(error)")
             try? FileManager.default.removeItem(at: workDir)
             return nil
         }
@@ -521,7 +523,7 @@ class ScheduleViewModel: ObservableObject {
     // MARK: - Apple Watch Support
     
     /// Synchronise les statistiques Top 3 avec l'Apple Watch
-    private func syncToWatch() {
+    func syncToWatch() {
         guard let schedule = schedules.first else {
             #if DEBUG
             print("⚠️ Aucun schedule à synchroniser")
