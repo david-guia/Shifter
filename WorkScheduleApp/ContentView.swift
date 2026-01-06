@@ -66,6 +66,9 @@ struct ContentView: View {
     
     /// Calcule les jours restants avant expiration du certificat développeur (7 jours)
     private var daysRemaining: Int {
+        // Vérifier si c'est une nouvelle installation en comparant le build
+        detectAndResetIfNewInstallation()
+        
         // Récupérer ou initialiser la date d'installation
         if UserDefaults.standard.object(forKey: "firstInstallDate") == nil {
             UserDefaults.standard.set(Date(), forKey: "firstInstallDate")
@@ -79,6 +82,44 @@ struct ContentView: View {
         let expiryDate = Calendar.current.date(byAdding: .day, value: 7, to: installDate)!
         let components = Calendar.current.dateComponents([.day], from: Date(), to: expiryDate)
         return max(0, components.day ?? 0)
+    }
+    
+    /// Détecte une nouvelle installation et réinitialise le timer si nécessaire
+    private func detectAndResetIfNewInstallation() {
+        // Méthode 1: Vérifier le chemin d'installation (change à chaque Cmd+R)
+        let currentAppPath = Bundle.main.bundlePath
+        let storedAppPathKey = "lastKnownAppPath"
+        let storedAppPath = UserDefaults.standard.string(forKey: storedAppPathKey)
+        
+        #if DEBUG
+        print("🔍 Détection installation:")
+        print("   Chemin actuel: \(currentAppPath)")
+        if let stored = storedAppPath {
+            print("   Chemin stocké: \(stored)")
+        } else {
+            print("   Chemin stocké: AUCUN (première installation)")
+        }
+        #endif
+        
+        // Si le chemin a changé, c'est une nouvelle installation
+        if let stored = storedAppPath, stored != currentAppPath {
+            #if DEBUG
+            print("🔄 ✅ NOUVELLE INSTALLATION DÉTECTÉE - Réinitialisation du timer")
+            #endif
+            
+            // Réinitialiser la date d'installation et les alertes
+            UserDefaults.standard.removeObject(forKey: "firstInstallDate")
+            UserDefaults.standard.removeObject(forKey: "lastWarningAlertDate")
+            UserDefaults.standard.removeObject(forKey: "lastUrgentAlertDate")
+        }
+        
+        // Sauvegarder le chemin actuel
+        if storedAppPath != currentAppPath {
+            UserDefaults.standard.set(currentAppPath, forKey: storedAppPathKey)
+            #if DEBUG
+            print("💾 Chemin d'installation sauvegardé")
+            #endif
+        }
     }
     
     /// Calcule les heures restantes (pour affichage détaillé)
@@ -207,7 +248,9 @@ struct ContentView: View {
                         // Navigation temporelle
                         HStack(spacing: 10) {
                             Button {
-                                changeDate(by: -1)
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                    changeDate(by: -1)
+                                }
                             } label: {
                                 Text("◀")
                                     .font(.chicago14)
@@ -233,9 +276,12 @@ struct ContentView: View {
                                         .stroke(Color.systemBlack, lineWidth: 2)
                                 )
                                 .cornerRadius(6)
+                                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: periodLabel)
                             
                             Button {
-                                changeDate(by: 1)
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                    changeDate(by: 1)
+                                }
                             } label: {
                                 Text("▶")
                                     .font(.chicago14)
@@ -267,6 +313,30 @@ struct ContentView: View {
                         selectedDate: selectedDate
                     )
                     .padding(.top, 8)
+                    .id("\(selectedPeriod.rawValue)-\(selectedDate.timeIntervalSince1970)")
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                        removal: .move(edge: .leading).combined(with: .opacity)
+                    ))
+                    .gesture(
+                        DragGesture(minimumDistance: 50)
+                            .onEnded { value in
+                                let horizontalMovement = value.translation.width
+                                
+                                // Swipe de droite à gauche = avancer
+                                if horizontalMovement < -50 {
+                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                        navigatePeriod(forward: true)
+                                    }
+                                }
+                                // Swipe de gauche à droite = reculer
+                                else if horizontalMovement > 50 {
+                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                        navigatePeriod(forward: false)
+                                    }
+                                }
+                            }
+                    )
                 } else {
                     Spacer()
                     VStack(spacing: 16) {
@@ -547,6 +617,16 @@ struct ContentView: View {
         .onChange(of: viewModel.schedules) { _, _ in
             updateFilteredShifts()
         }
+        // Trigger explicite pour forcer le rafraîchissement après toute modification
+        .onChange(of: viewModel.dataRefreshTrigger) { _, _ in
+            updateFilteredShifts()
+        }
+        .onChange(of: showingManageSheet) { _, newValue in
+            // Quand la feuille de gestion se ferme, forcer un refresh (utile après ajout manuel)
+            if !newValue {
+                updateFilteredShifts()
+            }
+        }
         .alert("Erreur", isPresented: $viewModel.showError) {
             SystemButton("OK") {
                 viewModel.showError = false
@@ -559,24 +639,6 @@ struct ContentView: View {
             viewModel.setModelContext(modelContext)
             updateFilteredShifts()
         }
-        .onReceive(viewModel.$schedules) { _ in
-            // Publisher plus fiable: quand le ViewModel publie des schedules, recalculer
-            updateFilteredShifts()
-        }
-        .onChange(of: showingManageSheet) { _, newValue in
-            // Quand la feuille de gestion se ferme, forcer un refresh (utile après ajout manuel)
-            if !newValue {
-                updateFilteredShifts()
-            }
-        }
-        .onChange(of: selectedDate) { _, _ in
-            // Recalculer quand l'utilisateur change de date / mois
-            updateFilteredShifts()
-        }
-        .onChange(of: selectedPeriod) { _, _ in
-            // Recalculer quand l'utilisateur change la période (Mois/Trimestre/Année)
-            updateFilteredShifts()
-        }
         .sheet(isPresented: $showingExportSheet) {
             if let url = exportFileURL {
                 ExportShareView(fileURL: url, isPresented: $showingExportSheet)
@@ -586,7 +648,7 @@ struct ContentView: View {
             ImportView(viewModel: viewModel, isPresented: $showingImportSheet)
         }
         .sheet(isPresented: $showingManageSheet) {
-            ManageDataView(viewModel: viewModel, isPresented: $showingManageSheet)
+            ManageDataView(viewModel: viewModel, isPresented: $showingManageSheet, initialDate: selectedDate)
         }
         .sheet(isPresented: $showingAboutSheet) {
             AboutView(isPresented: $showingAboutSheet)
@@ -688,6 +750,11 @@ struct ContentView: View {
                 selectedDate = newDate
             }
         }
+    }
+    
+    /// Navigation par swipe sur le tableau des statistiques
+    private func navigatePeriod(forward: Bool) {
+        changeDate(by: forward ? 1 : -1)
     }
     
     /// Vérifie l'expiration du certificat développeur et affiche les alertes appropriées

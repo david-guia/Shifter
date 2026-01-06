@@ -18,6 +18,9 @@ class ScheduleViewModel: ObservableObject {
     @Published var schedules: [WorkSchedule] = []
     @Published var selectedSchedule: WorkSchedule?
     
+    /// Trigger pour forcer le rafraîchissement de l'UI (s'incrémente à chaque modification)
+    @Published var dataRefreshTrigger: Int = 0
+    
     /// Indicateur de chargement pendant l'OCR
     @Published var isLoading = false
     
@@ -72,6 +75,12 @@ class ScheduleViewModel: ObservableObject {
         } catch {
             handleError(error)
         }
+    }
+    
+    /// Force le rafraîchissement de l'UI en incrémentant le trigger
+    private func triggerUIRefresh() {
+        dataRefreshTrigger += 1
+        objectWillChange.send()
     }
     
     // MARK: - Import depuis image OCR
@@ -152,6 +161,15 @@ class ScheduleViewModel: ObservableObject {
                 showError = true
             }
             
+            // Sauvegarder le contexte SwiftData
+            try context.save()
+            
+            // Rafraîchir les schedules pour déclencher l'UI update
+            fetchSchedules()
+            
+            // Forcer la republication pour que SwiftUI détecte le changement
+            triggerUIRefresh()
+            
             // Backup automatique après import
             Task {
                 await saveAutoBackup()
@@ -225,6 +243,7 @@ class ScheduleViewModel: ObservableObject {
         do {
             try context.save()
             fetchSchedules()
+            triggerUIRefresh()
             Task {
                 await saveAutoBackup()
             }
@@ -254,6 +273,7 @@ class ScheduleViewModel: ObservableObject {
         do {
             try context.save()
             fetchSchedules()
+            triggerUIRefresh()
             Task {
                 await saveAutoBackup()
             }
@@ -270,6 +290,7 @@ class ScheduleViewModel: ObservableObject {
         do {
             try context.save()
             fetchSchedules()
+            triggerUIRefresh()
             Task {
                 await saveAutoBackup()
             }
@@ -296,6 +317,7 @@ class ScheduleViewModel: ObservableObject {
         do {
             try context.save()
             fetchSchedules()
+            triggerUIRefresh()
             Task {
                 await saveAutoBackup()
             }
@@ -513,6 +535,7 @@ class ScheduleViewModel: ObservableObject {
             try context.save()
             
             fetchSchedules()
+            triggerUIRefresh()
             isLoading = false
         } catch {
             isLoading = false

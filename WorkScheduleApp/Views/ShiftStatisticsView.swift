@@ -32,41 +32,72 @@ struct ShiftStatisticsView: View {
     @State private var lastShiftsHash: Int = 0
     
     var body: some View {
-        VStack(spacing: 0) {
-            // En-tête FIXE en haut
-            HStack(spacing: 0) {
-                Text("Shift")
-                    .font(.chicago14)
-                    .foregroundStyle(Color.systemWhite)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, 16)
-                
-                Text("Heures")
-                    .font(.chicago14)
-                    .foregroundStyle(Color.systemWhite)
-                    .frame(width: 70, alignment: .trailing)
-                
-                Text("%")
-                    .font(.chicago14)
-                    .foregroundStyle(Color.systemWhite)
-                    .frame(width: 50, alignment: .trailing)
-                
-                Text("Δ")
-                    .font(.chicago14)
-                    .foregroundStyle(Color.systemWhite)
-                    .frame(width: 70, alignment: .trailing)
-                    .padding(.trailing, 16)
+        mainContent
+            .onAppear {
+                updateStatsIfNeeded()
             }
-            .padding(.vertical, 12)
-            .background(Color.systemBlack)
+            .onChange(of: shifts) { _, _ in
+                updateStatsIfNeeded()
+            }
+    }
+    
+    // MARK: - Vues extraites pour simplifier le body
+    
+    private var mainContent: some View {
+        VStack(spacing: 0) {
+            headerView
+            scrollableContent
+            totalView
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.systemBlack, lineWidth: 3)
+        )
+        .padding(.horizontal, 12)
+        .padding(.bottom, 12)
+    }
+    
+    private var headerView: some View {
+        HStack(spacing: 0) {
+            Text("Shift")
+                .font(.chicago14)
+                .foregroundStyle(Color.systemWhite)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 16)
             
-            // Contenu SCROLLABLE au milieu
+            Text("Heures")
+                .font(.chicago14)
+                .foregroundStyle(Color.systemWhite)
+                .frame(width: 70, alignment: .trailing)
+            
+            Text("%")
+                .font(.chicago14)
+                .foregroundStyle(Color.systemWhite)
+                .frame(width: 50, alignment: .trailing)
+            
+            Text("Δ")
+                .font(.chicago14)
+                .foregroundStyle(Color.systemWhite)
+                .frame(width: 70, alignment: .trailing)
+                .padding(.trailing, 16)
+        }
+        .padding(.vertical, 12)
+        .background(Color.systemBlack)
+    }
+    
+    private var scrollableContent: some View {
             ScrollView {
                 VStack(spacing: 0) {
-                    ForEach(Array(segmentStats.keys.sorted(by: { key1, key2 in
-                        guard let stats1 = segmentStats[key1], let stats2 = segmentStats[key2] else { return false }
+                    let sortedSegments = segmentStats.keys.sorted { key1, key2 in
+                        guard let stats1 = segmentStats[key1], 
+                              let stats2 = segmentStats[key2] else { 
+                            return false 
+                        }
                         return stats1.percentage > stats2.percentage
-                    })), id: \.self) { segment in
+                    }
+                    
+                    ForEach(sortedSegments, id: \.self) { segment in
                         if segment != "Général", let stats = segmentStats[segment] {
                             let evolution = calculateEvolution(for: segment)
                             
@@ -100,46 +131,33 @@ struct ShiftStatisticsView: View {
                 }
                 .padding(.horizontal, 0)
             }
+    }
+    
+    private var totalView: some View {
+        HStack(spacing: 0) {
+            Text("TOTAL")
+                .font(.chicago14)
+                .foregroundStyle(Color.systemWhite)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 16)
             
-            // Total FIXE en bas
-            HStack(spacing: 0) {
-                Text("TOTAL")
-                    .font(.chicago14)
-                    .foregroundStyle(Color.systemWhite)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, 16)
-                
-                Text(formatHours(totalHours))
-                    .font(.chicago14)
-                    .foregroundStyle(Color.systemWhite)
-                    .frame(width: 70, alignment: .trailing)
-                
-                Text("100%")
-                    .font(.chicago14)
-                    .foregroundStyle(Color.systemWhite)
-                    .frame(width: 50, alignment: .trailing)
-                
-                Text("")
-                    .font(.chicago14)
-                    .frame(width: 70, alignment: .trailing)
-                    .padding(.trailing, 16)
-            }
-            .padding(.vertical, 14)
-            .background(Color.systemBlack)
+            Text(formatHours(totalHours))
+                .font(.chicago14)
+                .foregroundStyle(Color.systemWhite)
+                .frame(width: 70, alignment: .trailing)
+            
+            Text("100%")
+                .font(.chicago14)
+                .foregroundStyle(Color.systemWhite)
+                .frame(width: 50, alignment: .trailing)
+            
+            Text("")
+                .font(.chicago14)
+                .frame(width: 70, alignment: .trailing)
+                .padding(.trailing, 16)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.systemBlack, lineWidth: 3)
-        )
-        .padding(.horizontal, 12)
-        .padding(.bottom, 12)
-        .onAppear {
-            updateStatsIfNeeded()
-        }
-        .onChange(of: shifts.map(\.id)) { _, _ in
-            updateStatsIfNeeded()
-        }
+        .padding(.vertical, 14)
+        .background(Color.systemBlack)
     }
     
     // MARK: - Mémorisation (optimisation)

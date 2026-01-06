@@ -13,11 +13,19 @@ struct ManageDataView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: ScheduleViewModel
     @Binding var isPresented: Bool
+    let initialDate: Date
     @State private var showingDeleteAllAlert = false
     @State private var selectedShiftToDelete: Shift?
     @State private var selectedShiftToEdit: Shift?
-    @State private var selectedCalendarDate = Date()
+    @State private var selectedCalendarDate: Date
     @State private var showingAddShiftSheet = false
+    
+    init(viewModel: ScheduleViewModel, isPresented: Binding<Bool>, initialDate: Date = Date()) {
+        self.viewModel = viewModel
+        self._isPresented = isPresented
+        self.initialDate = initialDate
+        self._selectedCalendarDate = State(initialValue: initialDate)
+    }
     
     private var allShifts: [Shift] {
         guard let schedule = viewModel.schedules.first else { return [] }
@@ -174,24 +182,55 @@ struct ManageDataView: View {
                     .frame(maxHeight: .infinity)
                     .padding(.horizontal, 16)
                 } else {
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            ForEach(shiftsForSelectedMonth) { shift in
-                                ShiftRowView(shift: shift) {
-                                    selectedShiftToEdit = shift
-                                } onDelete: {
-                                    selectedShiftToDelete = shift
+                    List {
+                        ForEach(shiftsForSelectedMonth) { shift in
+                            ShiftRowView(shift: shift)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        selectedShiftToDelete = shift
+                                    } label: {
+                                        VStack(spacing: 4) {
+                                            Image(systemName: "trash.fill")
+                                                .font(.system(size: 20, weight: .semibold))
+                                            Text("Supprimer")
+                                                .font(.system(size: 10, weight: .medium))
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    }
+                                    .tint(.red)
                                 }
-                                
-                                if shift != shiftsForSelectedMonth.last {
-                                    Rectangle()
-                                        .fill(Color.systemBlack)
-                                        .frame(height: 2)
+                                .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                    Button {
+                                        selectedShiftToEdit = shift
+                                    } label: {
+                                        VStack(spacing: 4) {
+                                            Image(systemName: "pencil")
+                                                .font(.system(size: 20, weight: .semibold))
+                                            Text("Modifier")
+                                                .font(.system(size: 10, weight: .medium))
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    }
+                                    .tint(.blue)
                                 }
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                                .listRowBackground(Color.systemWhite)
+                            
+                            if shift != shiftsForSelectedMonth.last {
+                                Rectangle()
+                                    .fill(Color.systemBlack)
+                                    .frame(height: 2)
+                                    .listRowSeparator(.hidden)
+                                    .listRowInsets(EdgeInsets())
+                                    .listRowBackground(Color.systemWhite)
                             }
                         }
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                     .background(Color.systemWhite)
+                    .environment(\.defaultMinListRowHeight, 0)
                     .overlay(
                         Rectangle()
                             .stroke(Color.systemBlack, lineWidth: 2)
@@ -588,17 +627,15 @@ struct ManualShiftView: View {
 // MARK: - Ligne de shift
 struct ShiftRowView: View {
     let shift: Shift
-    let onEdit: () -> Void
-    let onDelete: () -> Void
     
     var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(shift.segment)
                     .font(.chicago12)
                     .foregroundStyle(Color.systemBlack)
                 
-                HStack(spacing: 8) {
+                HStack(spacing: 4) {
                     Text(shift.date.formatted(date: .abbreviated, time: .omitted))
                         .font(.geneva9)
                         .foregroundStyle(Color.systemGray)
@@ -618,39 +655,9 @@ struct ShiftRowView: View {
             Text(shift.durationFormatted)
                 .font(.chicago12)
                 .foregroundStyle(Color.systemBlack)
-                .frame(width: 60, alignment: .trailing)
-            
-            HStack(spacing: 8) {
-                Button {
-                    onEdit()
-                } label: {
-                    Text("✏️")
-                        .font(.system(size: 14))
-                }
-                .buttonStyle(.plain)
-                .frame(width: 32, height: 32)
-                .background(Color.systemBeige)
-                .overlay(
-                    Rectangle()
-                        .stroke(Color.systemBlack, lineWidth: 1)
-                )
-                
-                Button {
-                    onDelete()
-                } label: {
-                    Text("🗑️")
-                        .font(.system(size: 14))
-                }
-                .buttonStyle(.plain)
-                .frame(width: 32, height: 32)
-                .background(Color.systemBeige)
-                .overlay(
-                    Rectangle()
-                        .stroke(Color.systemBlack, lineWidth: 1)
-                )
-            }
         }
-        .padding(12)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
         .background(Color.systemWhite)
     }
 }
