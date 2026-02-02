@@ -19,6 +19,10 @@ struct ManageDataView: View {
     @State private var selectedShiftToEdit: Shift?
     @State private var selectedCalendarDate: Date
     @State private var showingAddShiftSheet = false
+    @State private var dayHoursCache: [Int: TimeInterval] = [:]
+    @State private var cachedAllShifts: [Shift] = []
+    @State private var monthShiftsCache: [Shift] = []
+    @State private var shiftsByDay: [Int: [Shift]] = [:]
     
     init(viewModel: ScheduleViewModel, isPresented: Binding<Bool>, initialDate: Date = Date()) {
         self.viewModel = viewModel
@@ -28,16 +32,30 @@ struct ManageDataView: View {
     }
     
     private var allShifts: [Shift] {
+        if !cachedAllShifts.isEmpty {
+            return cachedAllShifts
+        }
         guard let schedule = viewModel.schedules.first else { return [] }
-        return schedule.shifts.sorted { $0.date > $1.date }
+        let sorted = schedule.shifts.sorted { shift1, shift2 in
+            // Tri par date décroissante (plus récent en premier)
+            if shift1.date != shift2.date {
+                return shift1.date > shift2.date
+            }
+            // Si même date, tri par heure de début décroissante (plus tard en premier)
+            return shift1.startTime > shift2.startTime
+        }
+        cachedAllShifts = sorted
+        return sorted
     }
     
     // Shifts filtrés par le mois sélectionné dans le calendrier
     private var shiftsForSelectedMonth: [Shift] {
-        let calendar = Calendar.current
-        return allShifts.filter { shift in
-            calendar.isDate(shift.date, equalTo: selectedCalendarDate, toGranularity: .month)
-        }
+        return monthShiftsCache
+    }
+    
+    // Shifts affichés (sans le shift "Général")
+    private var displayedShifts: [Shift] {
+        shiftsForSelectedMonth.filter { $0.segment.lowercased() != "général" && $0.segment.lowercased() != "general" }
     }
     
     var body: some View {
@@ -65,9 +83,9 @@ struct ManageDataView: View {
                             changeMonth(by: -1)
                         } label: {
                             Text("◀")
-                                .font(.chicago12)
+                                .font(.chicago14)
                                 .foregroundStyle(Color.systemWhite)
-                                .frame(width: 40)
+                                .frame(width: 50)
                         }
                         .buttonStyle(.plain)
                         
@@ -80,26 +98,13 @@ struct ManageDataView: View {
                             changeMonth(by: 1)
                         } label: {
                             Text("▶")
-                                .font(.chicago12)
+                                .font(.chicago14)
                                 .foregroundStyle(Color.systemWhite)
-                                .frame(width: 40)
+                                .frame(width: 50)
                         }
                         .buttonStyle(.plain)
-                        
-                        HStack(spacing: 6) {
-                            Text("\(shiftsInSelectedMonth.count)")
-                                .font(.chicago12)
-                                .fontWeight(.bold)
-                            Text("•")
-                                .font(.geneva9)
-                            Text(totalHoursInSelectedMonth)
-                                .font(.chicago12)
-                                .fontWeight(.bold)
-                        }
-                        .foregroundStyle(Color.systemWhite)
-                        .padding(.trailing, 12)
                     }
-                    .padding(.vertical, 10)
+                    .padding(.vertical, 12)
                     .background(Color.systemBlack)
                     
                     // Jours de la semaine
@@ -128,6 +133,7 @@ struct ManageDataView: View {
                                     ZStack {
                                         if let day = dayNumber {
                                             let hasShift = dayHasShift(day: day)
+                                            let isFullWorkday = dayHasFullWorkday(day: day)
                                             
                                             VStack(spacing: 2) {
                                                 Text("\(day)")
@@ -135,7 +141,7 @@ struct ManageDataView: View {
                                                     .foregroundStyle(hasShift ? Color.systemBlack : Color.systemGray)
                                                 
                                                 if hasShift {
-                                                    Text("✅")
+                                                    Text(isFullWorkday ? "✅" : "🧐")
                                                         .font(.system(size: 12))
                                                 } else {
                                                     Text(" ")
@@ -166,7 +172,7 @@ struct ManageDataView: View {
                 .padding(.top, 12)
                 
                 // Liste des shifts avec message si vide
-                if shiftsForSelectedMonth.isEmpty {
+                if displayedShifts.isEmpty {
                     VStack(spacing: 16) {
                         Spacer()
                         Text("📋")
@@ -183,7 +189,7 @@ struct ManageDataView: View {
                     .padding(.horizontal, 16)
                 } else {
                     List {
-                        ForEach(shiftsForSelectedMonth) { shift in
+                        ForEach(displayedShifts) { shift in
                             ShiftRowView(shift: shift)
                                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                     Button(role: .destructive) {
@@ -217,7 +223,7 @@ struct ManageDataView: View {
                                 .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                                 .listRowBackground(Color.systemWhite)
                             
-                            if shift != shiftsForSelectedMonth.last {
+                            if shift != displayedShifts.last {
                                 Rectangle()
                                     .fill(Color.systemBlack)
                                     .frame(height: 2)
@@ -261,6 +267,7 @@ struct ManageDataView: View {
                         .cornerRadius(8)
                     }
                     .buttonStyle(.plain)
+                    
                     Button {
                         showingDeleteAllAlert = true
                     } label: {
@@ -283,26 +290,10 @@ struct ManageDataView: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(allShifts.isEmpty)
-                    
-                    Button {
-                        dismiss()
-                    } label: {
-                        Text("Fermer")
-                            .font(.chicago12)
-                            .foregroundStyle(Color.systemGray)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color.systemBeige)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.systemGray, lineWidth: 2)
-                            )
-                            .cornerRadius(8)
-                    }
-                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 24)
-                .padding(.vertical, 20)
+                .padding(.vertical, 16)
+                .padding(.bottom, 8)
             }
         }
         .alert("Supprimer le shift", isPresented: .constant(selectedShiftToDelete != nil)) {
@@ -334,6 +325,9 @@ struct ManageDataView: View {
         }
         .sheet(isPresented: $showingAddShiftSheet) {
             ManualShiftView(viewModel: viewModel, isPresented: $showingAddShiftSheet, parentIsPresented: $isPresented)
+        }
+        .onAppear {
+            updateMonthCache()
         }
     }
     
@@ -390,11 +384,33 @@ struct ManageDataView: View {
         return range.count
     }
     
+    /// Met à jour les caches pour le mois sélectionné
+    private func updateMonthCache() {
+        let calendar = Calendar.current
+        
+        // Filtrer les shifts du mois
+        monthShiftsCache = allShifts.filter { shift in
+            calendar.isDate(shift.date, equalTo: selectedCalendarDate, toGranularity: .month)
+        }
+        
+        // Construire le dictionnaire shiftsByDay
+        var dict: [Int: [Shift]] = [:]
+        for shift in monthShiftsCache {
+            let day = calendar.component(.day, from: shift.date)
+            dict[day, default: []].append(shift)
+        }
+        shiftsByDay = dict
+        
+        // Invalider le cache d'heures
+        dayHoursCache.removeAll()
+    }
+    
     /// Change de mois (navigation)
     private func changeMonth(by value: Int) {
         let calendar = Calendar.current
         if let newDate = calendar.date(byAdding: .month, value: value, to: selectedCalendarDate) {
             selectedCalendarDate = newDate
+            updateMonthCache()
         }
     }
     
@@ -419,19 +435,55 @@ struct ManageDataView: View {
     
     /// Vérifie si un jour donné a au moins un shift enregistré
     private func dayHasShift(day: Int) -> Bool {
-        let calendar = Calendar.current
+        return shiftsByDay[day] != nil && !shiftsByDay[day]!.isEmpty
+    }
+    
+    /// Calcule le total d'heures travaillées pour un jour donné (avec cache)
+    private func totalHoursForDay(_ day: Int) -> TimeInterval {
+        // Vérifier le cache d'abord
+        if let cachedValue = dayHoursCache[day] {
+            return cachedValue
+        }
         
-        for shift in allShifts {
-            // Vérifier si le shift est dans le mois sélectionné
-            if calendar.isDate(shift.date, equalTo: selectedCalendarDate, toGranularity: .month) {
-                let shiftDay = calendar.component(.day, from: shift.date)
-                if shiftDay == day {
-                    return true
+        var total: TimeInterval = 0
+        var shiftsForDay: [(String, TimeInterval)] = []
+        
+        // Utiliser le dictionnaire shiftsByDay pour accès direct
+        if let dayShifts = shiftsByDay[day] {
+            for shift in dayShifts {
+                // Exclure le shift "Général" du calcul
+                if shift.segment.lowercased() == "général" || shift.segment.lowercased() == "general" {
+                    continue
                 }
+                total += shift.duration
+                shiftsForDay.append((shift.segment, shift.duration))
             }
         }
         
-        return false
+        #if DEBUG
+        if !shiftsForDay.isEmpty {
+            let totalHours = total / 3600
+            print("📊 Jour \(day): \(shiftsForDay.count) shifts, Total: \(String(format: "%.2f", totalHours))h")
+            for (segment, duration) in shiftsForDay {
+                let hours = duration / 3600
+                print("   - \(segment): \(String(format: "%.2f", hours))h")
+            }
+        }
+        #endif
+        
+        // Mettre en cache le résultat
+        dayHoursCache[day] = total
+        
+        return total
+    }
+    
+    /// Vérifie si un jour a exactement 8h de travail (tolérance de ±1 minute)
+    private func dayHasFullWorkday(day: Int) -> Bool {
+        let total = totalHoursForDay(day)
+        let eightHours: TimeInterval = 8 * 3600 // 8 heures en secondes
+        let tolerance: TimeInterval = 60 // Tolérance de 1 minute
+        
+        return abs(total - eightHours) <= tolerance
     }
     
     private var totalHours: String {
@@ -628,6 +680,19 @@ struct ManualShiftView: View {
 struct ShiftRowView: View {
     let shift: Shift
     
+    // DateFormatter statique pour éviter allocations répétées
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter
+    }()
+    
+    private var timeRange: String {
+        let start = Self.timeFormatter.string(from: shift.startTime)
+        let end = Self.timeFormatter.string(from: shift.endTime)
+        return "\(start)-\(end)"
+    }
+    
     var body: some View {
         HStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 1) {
@@ -644,7 +709,7 @@ struct ShiftRowView: View {
                         .font(.geneva9)
                         .foregroundStyle(Color.systemGray)
                     
-                    Text(shift.location)
+                    Text(timeRange)
                         .font(.geneva9)
                         .foregroundStyle(Color.systemGray)
                 }

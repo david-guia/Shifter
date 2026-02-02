@@ -86,14 +86,17 @@ class ScheduleViewModel: ObservableObject {
     // MARK: - Import depuis image OCR
     
     /// Importe les horaires depuis une capture d'écran via OCR
-    /// Processus: OCR → Parsing → Ajout à SwiftData → Backup automatique
+    /// Processus: Downscaling → OCR → Parsing → Ajout à SwiftData → Backup automatique
     func importScheduleFromImage(_ image: UIImage) async {
         isLoading = true
         errorMessage = nil
         
         do {
+            // Étape 0: Downscaling - Réduction de l'image pour optimiser la mémoire
+            let processedImage = downscaleImage(image, maxDimension: 2048)
+            
             // Étape 1: OCR - Extraction du texte de l'image
-            let recognizedText = try await ocrService.recognizeText(from: image)
+            let recognizedText = try await ocrService.recognizeText(from: processedImage)
             
             // Étape 2: Parsing - Analyse du texte pour extraire dates, horaires, segments
             let parsedShifts = ocrService.parseScheduleText(recognizedText)
@@ -394,14 +397,44 @@ class ScheduleViewModel: ObservableObject {
             await MainActor.run {
                 showRestoredMessage = true
                 // Masquer après 3 secondes
-                Task {
+                Task { [weak self] in
+                    guard let self = self else { return }
                     try? await Task.sleep(nanoseconds: 3_000_000_000)
-                    showRestoredMessage = false
+                    await MainActor.run {
+                        self.showRestoredMessage = false
+                    }
                 }
             }
         } catch {
             // Restauration échouée silencieusement
         }
+    }
+    
+    // MARK: - Optimisation d'images
+    
+    /// Réduit la taille d'une image pour optimiser la mémoire
+    /// - Parameters:
+    ///   - image: L'image source à réduire
+    ///   - maxDimension: Dimension maximale (largeur ou hauteur)
+    /// - Returns: Image redimensionnée ou originale si déjà plus petite
+    private func downscaleImage(_ image: UIImage, maxDimension: CGFloat) -> UIImage {
+        let size = image.size
+        let maxOriginalDimension = max(size.width, size.height)
+        
+        // Si l'image est déjà plus petite, la retourner telle quelle
+        guard maxOriginalDimension > maxDimension else { return image }
+        
+        // Calculer le ratio de redimensionnement
+        let scale = maxDimension / maxOriginalDimension
+        let newSize = CGSize(width: size.width * scale, height: size.height * scale)
+        
+        // Redimensionner l'image
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: CGRect(origin: .zero, size: newSize))
+        let scaledImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return scaledImage ?? image
     }
     
     // MARK: - Export/Import JSON manuel

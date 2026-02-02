@@ -48,6 +48,9 @@ struct ContentView: View {
     /// Cache des shifts filtrés (optimisation performance)
     @State private var filteredShifts: [Shift] = []
     
+    /// Sens de la navigation pour l'animation de transition
+    @State private var isNavigatingForward: Bool = true
+    
     /// Task pour gérer l'annulation des imports concurrents
     @State private var importTask: Task<Void, Never>?
     
@@ -249,6 +252,7 @@ struct ContentView: View {
                         HStack(spacing: 10) {
                             Button {
                                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                    isNavigatingForward = false
                                     changeDate(by: -1)
                                 }
                             } label: {
@@ -280,6 +284,7 @@ struct ContentView: View {
                             
                             Button {
                                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                    isNavigatingForward = true
                                     changeDate(by: 1)
                                 }
                             } label: {
@@ -315,8 +320,8 @@ struct ContentView: View {
                     .padding(.top, 8)
                     .id("\(selectedPeriod.rawValue)-\(selectedDate.timeIntervalSince1970)")
                     .transition(.asymmetric(
-                        insertion: .move(edge: .trailing).combined(with: .opacity),
-                        removal: .move(edge: .leading).combined(with: .opacity)
+                        insertion: .move(edge: isNavigatingForward ? .trailing : .leading).combined(with: .opacity),
+                        removal: .move(edge: isNavigatingForward ? .leading : .trailing).combined(with: .opacity)
                     ))
                     .gesture(
                         DragGesture(minimumDistance: 50)
@@ -754,6 +759,7 @@ struct ContentView: View {
     
     /// Navigation par swipe sur le tableau des statistiques
     private func navigatePeriod(forward: Bool) {
+        isNavigatingForward = forward
         changeDate(by: forward ? 1 : -1)
     }
     
