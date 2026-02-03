@@ -8,7 +8,7 @@
 [![SwiftUI](https://img.shields.io/badge/SwiftUI-Latest-green.svg)](https://developer.apple.com/xcode/swiftui/)
 [![SwiftData](https://img.shields.io/badge/SwiftData-Latest-purple.svg)](https://developer.apple.com/xcode/swiftdata/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.3.0-brightgreen.svg)](https://github.com/david-guia/Shifter/releases/tag/v1.3.0)
+[![Version](https://img.shields.io/badge/version-1.3.3-brightgreen.svg)](https://github.com/david-guia/Shifter/releases/tag/v1.3.3)
 
 ---
 
@@ -800,7 +800,20 @@ View (SwiftUI) → ViewModel (@Published) → Model (SwiftData)
 
 ## 🗺️ Roadmap
 
-### ✅ Version 1.3.0 (Actuelle - 9 Déc 2025)
+### ✅ Version 1.3.3 (Actuelle - 3 Fév 2026)
+- [x] Ajout des icônes d'application (multiple variants)
+- [x] Système de mise en cache optimisé
+- [x] Optimisations des images et assets
+- [x] Rafraîchissement de l'interface amélioré
+- [x] Navigation optimisée dans les vues d'horaires
+- [x] Saisie manuelle de shifts
+- [x] Import ZIP de données
+- [x] Logger d'application (AppLogger)
+- [x] Amélioration des vues About et ShiftStatistics
+- [x] Layout optimisé avec en-tête/pied de page fixes
+- [x] Captures d'écran iPhone mises à jour
+
+### ✅ Version 1.3.0 (9 Déc 2025)
 - [x] Support Apple Watch complet (WatchConnectivity)
 - [x] Synchronisation automatique iPhone ↔ Watch
 - [x] Widgets Lock Screen iOS 16+
