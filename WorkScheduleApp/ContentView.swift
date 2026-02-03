@@ -39,7 +39,6 @@ struct ContentView: View {
     @State private var showingAboutSheet = false
     
     @State private var exportFileURL: URL?
-    @State private var importText = ""
     
     /// Période de temps sélectionnée pour le filtrage (Mois/Trimestre/Année)
     @State private var selectedPeriod: TimePeriod = .month
@@ -57,6 +56,9 @@ struct ContentView: View {
     /// Alertes pour l'expiration du certificat développeur
     @State private var showingExpiryWarning = false
     @State private var showingExpiryUrgent = false
+    
+    /// État pour le résumé Apple Intelligence
+    @State private var showingSummarySheet = false
     
     /// Types de période disponibles pour le filtrage
     enum TimePeriod: String, CaseIterable {
@@ -154,214 +156,258 @@ struct ContentView: View {
             .frame(height: 45)
     }
     
+    // Badge du timer de certificat développeur
+    private var certificateBadge: some View {
+        HStack(spacing: 3) {
+            Text(daysRemaining == 0 ? "⏱️" : "🕐")
+                .font(.system(size: 10))
+            Text("\(daysRemaining)j")
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+        }
+        .foregroundStyle(expiryBadgeColor)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(expiryBadgeColor.opacity(0.2))
+        .cornerRadius(3)
+        .overlay(
+            RoundedRectangle(cornerRadius: 3)
+                .stroke(expiryBadgeColor, lineWidth: 1)
+        )
+    }
+    
+    // Vue du logo avec version et badge
+    private var logoWithVersion: some View {
+        HStack(spacing: 6) {
+            logoView
+            
+            if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(version)")
+                        .font(.system(size: 14, weight: .medium, design: .monospaced))
+                        .foregroundStyle(Color.systemBlack.opacity(0.6))
+                    
+                    certificateBadge
+                }
+            }
+        }
+    }
+    
+    // Bouton résumé AI
+    private var summaryButton: some View {
+        Button {
+            generateSummary()
+        } label: {
+            Text("✨")
+                .font(.system(size: 22))
+                .foregroundStyle(Color.systemBlack)
+                .frame(width: 44, height: 44)
+        }
+        .buttonStyle(.plain)
+        .background(Color.systemWhite)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.systemBlack, lineWidth: 2)
+        )
+        .cornerRadius(8)
+    }
+    
+    // Bouton menu
+    private var menuButton: some View {
+        Button {
+            showingMenu.toggle()
+        } label: {
+            Text("⋮")
+                .font(.system(size: 28, weight: .bold))
+                .foregroundStyle(Color.systemBlack)
+                .frame(width: 44, height: 44)
+        }
+        .buttonStyle(.plain)
+        .background(Color.systemWhite)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.systemBlack, lineWidth: 2)
+        )
+        .cornerRadius(8)
+    }
+    
+    // Bouton de sélection de période
+    private func periodButton(_ period: TimePeriod) -> some View {
+        let isSelected = selectedPeriod == period
+        let textColor = isSelected ? Color.systemWhite : Color.systemBlack
+        let bgColor = isSelected ? Color.systemBlack : Color.systemWhite
+        
+        return Button {
+            selectedPeriod = period
+        } label: {
+            Text(period.rawValue)
+                .font(.chicago12)
+                .foregroundStyle(textColor)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(bgColor)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color.systemBlack, lineWidth: 2)
+                )
+                .cornerRadius(6)
+        }
+        .buttonStyle(.plain)
+    }
+    
+    // Header avec logo et boutons
+    private var headerView: some View {
+        HStack(alignment: .center, spacing: 0) {
+            logoWithVersion
+            Spacer()
+            if viewModel.schedules.first != nil {
+                summaryButton
+                    .padding(.trailing, 12)
+            }
+            menuButton
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 20)
+        .padding(.bottom, 16)
+        .background(Color.systemBeige)
+    }
+    
+    // Sélecteur de période
+    private var periodSelector: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 8) {
+                ForEach(TimePeriod.allCases, id: \.self) { period in
+                    periodButton(period)
+                }
+            }
+            navigationControls
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 12)
+        .background(Color.systemBeige)
+    }
+    
+    // Contrôles de navigation (flèches + label)
+    private var navigationControls: some View {
+        HStack(spacing: 10) {
+            navigationButton(direction: .previous)
+            periodLabelView
+            navigationButton(direction: .next)
+        }
+    }
+    
+    private enum NavigationDirection {
+        case previous, next
+    }
+    
+    private func navigationButton(direction: NavigationDirection) -> some View {
+        Button {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                isNavigatingForward = direction == .next
+                changeDate(by: direction == .next ? 1 : -1)
+            }
+        } label: {
+            Text(direction == .previous ? "◀" : "▶")
+                .font(.chicago14)
+                .frame(width: 44, height: 36)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(Color.systemBlack)
+        .background(Color.systemWhite)
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(Color.systemBlack, lineWidth: 2)
+        )
+        .cornerRadius(6)
+    }
+    
+    private var periodLabelView: some View {
+        Text(periodLabel)
+            .font(.chicago14)
+            .foregroundStyle(Color.systemBlack)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(Color.systemBeige)
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(Color.systemBlack, lineWidth: 2)
+            )
+            .cornerRadius(6)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: periodLabel)
+    }
+    
+    var statisticsContent: some View {
+        Group {
+            if let schedule = viewModel.schedules.first {
+                ShiftStatisticsView(
+                    shifts: filteredShifts,
+                    allShifts: schedule.shifts,
+                    selectedPeriod: selectedPeriod,
+                    selectedDate: selectedDate
+                )
+                .padding(.top, 8)
+                .id("\(selectedPeriod.rawValue)-\(selectedDate.timeIntervalSince1970)")
+                .transition(.asymmetric(
+                    insertion: .move(edge: isNavigatingForward ? .trailing : .leading).combined(with: .opacity),
+                    removal: .move(edge: isNavigatingForward ? .leading : .trailing).combined(with: .opacity)
+                ))
+                .gesture(swipeGesture)
+            } else {
+                emptyStateView
+            }
+        }
+    }
+    
+    var swipeGesture: some Gesture {
+        DragGesture(minimumDistance: 50)
+            .onEnded { value in
+                let horizontalMovement = value.translation.width
+                
+                if horizontalMovement < -50 {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        navigatePeriod(forward: true)
+                    }
+                } else if horizontalMovement > 50 {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        navigatePeriod(forward: false)
+                    }
+                }
+            }
+    }
+    
+    var emptyStateView: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            VStack(spacing: 16) {
+                Text("📊")
+                    .font(.system(size: 72))
+                Text("Aucune donnée")
+                    .font(.chicago14)
+                    .foregroundStyle(Color.systemBlack)
+                Text("Importez une capture d'écran\npour voir vos statistiques")
+                    .font(.geneva10)
+                    .foregroundStyle(Color.systemGray)
+                    .multilineTextAlignment(.center)
+            }
+            Spacer()
+        }
+    }
+    
     var body: some View {
         ZStack {
-            // Couleur de fond beige style macOS classique
-            Color.systemBeige
-                .ignoresSafeArea()
+            Color.systemBeige.ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // MARK: - Header avec titre et bouton menu (FIXE)
-                HStack(alignment: .center, spacing: 0) {
-                    // Groupe logo + infos à gauche
-                    HStack(spacing: 6) {
-                        logoView
-                        
-                        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("\(version)")
-                                    .font(.system(size: 14, weight: .medium, design: .monospaced))
-                                    .foregroundStyle(Color.systemBlack.opacity(0.6))
-                                
-                                // Badge du timer de certificat développeur
-                                HStack(spacing: 3) {
-                                    Text(daysRemaining == 0 ? "⏱️" : "🕐")
-                                        .font(.system(size: 10))
-                                    Text("\(daysRemaining)j")
-                                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                                }
-                                .foregroundStyle(expiryBadgeColor)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(expiryBadgeColor.opacity(0.2))
-                                .cornerRadius(3)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 3)
-                                        .stroke(expiryBadgeColor, lineWidth: 1)
-                                )
-                            }
-                        }
-                    }
-                    
-                    Spacer() // Pousse le menu vers la droite
-                    
-                    // Bouton menu aligné à droite
-                    Button {
-                        showingMenu.toggle()
-                    } label: {
-                        Text("⋮")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundStyle(Color.systemBlack)
-                            .frame(width: 44, height: 44)
-                    }
-                    .buttonStyle(.plain)
-                    .background(Color.systemWhite)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.systemBlack, lineWidth: 2)
-                    )
-                    .cornerRadius(8)
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 20)
-                .padding(.bottom, 16)
-                .background(Color.systemBeige) // Fond fixe
+                headerView
                 
-                // MARK: - Sélecteur de période et navigation temporelle (FIXE)
-                
-                // Afficher uniquement si des données existent
                 if viewModel.schedules.first != nil {
-                    VStack(spacing: 10) {
-                        // Boutons Mois/Trimestre/Année
-                        HStack(spacing: 8) {
-                            ForEach(TimePeriod.allCases, id: \.self) { period in
-                                Button {
-                                    selectedPeriod = period
-                                } label: {
-                                    let isSelected = selectedPeriod == period
-                                    let textColor = isSelected ? Color.systemWhite : Color.systemBlack
-                                    let bgColor = isSelected ? Color.systemBlack : Color.systemWhite
-                                    
-                                    Text(period.rawValue)
-                                        .font(.chicago12)
-                                        .foregroundStyle(textColor)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 8)
-                                        .background(bgColor)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 6)
-                                                .stroke(Color.systemBlack, lineWidth: 2)
-                                        )
-                                        .cornerRadius(6)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        
-                        // Navigation temporelle
-                        HStack(spacing: 10) {
-                            Button {
-                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                    isNavigatingForward = false
-                                    changeDate(by: -1)
-                                }
-                            } label: {
-                                Text("◀")
-                                    .font(.chicago14)
-                                    .frame(width: 44, height: 36)
-                            }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(Color.systemBlack)
-                            .background(Color.systemWhite)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(Color.systemBlack, lineWidth: 2)
-                            )
-                            .cornerRadius(6)
-                            
-                            Text(periodLabel)
-                                .font(.chicago14)
-                                .foregroundStyle(Color.systemBlack)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
-                                .background(Color.systemBeige)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .stroke(Color.systemBlack, lineWidth: 2)
-                                )
-                                .cornerRadius(6)
-                                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: periodLabel)
-                            
-                            Button {
-                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                    isNavigatingForward = true
-                                    changeDate(by: 1)
-                                }
-                            } label: {
-                                Text("▶")
-                                    .font(.chicago14)
-                                    .frame(width: 44, height: 36)
-                            }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(Color.systemBlack)
-                            .background(Color.systemWhite)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(Color.systemBlack, lineWidth: 2)
-                            )
-                            .cornerRadius(6)
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 12)
-                    .background(Color.systemBeige) // Fond fixe
+                    periodSelector
                 }
                 
-                // MARK: - Zone d'affichage des statistiques (SCROLLABLE)
-                
-                // Si des données existent, afficher les statistiques filtrées
-                if let schedule = viewModel.schedules.first {
-                    ShiftStatisticsView(
-                        shifts: filteredShifts,
-                        allShifts: schedule.shifts,
-                        selectedPeriod: selectedPeriod,
-                        selectedDate: selectedDate
-                    )
-                    .padding(.top, 8)
-                    .id("\(selectedPeriod.rawValue)-\(selectedDate.timeIntervalSince1970)")
-                    .transition(.asymmetric(
-                        insertion: .move(edge: isNavigatingForward ? .trailing : .leading).combined(with: .opacity),
-                        removal: .move(edge: isNavigatingForward ? .leading : .trailing).combined(with: .opacity)
-                    ))
-                    .gesture(
-                        DragGesture(minimumDistance: 50)
-                            .onEnded { value in
-                                let horizontalMovement = value.translation.width
-                                
-                                // Swipe de droite à gauche = avancer
-                                if horizontalMovement < -50 {
-                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                        navigatePeriod(forward: true)
-                                    }
-                                }
-                                // Swipe de gauche à droite = reculer
-                                else if horizontalMovement > 50 {
-                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                        navigatePeriod(forward: false)
-                                    }
-                                }
-                            }
-                    )
-                } else {
-                    Spacer()
-                    VStack(spacing: 16) {
-                        Text("📊")
-                            .font(.system(size: 72))
-                        Text("Aucune donnée")
-                            .font(.chicago14)
-                            .foregroundStyle(Color.systemBlack)
-                        Text("Importez une capture d'écran\npour voir vos statistiques")
-                            .font(.geneva10)
-                            .foregroundStyle(Color.systemGray)
-                            .multilineTextAlignment(.center)
-                    }
-                    Spacer()
-                }
+                statisticsContent
             }
             
             // MARK: - Overlays
             
-            // Overlay de chargement pendant l'OCR
             if viewModel.isLoading {
                 loadingOverlay
             }
@@ -658,6 +704,16 @@ struct ContentView: View {
         .sheet(isPresented: $showingAboutSheet) {
             AboutView(isPresented: $showingAboutSheet)
         }
+        .sheet(isPresented: $showingSummarySheet) {
+            SimpleSummarySheet(
+                viewModel: viewModel,
+                selectedPeriod: selectedPeriod,
+                selectedDate: selectedDate,
+                filteredShifts: filteredShifts,
+                periodLabel: periodLabel,
+                isPresented: $showingSummarySheet
+            )
+        }
         .fileImporter(
             isPresented: $showingPDFPicker,
             allowedContentTypes: [.pdf],
@@ -819,6 +875,11 @@ struct ContentView: View {
             // Réinitialiser le chemin
             sharedImagePath = nil
         }
+    }
+    
+    /// Génère un résumé intelligent des statistiques
+    private func generateSummary() {
+        showingSummarySheet = true
     }
     
     /// Traite la sélection d'un fichier PDF pour import
@@ -1329,7 +1390,498 @@ struct ImportView: View {
     }
 }
 
+// MARK: - Simple Summary Sheet
+
+struct SimpleSummarySheet: View {
+    let viewModel: ScheduleViewModel
+    let selectedPeriod: ContentView.TimePeriod
+    let selectedDate: Date
+    let filteredShifts: [Shift]
+    let periodLabel: String
+    @Binding var isPresented: Bool
+    
+    @State private var comparisonType: ComparisonType = .none
+    @State private var summaryText: String = ""
+    
+    enum ComparisonType: String, CaseIterable {
+        case none = "Sans comparaison"
+        case previousPeriod = "Période précédente"
+        case previousYear = "Année précédente"
+    }
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                comparisonPicker
+                
+                ScrollView {
+                    Text(summaryText)
+                        .font(.system(size: 14, design: .monospaced))
+                        .foregroundStyle(Color.systemBlack)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(16)
+                        .textSelection(.enabled)
+                }
+            }
+            .background(Color.systemBeige)
+            .navigationTitle("✨ Résumé")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    closeButton
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    toolbarButtons
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .onAppear {
+            generateText()
+        }
+        .onChange(of: comparisonType) { _, _ in
+            generateText()
+        }
+    }
+    
+    private var closeButton: some View {
+        Button("Fermer") {
+            isPresented = false
+        }
+    }
+    
+    private var comparisonPicker: some View {
+        Picker("Comparaison", selection: $comparisonType) {
+            ForEach(ComparisonType.allCases, id: \.self) { type in
+                Text(type.rawValue).tag(type)
+            }
+        }
+        .pickerStyle(.segmented)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color.systemWhite)
+    }
+    
+    private var toolbarButtons: some View {
+        HStack(spacing: 8) {
+            copyButton
+            shareButton
+        }
+    }
+    
+    private var copyButton: some View {
+        Button {
+            UIPasteboard.general.string = summaryText
+        } label: {
+            Image(systemName: "doc.on.doc")
+        }
+    }
+    
+    private var shareButton: some View {
+        ShareLink(item: summaryText) {
+            Image(systemName: "square.and.arrow.up")
+        }
+    }
+    
+    private func generateText() {
+        summaryText = buildSummaryText(comparisonType: comparisonType)
+    }
+    
+    private func buildSummaryText(comparisonType: ComparisonType) -> String {
+        let stats = calculateStatistics()
+        
+        var text = ""
+        text += "📊 Analyse de la période \(periodLabel)\n\n"
+        
+        if stats.total == 0 {
+            text += "Aucune activité n'a été enregistrée durant cette période.\n\n"
+            text += "💡 Astuce : Importez vos plannings WorkJam pour commencer à suivre vos heures de travail."
+            return text
+        }
+        
+        if comparisonType != .none {
+            if let comparison = getComparisonData(type: comparisonType) {
+                text += comparison
+            }
+        }
+        
+        text += buildOverviewSection(stats: stats)
+        text += buildActivitiesSection(stats: stats)
+        text += buildKeyPointsSection(stats: stats)
+        
+        return text
+    }
+    
+    private func calculateStatistics() -> (total: Double, count: Int, segments: [(key: String, value: Double)]) {
+        let total = filteredShifts.filter { $0.segment != "Général" }.reduce(0.0) { $0 + $1.duration / 3600 }
+        let count = filteredShifts.filter { $0.segment != "Général" }.count
+        
+        var segmentStats: [String: Double] = [:]
+        for shift in filteredShifts where shift.segment != "Général" {
+            segmentStats[shift.segment, default: 0] += shift.duration / 3600
+        }
+        
+        let sorted = segmentStats.sorted { $0.value > $1.value }
+        return (total, count, sorted)
+    }
+    
+    private func buildOverviewSection(stats: (total: Double, count: Int, segments: [(key: String, value: Double)])) -> String {
+        var text = "🎯 Vue d'ensemble\n\n"
+        text += "Au cours de cette période, vous avez effectué \(stats.count) shift\(stats.count > 1 ? "s" : "") "
+        text += "pour un total de \(formatHours(stats.total)) de travail. "
+        
+        let avgHoursPerShift = stats.total / Double(stats.count)
+        text += "En moyenne, chaque shift représente \(formatHours(avgHoursPerShift)) de travail.\n\n"
+        
+        return text
+    }
+    
+    private func buildActivitiesSection(stats: (total: Double, count: Int, segments: [(key: String, value: Double)])) -> String {
+        guard !stats.segments.isEmpty else { return "" }
+        
+        var text = "📈 Répartition détaillée des activités\n\n"
+        
+        let topSegment = stats.segments[0]
+        let topPercentage = (topSegment.value / stats.total) * 100
+        
+        text += "Votre activité principale est \"\(topSegment.key)\" avec \(formatHours(topSegment.value)) travaillées, "
+        text += "ce qui représente \(String(format: "%.0f", topPercentage))% de votre temps total. "
+        
+        if topPercentage > 50 {
+            text += "Cette activité domine largement votre emploi du temps.\n\n"
+        } else if topPercentage > 30 {
+            text += "Cette activité occupe une part significative de votre temps.\n\n"
+        } else {
+            text += "Votre temps est réparti de manière équilibrée entre plusieurs activités.\n\n"
+        }
+        
+        if stats.segments.count > 1 {
+            text += "Vos autres activités principales incluent :\n\n"
+            
+            for (segment, hours) in stats.segments.dropFirst().prefix(4) {
+                let percentage = (hours / stats.total) * 100
+                text += "• \(segment) : \(formatHours(hours)) (\(String(format: "%.0f", percentage))%)\n"
+            }
+            text += "\n"
+        }
+        
+        if stats.segments.count > 5 {
+            text += "Vous avez effectué \(stats.segments.count) types d'activités différentes, "
+            text += "ce qui démontre une grande polyvalence dans vos tâches.\n\n"
+        }
+        
+        return text
+    }
+    
+    private func buildKeyPointsSection(stats: (total: Double, count: Int, segments: [(key: String, value: Double)])) -> String {
+        var text = "💡 Points clés à retenir\n\n"
+        
+        if let maxSegment = stats.segments.first, let minSegment = stats.segments.last, stats.segments.count > 2 {
+            let ratio = maxSegment.value / minSegment.value
+            if ratio > 5 {
+                text += "• Votre temps est fortement concentré sur quelques activités principales.\n"
+            } else {
+                text += "• Votre temps est bien équilibré entre vos différentes activités.\n"
+            }
+        }
+        
+        let avgHoursPerShift = stats.total / Double(stats.count)
+        if avgHoursPerShift > 7 {
+            text += "• Vos shifts sont généralement longs, dépassant une journée de travail standard.\n"
+        } else if avgHoursPerShift < 4 {
+            text += "• Vos shifts sont plutôt courts, vous permettant une flexibilité accrue.\n"
+        }
+        
+        text += "• Cette période représente \(formatHours(stats.total)) de travail documenté et analysé.\n\n"
+        text += "✨ Ce résumé a été généré automatiquement. Vous pouvez le copier ou le partager."
+        
+        return text
+    }
+    
+    private func getComparisonData(type: ComparisonType) -> String? {
+        guard let schedule = viewModel.schedules.first else { return nil }
+        
+        let comparisonShifts = getComparisonShifts(type: type, allShifts: schedule.shifts)
+        guard !comparisonShifts.isEmpty else { return nil }
+        
+        let currentTotal = filteredShifts.filter { $0.segment != "Général" }.reduce(0.0) { $0 + $1.duration / 3600 }
+        let currentCount = filteredShifts.filter { $0.segment != "Général" }.count
+        
+        let comparisonTotal = comparisonShifts.filter { $0.segment != "Général" }.reduce(0.0) { $0 + $1.duration / 3600 }
+        let comparisonCount = comparisonShifts.filter { $0.segment != "Général" }.count
+        
+        return buildComparisonText(
+            type: type,
+            currentTotal: currentTotal,
+            currentCount: currentCount,
+            comparisonTotal: comparisonTotal,
+            comparisonCount: comparisonCount,
+            comparisonShifts: comparisonShifts
+        )
+    }
+    
+    private func buildComparisonText(
+        type: ComparisonType,
+        currentTotal: Double,
+        currentCount: Int,
+        comparisonTotal: Double,
+        comparisonCount: Int,
+        comparisonShifts: [Shift]
+    ) -> String {
+        let comparisonPeriodLabel = getComparisonPeriodLabel(type: type)
+        var compText = "📊 Comparaison : \(periodLabel) vs \(comparisonPeriodLabel)\n\n"
+        
+        let hoursDiff = currentTotal - comparisonTotal
+        let shiftsDiff = currentCount - comparisonCount
+        let percentChange = comparisonTotal > 0 ? ((currentTotal - comparisonTotal) / comparisonTotal * 100) : 0
+        let avgCurrent = currentCount > 0 ? currentTotal / Double(currentCount) : 0
+        let avgComparison = comparisonCount > 0 ? comparisonTotal / Double(comparisonCount) : 0
+        let avgDiff = avgCurrent - avgComparison
+        
+        // Analyse du volume global
+        if abs(percentChange) > 5 {
+            let arrow = hoursDiff > 0 ? "📈" : "📉"
+            let sign = hoursDiff > 0 ? "+" : ""
+            let trend = hoursDiff > 0 ? "augmentation" : "diminution"
+            compText += "\(arrow) Volume de travail : \(sign)\(formatHours(abs(hoursDiff))) (\(sign)\(String(format: "%.0f", percentChange))%)\n"
+            compText += "   Cette \(trend) significative reflète "
+            
+            if abs(percentChange) > 20 {
+                compText += "un changement majeur dans votre charge de travail.\n\n"
+            } else {
+                compText += "une évolution notable de votre activité.\n\n"
+            }
+        } else {
+            compText += "➡️ Volume de travail stable (\(String(format: "%.0f", abs(percentChange)))% de variation)\n"
+            compText += "   Votre charge de travail reste cohérente entre les deux périodes.\n\n"
+        }
+        
+        // Analyse de la fréquence des shifts
+        if shiftsDiff != 0 {
+            let sign = shiftsDiff > 0 ? "+" : ""
+            let absShiftsDiff = abs(shiftsDiff)
+            compText += "📅 Fréquence des shifts : \(sign)\(absShiftsDiff) shift\(absShiftsDiff > 1 ? "s" : "") (\(currentCount) vs \(comparisonCount))\n"
+            
+            // Analyse de la durée moyenne
+            if abs(avgDiff) > 0.5 {
+                let avgSign = avgDiff > 0 ? "+" : ""
+                compText += "   Durée moyenne par shift : \(avgSign)\(formatHours(abs(avgDiff)))\n"
+                
+                if avgDiff > 0 {
+                    compText += "   Vous travaillez des shifts plus longs mais moins fréquents.\n\n"
+                } else {
+                    compText += "   Vous travaillez des shifts plus courts mais plus fréquents.\n\n"
+                }
+            } else {
+                compText += "   La durée moyenne des shifts reste similaire.\n\n"
+            }
+        } else if abs(avgDiff) > 0.5 {
+            let avgSign = avgDiff > 0 ? "+" : ""
+            compText += "⏱️  Durée moyenne par shift : \(avgSign)\(formatHours(abs(avgDiff)))\n"
+            compText += "   Même nombre de shifts, mais durée \(avgDiff > 0 ? "allongée" : "réduite").\n\n"
+        }
+        
+        // Analyse des activités
+        compText += analyzeActivityChanges(comparisonShifts: comparisonShifts, currentTotal: currentTotal, comparisonTotal: comparisonTotal)
+        
+        return compText
+    }
+    
+    private func analyzeActivityChanges(comparisonShifts: [Shift], currentTotal: Double, comparisonTotal: Double) -> String {
+        var currentSegmentStats: [String: Double] = [:]
+        var comparisonSegmentStats: [String: Double] = [:]
+        
+        for shift in filteredShifts where shift.segment != "Général" {
+            currentSegmentStats[shift.segment, default: 0] += shift.duration / 3600
+        }
+        
+        for shift in comparisonShifts where shift.segment != "Général" {
+            comparisonSegmentStats[shift.segment, default: 0] += shift.duration / 3600
+        }
+        
+        var analysisText = "🔄 Évolution des activités\n\n"
+        
+        let currentTop = currentSegmentStats.sorted { $0.value > $1.value }
+        let comparisonTop = comparisonSegmentStats.sorted { $0.value > $1.value }
+        
+        // Changement d'activité principale
+        if let current = currentTop.first, let previous = comparisonTop.first {
+            if current.key != previous.key {
+                analysisText += "• Activité principale : \(current.key) remplace \(previous.key)\n"
+                let currentPct = (current.value / currentTotal * 100)
+                let previousPct = (previous.value / comparisonTotal * 100)
+                analysisText += "  \(current.key) représente maintenant \(String(format: "%.0f", currentPct))% de votre temps "
+                analysisText += "(vs \(String(format: "%.0f", previousPct))% pour \(previous.key) précédemment).\n\n"
+            }
+        }
+        
+        // Activités en croissance et en baisse
+        var growingActivities: [(name: String, growth: Double)] = []
+        var decliningActivities: [(name: String, decline: Double)] = []
+        
+        for (segment, currentHours) in currentSegmentStats {
+            let previousHours = comparisonSegmentStats[segment] ?? 0
+            if previousHours > 0 {
+                let change = ((currentHours - previousHours) / previousHours) * 100
+                if change > 15 {
+                    growingActivities.append((segment, change))
+                } else if change < -15 {
+                    decliningActivities.append((segment, change))
+                }
+            } else if currentHours > 2 {
+                growingActivities.append((segment, 100))
+            }
+        }
+        
+        if !growingActivities.isEmpty {
+            analysisText += "📈 Activités en forte hausse :\n"
+            for activity in growingActivities.sorted(by: { $0.growth > $1.growth }).prefix(3) {
+                if activity.growth >= 100 {
+                    analysisText += "• \(activity.name) (nouvelle activité)\n"
+                } else {
+                    analysisText += "• \(activity.name) (+\(String(format: "%.0f", activity.growth))%)\n"
+                }
+            }
+            analysisText += "\n"
+        }
+        
+        if !decliningActivities.isEmpty {
+            analysisText += "📉 Activités en baisse :\n"
+            for activity in decliningActivities.sorted(by: { $0.decline < $1.decline }).prefix(3) {
+                analysisText += "• \(activity.name) (\(String(format: "%.0f", activity.decline))%)\n"
+            }
+            analysisText += "\n"
+        }
+        
+        if growingActivities.isEmpty && decliningActivities.isEmpty {
+            analysisText += "• Distribution des activités globalement stable.\n"
+            analysisText += "  Votre répartition du temps reste cohérente entre les périodes.\n\n"
+        }
+        
+        return analysisText
+    }
+    
+    private func getComparisonPeriodLabel(type: ComparisonType) -> String {
+        let calendar = Calendar.current
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "fr_FR")
+        
+        let dates = calculateComparisonDates(calendar: calendar, type: type)
+        
+        switch selectedPeriod {
+        case .month:
+            dateFormatter.dateFormat = "MMMM yyyy"
+            return dateFormatter.string(from: dates.start).capitalized
+            
+        case .quarter:
+            let month = calendar.component(.month, from: dates.start)
+            let quarter = ((month - 1) / 3) + 1
+            let year = calendar.component(.year, from: dates.start)
+            return "Q\(quarter) \(year)"
+            
+        case .year:
+            dateFormatter.dateFormat = "yyyy"
+            return dateFormatter.string(from: dates.start)
+        }
+    }
+    
+    private func getComparisonShifts(type: ComparisonType, allShifts: [Shift]) -> [Shift] {
+        let calendar = Calendar.current
+        let dates = calculateComparisonDates(calendar: calendar, type: type)
+        
+        return allShifts.filter { shift in
+            shift.date >= dates.start && shift.date <= dates.end
+        }
+    }
+    
+    private func calculateComparisonDates(calendar: Calendar, type: ComparisonType) -> (start: Date, end: Date) {
+        switch selectedPeriod {
+        case .month:
+            return calculateMonthComparison(calendar: calendar, type: type)
+        case .quarter:
+            return calculateQuarterComparison(calendar: calendar, type: type)
+        case .year:
+            return calculateYearComparison(calendar: calendar, type: type)
+        }
+    }
+    
+    private func calculateMonthComparison(calendar: Calendar, type: ComparisonType) -> (start: Date, end: Date) {
+        // Obtenir le début et la fin du mois actuel
+        let currentMonthStart = calendar.startOfMonth(for: selectedDate)
+        let currentMonthEnd = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: currentMonthStart)!
+        
+        if type == .previousPeriod {
+            // Mois précédent : décembre si on est en janvier, etc.
+            let previousMonthStart = calendar.date(byAdding: .month, value: -1, to: currentMonthStart)!
+            let previousMonthEnd = calendar.date(byAdding: .day, value: -1, to: currentMonthStart)!
+            return (previousMonthStart, previousMonthEnd)
+        } else {
+            // Même mois l'année précédente : janvier 2024 si on regarde janvier 2025
+            let previousYearStart = calendar.date(byAdding: .year, value: -1, to: currentMonthStart)!
+            let previousYearEnd = calendar.date(byAdding: .year, value: -1, to: currentMonthEnd)!
+            return (previousYearStart, previousYearEnd)
+        }
+    }
+    
+    private func calculateQuarterComparison(calendar: Calendar, type: ComparisonType) -> (start: Date, end: Date) {
+        // Obtenir le début et la fin du trimestre actuel
+        let currentQuarterStart = calendar.startOfQuarter(for: selectedDate)
+        let currentQuarterEnd = calendar.date(byAdding: DateComponents(month: 3, day: -1), to: currentQuarterStart)!
+        
+        if type == .previousPeriod {
+            // Trimestre précédent : T4 si on est en T1, etc.
+            let previousQuarterStart = calendar.date(byAdding: .month, value: -3, to: currentQuarterStart)!
+            let previousQuarterEnd = calendar.date(byAdding: .day, value: -1, to: currentQuarterStart)!
+            return (previousQuarterStart, previousQuarterEnd)
+        } else {
+            // Même trimestre l'année précédente : T1 2024 si on regarde T1 2025
+            let previousYearStart = calendar.date(byAdding: .year, value: -1, to: currentQuarterStart)!
+            let previousYearEnd = calendar.date(byAdding: .year, value: -1, to: currentQuarterEnd)!
+            return (previousYearStart, previousYearEnd)
+        }
+    }
+    
+    private func calculateYearComparison(calendar: Calendar, type: ComparisonType) -> (start: Date, end: Date) {
+        // Obtenir le début et la fin de l'année actuelle
+        let currentYearStart = calendar.startOfYear(for: selectedDate)
+        let currentYearEnd = calendar.date(byAdding: DateComponents(year: 1, day: -1), to: currentYearStart)!
+        
+        // Pour l'année, periode précédente = année précédente (même chose)
+        let previousYearStart = calendar.date(byAdding: .year, value: -1, to: currentYearStart)!
+        let previousYearEnd = calendar.date(byAdding: .year, value: -1, to: currentYearEnd)!
+        
+        return (previousYearStart, previousYearEnd)
+    }
+    
+    private func formatHours(_ hours: Double) -> String {
+        let h = Int(hours)
+        let m = Int((hours - Double(h)) * 60)
+        return m > 0 ? "\(h)h\(String(format: "%02d", m))" : "\(h)h"
+    }
+}
+
+extension Calendar {
+    func startOfMonth(for date: Date) -> Date {
+        let components = dateComponents([.year, .month], from: date)
+        return self.date(from: components)!
+    }
+    
+    func startOfQuarter(for date: Date) -> Date {
+        let month = component(.month, from: date)
+        let quarterStartMonth = ((month - 1) / 3) * 3 + 1
+        var components = dateComponents([.year], from: date)
+        components.month = quarterStartMonth
+        return self.date(from: components)!
+    }
+    
+    func startOfYear(for date: Date) -> Date {
+        let components = dateComponents([.year], from: date)
+        return self.date(from: components)!
+    }
+}
+
 #Preview {
     ContentView(sharedImagePath: .constant(nil))
         .modelContainer(for: WorkSchedule.self, inMemory: true)
 }
+

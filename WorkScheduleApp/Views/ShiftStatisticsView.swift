@@ -69,17 +69,17 @@ struct ShiftStatisticsView: View {
             Text("Heures")
                 .font(.chicago14)
                 .foregroundStyle(Color.systemWhite)
-                .frame(width: 70, alignment: .trailing)
+                .frame(width: 70, alignment: .leading)
             
             Text("%")
                 .font(.chicago14)
                 .foregroundStyle(Color.systemWhite)
-                .frame(width: 50, alignment: .trailing)
+                .frame(width: 50, alignment: .leading)
             
             Text("Δ")
                 .font(.chicago14)
                 .foregroundStyle(Color.systemWhite)
-                .frame(width: 70, alignment: .trailing)
+                .frame(width: 70, alignment: .leading)
                 .padding(.trailing, 16)
         }
         .padding(.vertical, 12)
@@ -111,17 +111,17 @@ struct ShiftStatisticsView: View {
                                 Text(formatHours(stats.hours))
                                     .font(.chicago12)
                                     .foregroundStyle(Color.systemBlack)
-                                    .frame(width: 70, alignment: .trailing)
+                                    .frame(width: 70, alignment: .leading)
                                 
                                 Text(String(format: "%.0f%%", stats.percentage))
                                     .font(.chicago12)
                                     .foregroundStyle(Color.systemBlack)
-                                    .frame(width: 50, alignment: .trailing)
+                                    .frame(width: 50, alignment: .leading)
                                 
                                 Text(formatEvolution(evolution))
                                     .font(.chicago12)
                                     .foregroundStyle(evolutionColor(evolution))
-                                    .frame(width: 70, alignment: .trailing)
+                                    .frame(width: 70, alignment: .leading)
                                     .padding(.trailing, 16)
                             }
                             .padding(.vertical, 12)
@@ -144,16 +144,16 @@ struct ShiftStatisticsView: View {
             Text(formatHours(totalHours))
                 .font(.chicago14)
                 .foregroundStyle(Color.systemWhite)
-                .frame(width: 70, alignment: .trailing)
+                .frame(width: 70, alignment: .leading)
             
             Text("100%")
                 .font(.chicago14)
                 .foregroundStyle(Color.systemWhite)
-                .frame(width: 50, alignment: .trailing)
+                .frame(width: 50, alignment: .leading)
             
             Text("")
                 .font(.chicago14)
-                .frame(width: 70, alignment: .trailing)
+                .frame(width: 70, alignment: .leading)
                 .padding(.trailing, 16)
         }
         .padding(.vertical, 14)

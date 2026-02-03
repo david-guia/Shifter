@@ -133,20 +133,6 @@ struct AboutView: View {
                             }
                         }
                         
-                        Spacer()
-                        
-                        // Ligne séparatrice (emplacement du trait rouge)
-                        Rectangle()
-                            .fill(Color.systemBlack)
-                            .frame(height: 2)
-                            .padding(.horizontal, 40)
-                            .padding(.bottom, 8)
-
-                        // MARK: - Copyright
-                        Text("© \(copyrightYear) David Guia")
-                            .font(.geneva10)
-                            .foregroundStyle(Color.systemGray)
-                        
                         // MARK: - Sélecteur d'icônes
                         VStack(spacing: 10) {
                             Text("Icône de l'app")
@@ -166,6 +152,20 @@ struct AboutView: View {
                             }
                             .padding(.horizontal, 24)
                         }
+                        
+                        Spacer()
+                        
+                        // Ligne séparatrice
+                        Rectangle()
+                            .fill(Color.systemBlack)
+                            .frame(height: 2)
+                            .padding(.horizontal, 40)
+                            .padding(.bottom, 8)
+
+                        // MARK: - Copyright
+                        Text("© \(copyrightYear) David Guia")
+                            .font(.geneva10)
+                            .foregroundStyle(Color.systemGray)
                         
                         Spacer()
                     }
