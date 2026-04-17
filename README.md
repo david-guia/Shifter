@@ -19,6 +19,7 @@
 
 Les employés utilisant **WorkJam** pour leurs horaires reçoivent leurs plannings sous forme de captures d'écran, mais l'application ne propose **aucune analyse détaillée par segment**. Shifter élimine :
 - ❌ La saisie manuelle fastidieuse des horaires depuis WorkJam
+- ❌ L'impossibilité de se connecter directement à WorkJam pour récupérer ses horaires
 - ❌ L'impossibilité d'analyser la répartition horaire par type de shift (Shift 1, Shift 2, Shift 3, etc.)
 - ❌ La difficulté à comparer ses performances entre périodes (mois/trimestre/année)
 - ❌ L'absence de vision synthétique des heures par segment
@@ -27,6 +28,7 @@ Les employés utilisant **WorkJam** pour leurs horaires reçoivent leurs plannin
 ### Solution Apportée
 
 ✅ **Import OCR ultra-rapide depuis WorkJam** : Capture d'écran → Reconnaissance texte → Shifts importés avec segments automatiquement  
+✅ **Connexion directe WorkJam** : Synchronisation de vos horaires sans capture d'écran, directement depuis votre compte WorkJam  
 ✅ **Segmentation détaillée par type de shift** : Analyse précise de la répartition horaire (Shift 1, Shift 2, Shift 3, Pause, etc.)  
 ✅ **Statistiques intelligentes** : Analyse comparative par mois/trimestre/année avec % et delta par segment  
 ✅ **Widgets iOS natifs** : Accès instantané aux 3 segments prioritaires depuis l'écran d'accueil et écran verrouillé  
