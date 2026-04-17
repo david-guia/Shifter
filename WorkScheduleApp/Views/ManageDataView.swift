@@ -19,7 +19,7 @@ struct ManageDataView: View {
     @State private var selectedShiftToEdit: Shift?
     @State private var selectedCalendarDate: Date
     @State private var showingAddShiftSheet = false
-    @State private var dayHoursCache: [Int: TimeInterval] = []
+    @State private var dayHoursCache: [Int: TimeInterval] = [:]
     @State private var monthShiftsCache: [Shift] = []
     @State private var shiftsByDay: [Int: [Shift]] = [:]
     
