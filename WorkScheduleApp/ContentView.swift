@@ -37,6 +37,7 @@ struct ContentView: View {
     @State private var showingManageSheet = false
     @State private var showingMenu = false
     @State private var showingAboutSheet = false
+    @State private var showingWorkJamSheet = false
     
     @State private var exportFileURL: URL?
     
@@ -592,6 +593,28 @@ struct ContentView: View {
                             
                             Divider()
                                 .background(Color.systemBlack)
+
+                            Button {
+                                showingMenu = false
+                                showingWorkJamSheet = true
+                            } label: {
+                                HStack {
+                                    Text("⬇️")
+                                        .font(.system(size: 16))
+                                    Text("WorkJam Auto")
+                                        .font(.chicago12)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                .contentShape(Rectangle())
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Color.systemBlack)
+                            .background(Color.systemWhite)
+
+                            Divider()
+                                .background(Color.systemBlack)
                             
                             Button {
                                 showingMenu = false
@@ -703,6 +726,18 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingAboutSheet) {
             AboutView(isPresented: $showingAboutSheet)
+        }
+        .sheet(isPresented: $showingWorkJamSheet) {
+            WorkJamLoginView(isPresented: $showingWorkJamSheet) { count in
+                viewModel.fetchSchedules()
+                updateFilteredShifts()
+                if count > 0 {
+                    viewModel.addedShiftMessage = "\(count) shift\(count > 1 ? "s" : "") importé\(count > 1 ? "s" : "") depuis WorkJam"
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        viewModel.addedShiftMessage = nil
+                    }
+                }
+            }
         }
         .sheet(isPresented: $showingSummarySheet) {
             SimpleSummarySheet(
