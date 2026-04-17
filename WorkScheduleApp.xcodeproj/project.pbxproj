@@ -32,6 +32,12 @@
 		5A5 /* ScheduleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B5 /* ScheduleViewModel.swift */; };
 		5A6 /* OCRService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B6 /* OCRService.swift */; };
 		5A9 /* SystemCSSTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B9 /* SystemCSSTheme.swift */; };
+		5A14 /* WorkJamModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B14 /* WorkJamModels.swift */; };
+		5A15 /* WorkJamKeychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B15 /* WorkJamKeychain.swift */; };
+		5A16 /* WorkJamAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B16 /* WorkJamAPIClient.swift */; };
+		5A17 /* WorkJamImportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B17 /* WorkJamImportService.swift */; };
+		5A18 /* WorkJamAuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B18 /* WorkJamAuthViewModel.swift */; };
+		5A19 /* WorkJamLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B19 /* WorkJamLoginView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -101,6 +107,12 @@
 		5B11 /* ManageDataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageDataView.swift; sourceTree = "<group>"; };
 		5B12 /* FiscalCalendarHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FiscalCalendarHelper.swift; sourceTree = "<group>"; };
 		5B13 /* DateFormatterCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatterCache.swift; sourceTree = "<group>"; };
+		5B14 /* WorkJamModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkJamModels.swift; sourceTree = "<group>"; };
+		5B15 /* WorkJamKeychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkJamKeychain.swift; sourceTree = "<group>"; };
+		5B16 /* WorkJamAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkJamAPIClient.swift; sourceTree = "<group>"; };
+		5B17 /* WorkJamImportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkJamImportService.swift; sourceTree = "<group>"; };
+		5B18 /* WorkJamAuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkJamAuthViewModel.swift; sourceTree = "<group>"; };
+		5B19 /* WorkJamLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkJamLoginView.swift; sourceTree = "<group>"; };
 		5B2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5B3 /* Shift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shift.swift; sourceTree = "<group>"; };
 		5B4 /* WorkSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkSchedule.swift; sourceTree = "<group>"; };
@@ -221,6 +233,7 @@
 			isa = PBXGroup;
 			children = (
 				5B5 /* ScheduleViewModel.swift */,
+				5B18 /* WorkJamAuthViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -229,6 +242,7 @@
 			isa = PBXGroup;
 			children = (
 				5B6 /* OCRService.swift */,
+				5E9 /* WorkJam */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -240,8 +254,20 @@
 				5B9 /* SystemCSSTheme.swift */,
 				5B10 /* ShiftStatisticsView.swift */,
 				5B11 /* ManageDataView.swift */,
+				5B19 /* WorkJamLoginView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		5E9 /* WorkJam */ = {
+			isa = PBXGroup;
+			children = (
+				5B14 /* WorkJamModels.swift */,
+				5B15 /* WorkJamKeychain.swift */,
+				5B16 /* WorkJamAPIClient.swift */,
+				5B17 /* WorkJamImportService.swift */,
+			);
+			path = WorkJam;
 			sourceTree = "<group>";
 		};
 		5E7 /* Helpers */ = {
@@ -502,6 +528,12 @@
 				5A11 /* ManageDataView.swift in Sources */,
 				5A12 /* FiscalCalendarHelper.swift in Sources */,
 				5A13 /* DateFormatterCache.swift in Sources */,
+				5A14 /* WorkJamModels.swift in Sources */,
+				5A15 /* WorkJamKeychain.swift in Sources */,
+				5A16 /* WorkJamAPIClient.swift in Sources */,
+				5A17 /* WorkJamImportService.swift in Sources */,
+				5A18 /* WorkJamAuthViewModel.swift in Sources */,
+				5A19 /* WorkJamLoginView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
