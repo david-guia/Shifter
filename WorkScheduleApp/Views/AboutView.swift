@@ -51,96 +51,85 @@ struct AboutView: View {
                 )
                 
                 ScrollView {
-                    VStack(spacing: 14) {
-                        // MARK: - Logo et nom de l'app
-                        VStack(spacing: 10) {
-                            // Logo rond comme sur Apple Watch
+                    VStack(spacing: 20) {
+                        
+                        // MARK: - Hero
+                        VStack(spacing: 12) {
                             Image("AppIconImage")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 100, height: 100)
-                                .clipShape(Circle())
+                                .frame(width: 110, height: 110)
+                                .clipShape(RoundedRectangle(cornerRadius: 24))
                                 .overlay(
-                                    Circle()
+                                    RoundedRectangle(cornerRadius: 24)
                                         .stroke(Color.systemBlack, lineWidth: 3)
                                 )
-                                .shadow(color: .black.opacity(0.2), radius: 4, x: 2, y: 2)
-
-                            // Title removed for a cleaner look (per user request)
-                            Text("Version \(appVersion) (Build \(buildNumber))")
+                                .shadow(color: .black.opacity(0.25), radius: 6, x: 2, y: 3)
+                            
+                            Text("Shifter")
+                                .font(.chicago14)
+                                .foregroundStyle(Color.systemBlack)
+                            
+                            Text("v\(appVersion)  ·  Build \(buildNumber)")
                                 .font(.geneva10)
                                 .foregroundStyle(Color.systemGray)
                         }
-                        .padding(.top, 12)
+                        .padding(.top, 28)
+                        .padding(.bottom, 4)
                         
-                        // MARK: - Description
-                        VStack(spacing: 6) {
-                            Text("Gestion d'horaires de travail")
-                                .font(.system(size: 16, weight: .bold, design: .monospaced))
+                        // MARK: - Fenêtre description
+                        VStack(spacing: 0) {
+                            Text("Shifter")
+                                .font(.chicago12)
                                 .foregroundStyle(Color.systemBlack)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 7)
+                                .background(Color.systemWhite)
                             
-                            Text("Importez vos captures d'écran WorkJam\net visualisez vos statistiques")
-                                .font(.system(size: 16))
-                                .foregroundStyle(Color.systemGray)
-                                .multilineTextAlignment(.center)
-                                .lineSpacing(4)
-                        }
-                        .padding(.horizontal, 32)
-                        
-                        // Barre de séparation
-                        Rectangle()
-                            .fill(Color.systemBlack)
-                            .frame(height: 2)
-                            .padding(.horizontal, 40)
-                        
-                        // MARK: - Informations
-                        VStack(spacing: 10) {
-                            InfoRow(icon: "📱", text: "iOS 18+")
+                            Rectangle()
+                                .fill(Color.systemBlack)
+                                .frame(height: 1.5)
                             
-                            Button {
-                                if let url = URL(string: "https://github.com/sakofchit/system.css") {
-                                    UIApplication.shared.open(url)
-                                }
-                            } label: {
-                                HStack(spacing: 12) {
-                                    Text("🎨")
-                                        .font(.system(size: 22))
-                                    Text("Design macOS Classic (system.css)")
-                                        .font(.system(size: 16))
-                                        .foregroundStyle(Color.blue)
-                                        .underline()
+                            VStack(spacing: 14) {
+                                Text("Importez vos captures d'écran WorkJam et visualisez vos horaires, statistiques et paies estimées.")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(Color.systemBlack)
+                                    .multilineTextAlignment(.center)
+                                    .lineSpacing(3)
+                                    .padding(.horizontal, 8)
+                                
+                                Rectangle()
+                                    .fill(Color.systemBlack.opacity(0.2))
+                                    .frame(height: 1)
+                                
+                                VStack(alignment: .leading, spacing: 10) {
+                                    InfoRow(icon: "🤖", text: "OCR & Parsing automatique")
+                                    InfoRow(icon: "💾", text: "Sauvegarde automatique")
+                                    InfoRow(icon: "📊", text: "Statistiques & historique")
+                                    InfoRow(icon: "📅", text: "Export calendrier")
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, 48)
                             }
-                            .buttonStyle(.plain)
-                            
-                            InfoRow(icon: "🤖", text: "OCR & Parsing automatique")
-                            InfoRow(icon: "💾", text: "Backup automatique")
-                            
-                            // Afficher le timer de certificat développeur
-                            if let installDate = UserDefaults.standard.object(forKey: "firstInstallDate") as? Date {
-                                let expiryDate = Calendar.current.date(byAdding: .day, value: 7, to: installDate)!
-                                let days = max(0, Calendar.current.dateComponents([.day], from: Date(), to: expiryDate).day ?? 0)
-                                
-                                if days <= 5 {
-                                    InfoRow(
-                                        icon: days <= 1 ? "⏱️" : "🕐",
-                                        text: "Certificat expire dans \(days)j",
-                                        color: days <= 1 ? .red : (days <= 3 ? .orange : .green)
-                                    )
-                                }
-                            }
+                            .padding(16)
+                            .background(Color.systemBeige)
                         }
+                        .overlay(Rectangle().stroke(Color.systemBlack, lineWidth: 1.5))
+                        .padding(.horizontal, 16)
                         
-                        // MARK: - Sélecteur d'icônes
-                        VStack(spacing: 10) {
+                        // MARK: - Fenêtre icônes
+                        VStack(spacing: 0) {
                             Text("Icône de l'app")
                                 .font(.chicago12)
                                 .foregroundStyle(Color.systemBlack)
-                                .padding(.top, 8)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 7)
+                                .background(Color.systemWhite)
                             
-                            HStack(spacing: 16) {
+                            Rectangle()
+                                .fill(Color.systemBlack)
+                                .frame(height: 1.5)
+                            
+                            HStack(spacing: 32) {
                                 ForEach(AppIcon.allCases, id: \.self) { icon in
                                     IconSelectionButton(
                                         icon: icon,
@@ -150,56 +139,47 @@ struct AboutView: View {
                                     }
                                 }
                             }
-                            .padding(.horizontal, 24)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 20)
+                            .background(Color.systemBeige)
+                        }
+                        .overlay(Rectangle().stroke(Color.systemBlack, lineWidth: 1.5))
+                        .padding(.horizontal, 16)
+                        
+                        // MARK: - Alerte certificat
+                        if let installDate = UserDefaults.standard.object(forKey: "firstInstallDate") as? Date {
+                            let expiryDate = Calendar.current.date(byAdding: .day, value: 7, to: installDate)!
+                            let days = max(0, Calendar.current.dateComponents([.day], from: Date(), to: expiryDate).day ?? 0)
+                            if days <= 5 {
+                                HStack(spacing: 8) {
+                                    Text(days <= 1 ? "⏱️" : "🕐")
+                                    Text("Certificat expire dans \(days) jour\(days > 1 ? "s" : "")")
+                                        .font(.geneva10)
+                                        .foregroundStyle(days <= 1 ? Color.red : (days <= 3 ? Color.orange : Color.green))
+                                        .fontWeight(.bold)
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                                .frame(maxWidth: .infinity)
+                                .background(Color.systemWhite)
+                                .overlay(
+                                    Rectangle().stroke(days <= 1 ? Color.red : Color.orange, lineWidth: 1.5)
+                                )
+                                .padding(.horizontal, 16)
+                            }
                         }
                         
-                        Spacer()
-                        
-                        // Ligne séparatrice
-                        Rectangle()
-                            .fill(Color.systemBlack)
-                            .frame(height: 2)
-                            .padding(.horizontal, 40)
-                            .padding(.bottom, 8)
-
                         // MARK: - Copyright
                         Text("© \(copyrightYear) David Guia")
                             .font(.geneva10)
                             .foregroundStyle(Color.systemGray)
-                        
-                        Spacer()
+                            .padding(.top, 4)
+                            .padding(.bottom, 32)
                     }
                 }
-                
-                // MARK: - Bouton GitHub
-                Button {
-                    if let url = URL(string: "https://github.com/david-guia/Shifter") {
-                        UIApplication.shared.open(url)
-                    }
-                } label: {
-                    HStack(spacing: 10) {
-                        Text("🔗")
-                            .font(.system(size: 20))
-                        Text("Voir sur GitHub")
-                            .font(.chicago12)
-                            .foregroundStyle(Color.blue)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.systemWhite)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.blue, lineWidth: 2)
-                    )
-                    .cornerRadius(8)
-                }
-                .buttonStyle(.plain)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 16)
             }
         }
         .onAppear {
-            // Détecter l'icône actuellement utilisée
             selectedIcon = AppIcon.current
         }
     }
@@ -259,16 +239,14 @@ struct InfoRow: View {
     var color: Color? = nil
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             Text(icon)
-                .font(.system(size: 22))
+                .font(.system(size: 18))
             Text(text)
-                .font(.system(size: 16))
+                .font(.system(size: 14))
                 .foregroundStyle(color ?? Color.systemBlack)
                 .fontWeight(color != nil ? .bold : .regular)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 48)
     }
 }
 
