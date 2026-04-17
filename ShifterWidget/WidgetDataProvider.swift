@@ -8,30 +8,25 @@
 import Foundation
 import SwiftData
 
-class WidgetDataProvider {
+final class WidgetDataProvider: @unchecked Sendable {
     static let shared = WidgetDataProvider()
     
     private let appGroupIdentifier = "group.com.davidguia.shifter"
     
-    private var modelContainer: ModelContainer?
+    private let modelContainer: ModelContainer?
     
     init() {
-        setupModelContainer()
-    }
-    
-    private func setupModelContainer() {
         guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) else {
+            modelContainer = nil
             return
         }
-        
         let storeURL = containerURL.appendingPathComponent("shifter.sqlite")
-        
         do {
             let schema = Schema([WorkSchedule.self, Shift.self])
             let modelConfiguration = ModelConfiguration(url: storeURL)
             modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            // Silencieux en production
+            modelContainer = nil
         }
     }
     

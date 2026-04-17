@@ -287,7 +287,14 @@ class WorkJamAuthViewModel: NSObject {
 extension WorkJamAuthViewModel: ASWebAuthenticationPresentationContextProviding {
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
         let scenes = UIApplication.shared.connectedScenes
-        let windowScene = scenes.first as? UIWindowScene
-        return windowScene?.windows.first ?? ASPresentationAnchor()
+        let windowScene = scenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
+                       ?? scenes.first as? UIWindowScene
+        if let window = windowScene?.windows.first(where: { $0.isKeyWindow }) ?? windowScene?.windows.first {
+            return window
+        }
+        if let scene = windowScene {
+            return UIWindow(windowScene: scene)
+        }
+        return UIWindow()
     }
 }
