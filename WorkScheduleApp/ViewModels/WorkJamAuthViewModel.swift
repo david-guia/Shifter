@@ -31,6 +31,14 @@ class WorkJamAuthViewModel: NSObject, ObservableObject {
     private let keychain = WorkJamKeychain.shared
     private var authSession: ASWebAuthenticationSession?
 
+    private let lastSyncKey = "workjam_last_sync_date"
+    /// Intervalle minimum entre deux syncs automatiques (en heures)
+    private let autoSyncIntervalHours: Double = 6
+
+    var lastSyncDate: Date? {
+        UserDefaults.standard.object(forKey: lastSyncKey) as? Date
+    }
+
     // MARK: - Initialisation
 
     override init() {
@@ -231,6 +239,7 @@ class WorkJamAuthViewModel: NSObject, ObservableObject {
             let shifts = WorkJamImportService.convertEvents(events, detailMap: detailMap)
             let count = WorkJamImportService.insertShifts(shifts, into: context)
             importedCount = count
+            UserDefaults.standard.set(Date(), forKey: lastSyncKey)
             showImportSuccess = true
         } catch WJAPIError.tokenExpired {
             errorMessage = "Session expirée. Veuillez vous reconnecter."
@@ -243,6 +252,21 @@ class WorkJamAuthViewModel: NSObject, ObservableObject {
         }
 
         isImporting = false
+    }
+
+    // MARK: - Sync automatique au lancement
+
+    /// Sync silencieuse : se déclenche si connecté et si la dernière sync date
+    /// de plus de `autoSyncIntervalHours` heures (ou n'a jamais eu lieu).
+    func autoSyncIfNeeded(context: ModelContext) async {
+        guard isAuthenticated else { return }
+
+        if let last = lastSyncDate {
+            let hoursSinceLast = Date().timeIntervalSince(last) / 3600
+            guard hoursSinceLast >= autoSyncIntervalHours else { return }
+        }
+
+        await importShifts(context: context)
     }
 
     // MARK: - Déconnexion

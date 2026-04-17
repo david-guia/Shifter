@@ -54,6 +54,9 @@ struct ContentView: View {
     /// Task pour gérer l'annulation des imports concurrents
     @State private var importTask: Task<Void, Never>?
     
+    /// ViewModel dédié à la sync automatique WorkJam au lancement
+    @StateObject private var workJamAutoSync = WorkJamAuthViewModel()
+
     /// Alertes pour l'expiration du certificat développeur
     @State private var showingExpiryWarning = false
     @State private var showingExpiryUrgent = false
@@ -712,6 +715,21 @@ struct ContentView: View {
         .onAppear {
             viewModel.setModelContext(modelContext)
             updateFilteredShifts()
+        }
+        .task {
+            // Sync automatique WorkJam au lancement (si connecté et sync > 6h)
+            await workJamAutoSync.autoSyncIfNeeded(context: modelContext)
+        }
+        .onChange(of: workJamAutoSync.showImportSuccess) { _, success in
+            guard success, workJamAutoSync.importedCount > 0 else { return }
+            let count = workJamAutoSync.importedCount
+            viewModel.fetchSchedules()
+            updateFilteredShifts()
+            viewModel.addedShiftMessage = "↻ WorkJam synchronisé \(count > 1 ? \"\(count) shifts mis à jour\" : \"1 shift mis à jour\")"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                viewModel.addedShiftMessage = nil
+                workJamAutoSync.showImportSuccess = false
+            }
         }
         .sheet(isPresented: $showingExportSheet) {
             if let url = exportFileURL {
