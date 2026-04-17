@@ -299,9 +299,9 @@ enum AppIcon: String, CaseIterable {
     var previewImageName: String {
         switch self {
         case .dark:
-            return "AppIcon-Dark"
+            return "AppIconDarkPreview"
         case .tinted:
-            return "AppIcon-Tinted"
+            return "AppIconTintedPreview"
         }
     }
     
