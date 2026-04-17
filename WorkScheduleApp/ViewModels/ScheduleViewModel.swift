@@ -16,7 +16,6 @@ class ScheduleViewModel: ObservableObject {
     
     /// Liste de tous les schedules (en pratique, un seul schedule principal)
     @Published var schedules: [WorkSchedule] = []
-    @Published var selectedSchedule: WorkSchedule?
     
     /// Trigger pour forcer le rafraîchissement de l'UI (s'incrémente à chaque modification)
     @Published var dataRefreshTrigger: Int = 0
@@ -181,9 +180,6 @@ class ScheduleViewModel: ObservableObject {
             // Rafraîchir les widgets
             WidgetCenter.shared.reloadAllTimelines()
             
-            // Synchroniser avec Apple Watch
-            syncToWatch()
-            
             isLoading = false
         } catch {
             isLoading = false
@@ -300,9 +296,6 @@ class ScheduleViewModel: ObservableObject {
             
             // Rafraîchir les widgets
             WidgetCenter.shared.reloadAllTimelines()
-            
-            // Synchroniser avec Apple Watch
-            syncToWatch()
         } catch {
             handleError(error)
         }
@@ -327,9 +320,6 @@ class ScheduleViewModel: ObservableObject {
             
             // Rafraîchir les widgets
             WidgetCenter.shared.reloadAllTimelines()
-            
-            // Synchroniser avec Apple Watch
-            syncToWatch()
         } catch {
             handleError(error)
         }
@@ -355,16 +345,6 @@ class ScheduleViewModel: ObservableObject {
         
         showError = true
     }
-    
-    // Statistiques
-    var shiftsGroupedByDate: [Date: [Shift]] {
-        guard let schedule = selectedSchedule else { return [:] }
-        return Dictionary(grouping: schedule.shifts) { shift in
-            Calendar.current.startOfDay(for: shift.date)
-        }
-    }
-    
-    // MARK: - Export/Import JSON
     
     // MARK: - Backup & Restore automatiques
     
@@ -421,20 +401,15 @@ class ScheduleViewModel: ObservableObject {
         let size = image.size
         let maxOriginalDimension = max(size.width, size.height)
         
-        // Si l'image est déjà plus petite, la retourner telle quelle
         guard maxOriginalDimension > maxDimension else { return image }
         
-        // Calculer le ratio de redimensionnement
         let scale = maxDimension / maxOriginalDimension
         let newSize = CGSize(width: size.width * scale, height: size.height * scale)
         
-        // Redimensionner l'image
-        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-        image.draw(in: CGRect(origin: .zero, size: newSize))
-        let scaledImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        return scaledImage ?? image
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+        }
     }
     
     // MARK: - Export/Import JSON manuel
@@ -576,23 +551,6 @@ class ScheduleViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Apple Watch Support
-    
-    /// Synchronise les statistiques Top 3 avec l'Apple Watch
-    func syncToWatch() {
-        guard let schedule = schedules.first else {
-            #if DEBUG
-            print("⚠️ Aucun schedule à synchroniser")
-            #endif
-            return
-        }
-        
-        // Récupérer tous les shifts
-        let allShifts = schedule.shifts
-        
-        // Envoyer via WatchConnectivity
-        WatchConnectivityManager.shared.syncTop3FromShifts(allShifts)
-    }
 }
 
 // MARK: - Export Models

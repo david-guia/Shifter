@@ -667,7 +667,6 @@ struct ManualShiftView: View {
         let finalSegment = segment == "Aucun" ? customShiftName.trimmingCharacters(in: .whitespacesAndNewlines) : segment
 
         viewModel.addManualShift(to: schedule, date: date, startTime: combinedStart, endTime: combinedEnd, location: "", segment: finalSegment, notes: notes)
-        viewModel.syncToWatch()
         WidgetCenter.shared.reloadAllTimelines()
 
         // Fermer la feuille d'ajout
