@@ -14,7 +14,6 @@ final class WorkJamAPIClient: @unchecked Sendable {
     private let baseURL = "https://api.workjam.com"
     private let authEndpoint = "/auth/v3"
     private let verifyMFAEndpoint = "/auth/v3/verify-mfa"
-    private let companyID = "COMPANY_ID_REMOVED"
 
     private let session: URLSession = {
         let config = URLSessionConfiguration.default
@@ -113,6 +112,10 @@ final class WorkJamAPIClient: @unchecked Sendable {
     // MARK: - Récupération des événements (shifts + congés)
 
     func fetchEvents(token: String, employeeID: String, startDate: Date, endDate: Date) async throws -> [WJEvent] {
+        guard let companyID = WorkJamKeychain.shared.retrieveCompanyID(), !companyID.isEmpty else {
+            throw WJAPIError.missingCompanyID
+        }
+
         let iso = ISO8601DateFormatter()
         iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 
@@ -253,6 +256,9 @@ final class WorkJamAPIClient: @unchecked Sendable {
     // MARK: - Détail d'un shift (segments / zones)
 
     func fetchShiftDetail(token: String, shiftID: String, locationID: String) async throws -> WJShiftDetail {
+        guard let companyID = WorkJamKeychain.shared.retrieveCompanyID(), !companyID.isEmpty else {
+            throw WJAPIError.missingCompanyID
+        }
         let urlString = "\(baseURL)/api/v4/companies/\(companyID)/locations/\(locationID)/shifts/\(shiftID)"
         guard let url = URL(string: urlString) else { throw WJAPIError.invalidURL }
 

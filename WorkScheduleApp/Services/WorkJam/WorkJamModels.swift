@@ -110,6 +110,7 @@ enum WJAPIError: LocalizedError {
     case invalidCredentials
     case serverError(String)
     case decodingError(Error)
+    case missingCompanyID
 
     var errorDescription: String? {
         switch self {
@@ -129,6 +130,8 @@ enum WJAPIError: LocalizedError {
             return message
         case .decodingError:
             return "Impossible de lire la réponse du serveur"
+        case .missingCompanyID:
+            return "Identifiant entreprise manquant. Veuillez le saisir dans les paramètres de connexion."
         }
     }
 }

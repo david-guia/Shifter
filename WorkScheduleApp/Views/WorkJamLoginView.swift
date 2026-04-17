@@ -92,6 +92,19 @@ struct WorkJamLoginView: View {
                 .background(Color.systemBeige)
                 .border(Color.systemBlack, width: 1)
 
+                // Company ID
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Identifiant entreprise WorkJam")
+                        .font(.chicago12)
+                        .foregroundStyle(Color.systemBlack)
+                    SystemTextField(placeholder: "ex : 1234567890", text: $authVM.companyID)
+                        .keyboardType(.numberPad)
+                        .autocorrectionDisabled()
+                    Text("Trouvable dans l'URL de votre portail WorkJam : /companies/{identifiant}/")
+                        .font(.geneva9)
+                        .foregroundStyle(Color.systemGray)
+                }
+
                 // Email
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Email professionnel")

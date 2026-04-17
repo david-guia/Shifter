@@ -87,6 +87,9 @@ final class WorkJamKeychain: @unchecked Sendable {
     func saveEmail(_ email: String) -> Bool { save(key: "wj_email", value: email) }
     func retrieveEmail() -> String? { retrieve(key: "wj_email") }
 
+    func saveCompanyID(_ id: String) -> Bool { save(key: "wj_company_id", value: id) }
+    func retrieveCompanyID() -> String? { retrieve(key: "wj_company_id") }
+
     func savePassword(_ password: String) -> Bool { save(key: "wj_password", value: password) }
     func retrievePassword() -> String? { retrieve(key: "wj_password") }
 

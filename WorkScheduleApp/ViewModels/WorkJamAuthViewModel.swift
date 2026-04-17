@@ -18,6 +18,7 @@ class WorkJamAuthViewModel: NSObject {
     // MARK: - État de l'interface
 
     var email: String = ""
+    var companyID: String = ""
     var isLoading: Bool = false
     var isAuthenticated: Bool = false
     var errorMessage: String?
@@ -49,6 +50,9 @@ class WorkJamAuthViewModel: NSObject {
         if let savedEmail = keychain.retrieveEmail() {
             email = savedEmail
         }
+        if let savedCompanyID = keychain.retrieveCompanyID() {
+            companyID = savedCompanyID
+        }
     }
 
     func checkExistingSession() {
@@ -58,7 +62,7 @@ class WorkJamAuthViewModel: NSObject {
     // MARK: - Connexion SSO
 
     var canStartAuth: Bool {
-        !email.isEmpty && email.contains("@") && !isLoading
+        !email.isEmpty && email.contains("@") && !companyID.isEmpty && !isLoading
     }
 
     func startSSO() async {
@@ -152,6 +156,7 @@ class WorkJamAuthViewModel: NSObject {
             _ = keychain.saveToken(token)
             _ = keychain.saveEmployeeID(empID)
             _ = keychain.saveEmail(email)
+            _ = keychain.saveCompanyID(companyID)
             isAuthenticated = true
             statusMessage = "Connexion réussie !"
             isLoading = false
@@ -277,6 +282,7 @@ class WorkJamAuthViewModel: NSObject {
         keychain.logout()
         isAuthenticated = false
         email = ""
+        companyID = ""
         errorMessage = nil
         statusMessage = nil
     }
