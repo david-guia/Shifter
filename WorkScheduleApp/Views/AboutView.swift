@@ -305,7 +305,7 @@ enum AppIcon: String, CaseIterable {
         }
     }
     
-    static var current: AppIcon {
+    @MainActor static var current: AppIcon {
         let iconName = UIApplication.shared.alternateIconName
         return AppIcon.allCases.first { $0.iconName == iconName } ?? .dark
     }
