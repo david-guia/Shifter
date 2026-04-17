@@ -166,16 +166,45 @@ class WorkJamAuthViewModel: NSObject, ObservableObject {
         isImporting = true
         errorMessage = nil
 
+        // Depuis le 6 juin 2024 jusqu'à 28 jours dans le futur
+        var startComponents = DateComponents()
+        startComponents.year = 2024
+        startComponents.month = 6
+        startComponents.day = 6
+        let historyStart = Calendar.current.date(from: startComponents)
+            ?? Calendar.current.startOfDay(for: Date())
+
         let today = Calendar.current.startOfDay(for: Date())
         let endDate = Calendar.current.date(byAdding: .day, value: 28, to: today) ?? today
 
         do {
-            let events = try await api.fetchEvents(
-                token: token,
-                employeeID: empID,
-                startDate: today,
-                endDate: endDate
-            )
+            // Découper en tranches de 3 mois pour fiabilité (limite API WorkJam)
+            statusMessage = "Chargement des horaires…"
+            var allEvents: [WJEvent] = []
+            var sliceStart = historyStart
+            let cal = Calendar.current
+            var sliceIndex = 0
+
+            while sliceStart < endDate {
+                let sliceEnd = min(
+                    cal.date(byAdding: .month, value: 3, to: sliceStart) ?? endDate,
+                    endDate
+                )
+                let slice = try await api.fetchEvents(
+                    token: token,
+                    employeeID: empID,
+                    startDate: sliceStart,
+                    endDate: sliceEnd
+                )
+                allEvents.append(contentsOf: slice)
+                sliceStart = sliceEnd
+                sliceIndex += 1
+                statusMessage = "Chargement des horaires… (\(sliceIndex * 3) mois traités)"
+            }
+
+            // Dédupliquer les événements par ID
+            var seen = Set<String>()
+            let events = allEvents.filter { seen.insert($0.id).inserted }
 
             // Récupérer les détails de shift en parallèle pour obtenir les vraies zones
             statusMessage = "Récupération des zones de travail…"
