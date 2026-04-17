@@ -69,7 +69,7 @@ class WorkJamImportService {
         if let existing = schedules.first {
             schedule = existing
         } else {
-            schedule = WorkSchedule()
+            schedule = WorkSchedule(title: "WorkJam")
             context.insert(schedule)
         }
 
