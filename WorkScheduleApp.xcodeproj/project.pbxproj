@@ -30,6 +30,7 @@
 		5A17 /* WorkJamImportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B17 /* WorkJamImportService.swift */; };
 		5A18 /* WorkJamAuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B18 /* WorkJamAuthViewModel.swift */; };
 		5A19 /* WorkJamLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B19 /* WorkJamLoginView.swift */; };
+		5A20 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B20 /* AppLogger.swift */; };
 		5A2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B2 /* ContentView.swift */; };
 		5A3 /* Shift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B3 /* Shift.swift */; };
 		5A4 /* WorkSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B4 /* WorkSchedule.swift */; };
@@ -91,6 +92,7 @@
 		5B17 /* WorkJamImportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkJamImportService.swift; sourceTree = "<group>"; };
 		5B18 /* WorkJamAuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkJamAuthViewModel.swift; sourceTree = "<group>"; };
 		5B19 /* WorkJamLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkJamLoginView.swift; sourceTree = "<group>"; };
+		5B20 /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
 		5B2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5B3 /* Shift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shift.swift; sourceTree = "<group>"; };
 		5B4 /* WorkSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkSchedule.swift; sourceTree = "<group>"; };
@@ -232,6 +234,7 @@
 			children = (
 				5B12 /* FiscalCalendarHelper.swift */,
 				5B13 /* DateFormatterCache.swift */,
+				5B20 /* AppLogger.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -461,6 +464,7 @@
 				5A17 /* WorkJamImportService.swift in Sources */,
 				5A18 /* WorkJamAuthViewModel.swift in Sources */,
 				5A19 /* WorkJamLoginView.swift in Sources */,
+				5A20 /* AppLogger.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

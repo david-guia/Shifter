@@ -725,7 +725,8 @@ struct ContentView: View {
             let count = workJamAutoSync.importedCount
             viewModel.fetchSchedules()
             updateFilteredShifts()
-            viewModel.addedShiftMessage = "↻ WorkJam synchronisé \(count > 1 ? \"\(count) shifts mis à jour\" : \"1 shift mis à jour\")"
+            let countLabel = count > 1 ? "\(count) shifts mis à jour" : "1 shift mis à jour"
+            viewModel.addedShiftMessage = "↻ WorkJam synchronisé — \(countLabel)"
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
                 viewModel.addedShiftMessage = nil
                 workJamAutoSync.showImportSuccess = false
