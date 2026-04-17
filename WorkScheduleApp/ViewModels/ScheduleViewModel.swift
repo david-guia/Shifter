@@ -10,28 +10,28 @@ import SwiftUI
 import SwiftData
 import WidgetKit
 
+@Observable
 @MainActor
-class ScheduleViewModel: ObservableObject {
-    // MARK: - Propriétés publiées
+class ScheduleViewModel {
+    // MARK: - Propriétés observées
     
     /// Liste de tous les schedules (en pratique, un seul schedule principal)
-    @Published var schedules: [WorkSchedule] = []
-    @Published var selectedSchedule: WorkSchedule?
+    var schedules: [WorkSchedule] = []
     
     /// Trigger pour forcer le rafraîchissement de l'UI (s'incrémente à chaque modification)
-    @Published var dataRefreshTrigger: Int = 0
+    var dataRefreshTrigger: Int = 0
     
     /// Indicateur de chargement pendant l'OCR
-    @Published var isLoading = false
+    var isLoading = false
     
     /// Message d'erreur à afficher
-    @Published var errorMessage: String?
-    @Published var showError = false
+    var errorMessage: String?
+    var showError = false
     
     /// Indicateur pour afficher le toast de restauration automatique
-    @Published var showRestoredMessage = false
+    var showRestoredMessage = false
     /// Message court affiché en toast après actions (ex: ajout manuel)
-    @Published var addedShiftMessage: String?
+    var addedShiftMessage: String?
     
     // MARK: - Propriétés privées
     
@@ -80,7 +80,6 @@ class ScheduleViewModel: ObservableObject {
     /// Force le rafraîchissement de l'UI en incrémentant le trigger
     private func triggerUIRefresh() {
         dataRefreshTrigger += 1
-        objectWillChange.send()
     }
     
     // MARK: - Import depuis image OCR
@@ -180,9 +179,6 @@ class ScheduleViewModel: ObservableObject {
             
             // Rafraîchir les widgets
             WidgetCenter.shared.reloadAllTimelines()
-            
-            // Synchroniser avec Apple Watch
-            syncToWatch()
             
             isLoading = false
         } catch {
@@ -300,9 +296,6 @@ class ScheduleViewModel: ObservableObject {
             
             // Rafraîchir les widgets
             WidgetCenter.shared.reloadAllTimelines()
-            
-            // Synchroniser avec Apple Watch
-            syncToWatch()
         } catch {
             handleError(error)
         }
@@ -327,9 +320,6 @@ class ScheduleViewModel: ObservableObject {
             
             // Rafraîchir les widgets
             WidgetCenter.shared.reloadAllTimelines()
-            
-            // Synchroniser avec Apple Watch
-            syncToWatch()
         } catch {
             handleError(error)
         }
@@ -355,16 +345,6 @@ class ScheduleViewModel: ObservableObject {
         
         showError = true
     }
-    
-    // Statistiques
-    var shiftsGroupedByDate: [Date: [Shift]] {
-        guard let schedule = selectedSchedule else { return [:] }
-        return Dictionary(grouping: schedule.shifts) { shift in
-            Calendar.current.startOfDay(for: shift.date)
-        }
-    }
-    
-    // MARK: - Export/Import JSON
     
     // MARK: - Backup & Restore automatiques
     
@@ -421,20 +401,15 @@ class ScheduleViewModel: ObservableObject {
         let size = image.size
         let maxOriginalDimension = max(size.width, size.height)
         
-        // Si l'image est déjà plus petite, la retourner telle quelle
         guard maxOriginalDimension > maxDimension else { return image }
         
-        // Calculer le ratio de redimensionnement
         let scale = maxDimension / maxOriginalDimension
         let newSize = CGSize(width: size.width * scale, height: size.height * scale)
         
-        // Redimensionner l'image
-        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-        image.draw(in: CGRect(origin: .zero, size: newSize))
-        let scaledImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        return scaledImage ?? image
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+        }
     }
     
     // MARK: - Export/Import JSON manuel
@@ -576,23 +551,6 @@ class ScheduleViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Apple Watch Support
-    
-    /// Synchronise les statistiques Top 3 avec l'Apple Watch
-    func syncToWatch() {
-        guard let schedule = schedules.first else {
-            #if DEBUG
-            print("⚠️ Aucun schedule à synchroniser")
-            #endif
-            return
-        }
-        
-        // Récupérer tous les shifts
-        let allShifts = schedule.shifts
-        
-        // Envoyer via WatchConnectivity
-        WatchConnectivityManager.shared.syncTop3FromShifts(allShifts)
-    }
 }
 
 // MARK: - Export Models

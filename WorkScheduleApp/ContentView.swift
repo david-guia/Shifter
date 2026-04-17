@@ -23,7 +23,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     
     /// ViewModel qui gère la logique métier (import OCR, export, backup auto)
-    @StateObject private var viewModel = ScheduleViewModel()
+    @State private var viewModel = ScheduleViewModel()
     
     /// Images sélectionnées via PhotosPicker pour import OCR
     @State private var selectedItems: [PhotosPickerItem] = []
@@ -37,6 +37,7 @@ struct ContentView: View {
     @State private var showingManageSheet = false
     @State private var showingMenu = false
     @State private var showingAboutSheet = false
+    @State private var showingWorkJamSheet = false
     
     @State private var exportFileURL: URL?
     
@@ -53,6 +54,9 @@ struct ContentView: View {
     /// Task pour gérer l'annulation des imports concurrents
     @State private var importTask: Task<Void, Never>?
     
+    /// ViewModel dédié à la sync automatique WorkJam au lancement
+    @State private var workJamAutoSync = WorkJamAuthViewModel()
+
     /// Alertes pour l'expiration du certificat développeur
     @State private var showingExpiryWarning = false
     @State private var showingExpiryUrgent = false
@@ -592,6 +596,28 @@ struct ContentView: View {
                             
                             Divider()
                                 .background(Color.systemBlack)
+
+                            Button {
+                                showingMenu = false
+                                showingWorkJamSheet = true
+                            } label: {
+                                HStack {
+                                    Text("⬇️")
+                                        .font(.system(size: 16))
+                                    Text("WorkJam Auto")
+                                        .font(.chicago12)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                .contentShape(Rectangle())
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Color.systemBlack)
+                            .background(Color.systemWhite)
+
+                            Divider()
+                                .background(Color.systemBlack)
                             
                             Button {
                                 showingMenu = false
@@ -690,6 +716,22 @@ struct ContentView: View {
             viewModel.setModelContext(modelContext)
             updateFilteredShifts()
         }
+        .task {
+            // Sync automatique WorkJam au lancement (si connecté et sync > 6h)
+            await workJamAutoSync.autoSyncIfNeeded(context: modelContext)
+        }
+        .onChange(of: workJamAutoSync.showImportSuccess) { _, success in
+            guard success, workJamAutoSync.importedCount > 0 else { return }
+            let count = workJamAutoSync.importedCount
+            viewModel.fetchSchedules()
+            updateFilteredShifts()
+            let countLabel = count > 1 ? "\(count) shifts mis à jour" : "1 shift mis à jour"
+            viewModel.addedShiftMessage = "↻ WorkJam synchronisé — \(countLabel)"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                viewModel.addedShiftMessage = nil
+                workJamAutoSync.showImportSuccess = false
+            }
+        }
         .sheet(isPresented: $showingExportSheet) {
             if let url = exportFileURL {
                 ExportShareView(fileURL: url, isPresented: $showingExportSheet)
@@ -703,6 +745,18 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingAboutSheet) {
             AboutView(isPresented: $showingAboutSheet)
+        }
+        .sheet(isPresented: $showingWorkJamSheet) {
+            WorkJamLoginView(isPresented: $showingWorkJamSheet) { count in
+                viewModel.fetchSchedules()
+                updateFilteredShifts()
+                if count > 0 {
+                    viewModel.addedShiftMessage = "\(count) shift\(count > 1 ? "s" : "") importé\(count > 1 ? "s" : "") depuis WorkJam"
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        viewModel.addedShiftMessage = nil
+                    }
+                }
+            }
         }
         .sheet(isPresented: $showingSummarySheet) {
             SimpleSummarySheet(
@@ -1182,7 +1236,7 @@ struct ExportShareView: View {
 
 struct ImportView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: ScheduleViewModel
+    @Bindable var viewModel: ScheduleViewModel
     @Binding var isPresented: Bool
     @State private var jsonText = ""
     @State private var showingZipImporter = false

@@ -12,11 +12,6 @@ import SwiftData
 struct WorkScheduleAppApp: App {
     @State private var sharedImagePath: String?
     
-    // MARK: - 🚧 Apple Watch Support
-    init() {
-        _ = WatchConnectivityManager.shared
-    }
-    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             WorkSchedule.self,

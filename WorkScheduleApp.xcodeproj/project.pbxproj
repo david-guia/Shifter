@@ -8,11 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		2A0C28B32EE37EC400929A7E /* ShifterShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2A0C28A92EE37EC400929A7E /* ShifterShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		2A12BCA22EE6F36C00BB11AA /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A12BCA12EE6F36C00BB11AA /* WatchConnectivityManager.swift */; };
 		2A4EA6912EE35E7C006F4D56 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A4EA6902EE35E7C006F4D56 /* AboutView.swift */; };
 		2A576F352EE7601300921266 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2A576F342EE7601300921266 /* LaunchScreen.storyboard */; };
 		2A7654742EE8A4D700A26216 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 2A7654732EE8A4D700A26216 /* ZIPFoundation */; };
-		2A7AB6412EE6EE31000BE7FA /* ShifterWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 2A7AB6372EE6EE2E000BE7FA /* ShifterWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2AA13CC32EDCED1F004C0E67 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2AA13CC22EDCED1A004C0E67 /* Assets.xcassets */; };
 		2AC002032EE4D036003B911F /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2AC002022EE4D036003B911F /* WidgetKit.framework */; };
 		2AC002052EE4D036003B911F /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2AC002042EE4D036003B911F /* SwiftUI.framework */; };
@@ -26,7 +24,14 @@
 		5A11 /* ManageDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B11 /* ManageDataView.swift */; };
 		5A12 /* FiscalCalendarHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B12 /* FiscalCalendarHelper.swift */; };
 		5A13 /* DateFormatterCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B13 /* DateFormatterCache.swift */; };
+		5A14 /* WorkJamModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B14 /* WorkJamModels.swift */; };
+		5A15 /* WorkJamKeychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B15 /* WorkJamKeychain.swift */; };
+		5A16 /* WorkJamAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B16 /* WorkJamAPIClient.swift */; };
+		5A17 /* WorkJamImportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B17 /* WorkJamImportService.swift */; };
+		5A18 /* WorkJamAuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B18 /* WorkJamAuthViewModel.swift */; };
+		5A19 /* WorkJamLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B19 /* WorkJamLoginView.swift */; };
 		5A2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B2 /* ContentView.swift */; };
+		5A20 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B20 /* AppLogger.swift */; };
 		5A3 /* Shift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B3 /* Shift.swift */; };
 		5A4 /* WorkSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B4 /* WorkSchedule.swift */; };
 		5A5 /* ScheduleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B5 /* ScheduleViewModel.swift */; };
@@ -41,13 +46,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = 2A0C28A82EE37EC400929A7E;
 			remoteInfo = ShifterShareExtension;
-		};
-		2A7AB63F2EE6EE31000BE7FA /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 5G1 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 2A7AB6362EE6EE2E000BE7FA;
-			remoteInfo = "ShifterWatch Watch App";
 		};
 		2AC002142EE4D037003B911F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -71,26 +69,13 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		2A7AB6422EE6EE31000BE7FA /* Embed Watch Content */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
-			dstSubfolderSpec = 16;
-			files = (
-				2A7AB6412EE6EE31000BE7FA /* ShifterWatch Watch App.app in Embed Watch Content */,
-			);
-			name = "Embed Watch Content";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		2A0C28A92EE37EC400929A7E /* ShifterShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShifterShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A0C28BD2EE380C900929A7E /* WorkScheduleApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WorkScheduleApp.entitlements; sourceTree = "<group>"; };
-		2A12BCA12EE6F36C00BB11AA /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
 		2A4EA6902EE35E7C006F4D56 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		2A576F342EE7601300921266 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
-		2A7AB6372EE6EE2E000BE7FA /* ShifterWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ShifterWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2AA13CC22EDCED1A004C0E67 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2AC002002EE4D036003B911F /* ShifterWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShifterWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		2AC002022EE4D036003B911F /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -101,7 +86,14 @@
 		5B11 /* ManageDataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageDataView.swift; sourceTree = "<group>"; };
 		5B12 /* FiscalCalendarHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FiscalCalendarHelper.swift; sourceTree = "<group>"; };
 		5B13 /* DateFormatterCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatterCache.swift; sourceTree = "<group>"; };
+		5B14 /* WorkJamModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkJamModels.swift; sourceTree = "<group>"; };
+		5B15 /* WorkJamKeychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkJamKeychain.swift; sourceTree = "<group>"; };
+		5B16 /* WorkJamAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkJamAPIClient.swift; sourceTree = "<group>"; };
+		5B17 /* WorkJamImportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkJamImportService.swift; sourceTree = "<group>"; };
+		5B18 /* WorkJamAuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkJamAuthViewModel.swift; sourceTree = "<group>"; };
+		5B19 /* WorkJamLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkJamLoginView.swift; sourceTree = "<group>"; };
 		5B2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		5B20 /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
 		5B3 /* Shift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shift.swift; sourceTree = "<group>"; };
 		5B4 /* WorkSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkSchedule.swift; sourceTree = "<group>"; };
 		5B5 /* ScheduleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleViewModel.swift; sourceTree = "<group>"; };
@@ -129,19 +121,11 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2A0C28AA2EE37EC400929A7E /* ShifterShareExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2A0C28B42EE37EC400929A7E /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ShifterShareExtension; sourceTree = "<group>"; };
-		2A7AB6382EE6EE2E000BE7FA /* ShifterWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "ShifterWatch Watch App"; sourceTree = "<group>"; };
 		2AC002062EE4D036003B911F /* ShifterWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2AC002192EE4D037003B911F /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ShifterWidget; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		2A0C28A62EE37EC400929A7E /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		2A7AB6342EE6EE2E000BE7FA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -184,7 +168,6 @@
 				5E2 /* WorkScheduleApp */,
 				2A0C28AA2EE37EC400929A7E /* ShifterShareExtension */,
 				2AC002062EE4D036003B911F /* ShifterWidget */,
-				2A7AB6382EE6EE2E000BE7FA /* ShifterWatch Watch App */,
 				2AC002012EE4D036003B911F /* Frameworks */,
 				5E8 /* Products */,
 			);
@@ -194,7 +177,6 @@
 			isa = PBXGroup;
 			children = (
 				2A576F342EE7601300921266 /* LaunchScreen.storyboard */,
-				2A12BCA12EE6F36C00BB11AA /* WatchConnectivityManager.swift */,
 				2A0C28BD2EE380C900929A7E /* WorkScheduleApp.entitlements */,
 				2AA13CC22EDCED1A004C0E67 /* Assets.xcassets */,
 				5B1 /* WorkScheduleAppApp.swift */,
@@ -221,6 +203,7 @@
 			isa = PBXGroup;
 			children = (
 				5B5 /* ScheduleViewModel.swift */,
+				5B18 /* WorkJamAuthViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -229,6 +212,7 @@
 			isa = PBXGroup;
 			children = (
 				5B6 /* OCRService.swift */,
+				5E9 /* WorkJam */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -240,6 +224,7 @@
 				5B9 /* SystemCSSTheme.swift */,
 				5B10 /* ShiftStatisticsView.swift */,
 				5B11 /* ManageDataView.swift */,
+				5B19 /* WorkJamLoginView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -249,6 +234,7 @@
 			children = (
 				5B12 /* FiscalCalendarHelper.swift */,
 				5B13 /* DateFormatterCache.swift */,
+				5B20 /* AppLogger.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -259,9 +245,19 @@
 				5C3 /* WorkScheduleApp.app */,
 				2A0C28A92EE37EC400929A7E /* ShifterShareExtension.appex */,
 				2AC002002EE4D036003B911F /* ShifterWidgetExtension.appex */,
-				2A7AB6372EE6EE2E000BE7FA /* ShifterWatch Watch App.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		5E9 /* WorkJam */ = {
+			isa = PBXGroup;
+			children = (
+				5B14 /* WorkJamModels.swift */,
+				5B15 /* WorkJamKeychain.swift */,
+				5B16 /* WorkJamAPIClient.swift */,
+				5B17 /* WorkJamImportService.swift */,
+			);
+			path = WorkJam;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -288,28 +284,6 @@
 			productName = ShifterShareExtension;
 			productReference = 2A0C28A92EE37EC400929A7E /* ShifterShareExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
-		};
-		2A7AB6362EE6EE2E000BE7FA /* ShifterWatch Watch App */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 2A7AB6452EE6EE31000BE7FA /* Build configuration list for PBXNativeTarget "ShifterWatch Watch App" */;
-			buildPhases = (
-				2A7AB6332EE6EE2E000BE7FA /* Sources */,
-				2A7AB6342EE6EE2E000BE7FA /* Frameworks */,
-				2A7AB6352EE6EE2E000BE7FA /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				2A7AB6382EE6EE2E000BE7FA /* ShifterWatch Watch App */,
-			);
-			name = "ShifterWatch Watch App";
-			packageProductDependencies = (
-			);
-			productName = "ShifterWatch Watch App";
-			productReference = 2A7AB6372EE6EE2E000BE7FA /* ShifterWatch Watch App.app */;
-			productType = "com.apple.product-type.application";
 		};
 		2AC001FF2EE4D036003B911F /* ShifterWidgetExtension */ = {
 			isa = PBXNativeTarget;
@@ -342,14 +316,12 @@
 				5F3 /* Sources */,
 				2AA13CC62EDCEEF7004C0E67 /* ShellScript */,
 				2A0C28B82EE37EC400929A7E /* Embed Foundation Extensions */,
-				2A7AB6422EE6EE31000BE7FA /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				2A0C28B22EE37EC400929A7E /* PBXTargetDependency */,
 				2AC002152EE4D037003B911F /* PBXTargetDependency */,
-				2A7AB6402EE6EE31000BE7FA /* PBXTargetDependency */,
 			);
 			name = WorkScheduleApp;
 			productName = WorkScheduleApp;
@@ -364,12 +336,9 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2620;
-				LastUpgradeCheck = 2620;
+				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					2A0C28A82EE37EC400929A7E = {
-						CreatedOnToolsVersion = 26.1.1;
-					};
-					2A7AB6362EE6EE2E000BE7FA = {
 						CreatedOnToolsVersion = 26.1.1;
 					};
 					2AC001FF2EE4D036003B911F = {
@@ -400,20 +369,12 @@
 				5F1 /* WorkScheduleApp */,
 				2A0C28A82EE37EC400929A7E /* ShifterShareExtension */,
 				2AC001FF2EE4D036003B911F /* ShifterWidgetExtension */,
-				2A7AB6362EE6EE2E000BE7FA /* ShifterWatch Watch App */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		2A0C28A72EE37EC400929A7E /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		2A7AB6352EE6EE2E000BE7FA /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -467,13 +428,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		2A7AB6332EE6EE2E000BE7FA /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		2AC001FC2EE4D036003B911F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -495,13 +449,19 @@
 				5A4 /* WorkSchedule.swift in Sources */,
 				2A4EA6912EE35E7C006F4D56 /* AboutView.swift in Sources */,
 				5A5 /* ScheduleViewModel.swift in Sources */,
-				2A12BCA22EE6F36C00BB11AA /* WatchConnectivityManager.swift in Sources */,
 				5A6 /* OCRService.swift in Sources */,
 				5A9 /* SystemCSSTheme.swift in Sources */,
 				5A10 /* ShiftStatisticsView.swift in Sources */,
 				5A11 /* ManageDataView.swift in Sources */,
 				5A12 /* FiscalCalendarHelper.swift in Sources */,
 				5A13 /* DateFormatterCache.swift in Sources */,
+				5A14 /* WorkJamModels.swift in Sources */,
+				5A15 /* WorkJamKeychain.swift in Sources */,
+				5A16 /* WorkJamAPIClient.swift in Sources */,
+				5A17 /* WorkJamImportService.swift in Sources */,
+				5A18 /* WorkJamAuthViewModel.swift in Sources */,
+				5A19 /* WorkJamLoginView.swift in Sources */,
+				5A20 /* AppLogger.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -512,11 +472,6 @@
 			isa = PBXTargetDependency;
 			target = 2A0C28A82EE37EC400929A7E /* ShifterShareExtension */;
 			targetProxy = 2A0C28B12EE37EC400929A7E /* PBXContainerItemProxy */;
-		};
-		2A7AB6402EE6EE31000BE7FA /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 2A7AB6362EE6EE2E000BE7FA /* ShifterWatch Watch App */;
-			targetProxy = 2A7AB63F2EE6EE31000BE7FA /* PBXContainerItemProxy */;
 		};
 		2AC002152EE4D037003B911F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -533,7 +488,6 @@
 				CODE_SIGN_ENTITLEMENTS = ShifterShareExtension/ShifterShareExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8646HX4XDV;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ShifterShareExtension/Info.plist;
@@ -553,7 +507,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -565,7 +519,6 @@
 				CODE_SIGN_ENTITLEMENTS = ShifterShareExtension/ShifterShareExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8646HX4XDV;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ShifterShareExtension/Info.plist;
@@ -585,88 +538,8 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		2A7AB6432EE6EE31000BE7FA /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
-				CODE_SIGN_ENTITLEMENTS = "ShifterWatch Watch App/ShifterWatch Watch App.entitlements";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8646HX4XDV;
-				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = ShifterWatch;
-				INFOPLIST_KEY_UIDeviceFamily = 4;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKApplication = YES;
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = me.davidguia.WorkScheduleApp;
-				INFOPLIST_KEY_WKWatchKitApp = YES;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.3.3;
-				PRODUCT_BUNDLE_IDENTIFIER = me.davidguia.WorkScheduleApp.watchkitapp;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 26.1;
-			};
-			name = Debug;
-		};
-		2A7AB6442EE6EE31000BE7FA /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
-				CODE_SIGN_ENTITLEMENTS = "ShifterWatch Watch App/ShifterWatch Watch App.entitlements";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8646HX4XDV;
-				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = ShifterWatch;
-				INFOPLIST_KEY_UIDeviceFamily = 4;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKApplication = YES;
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = me.davidguia.WorkScheduleApp;
-				INFOPLIST_KEY_WKWatchKitApp = YES;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.3.3;
-				PRODUCT_BUNDLE_IDENTIFIER = me.davidguia.WorkScheduleApp.watchkitapp;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 26.1;
 			};
 			name = Release;
 		};
@@ -679,7 +552,6 @@
 				CODE_SIGN_ENTITLEMENTS = ShifterWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8646HX4XDV;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ShifterWidget/Info.plist;
@@ -699,7 +571,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -713,7 +585,6 @@
 				CODE_SIGN_ENTITLEMENTS = ShifterWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8646HX4XDV;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ShifterWidget/Info.plist;
@@ -733,7 +604,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -778,7 +649,6 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 8646HX4XDV;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -821,9 +691,11 @@
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
@@ -868,7 +740,6 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 8646HX4XDV;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -903,9 +774,11 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -946,6 +819,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 8646HX4XDV;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
@@ -962,7 +836,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -1009,6 +883,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 8646HX4XDV;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
@@ -1019,7 +894,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -1038,15 +913,6 @@
 			buildConfigurations = (
 				2A0C28B62EE37EC400929A7E /* Debug */,
 				2A0C28B72EE37EC400929A7E /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		2A7AB6452EE6EE31000BE7FA /* Build configuration list for PBXNativeTarget "ShifterWatch Watch App" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				2A7AB6432EE6EE31000BE7FA /* Debug */,
-				2A7AB6442EE6EE31000BE7FA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

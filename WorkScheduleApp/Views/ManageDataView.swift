@@ -11,7 +11,7 @@ import WidgetKit
 
 struct ManageDataView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: ScheduleViewModel
+    @Bindable var viewModel: ScheduleViewModel
     @Binding var isPresented: Bool
     let initialDate: Date
     @State private var showingDeleteAllAlert = false
@@ -20,7 +20,6 @@ struct ManageDataView: View {
     @State private var selectedCalendarDate: Date
     @State private var showingAddShiftSheet = false
     @State private var dayHoursCache: [Int: TimeInterval] = [:]
-    @State private var cachedAllShifts: [Shift] = []
     @State private var monthShiftsCache: [Shift] = []
     @State private var shiftsByDay: [Int: [Shift]] = [:]
     
@@ -32,20 +31,11 @@ struct ManageDataView: View {
     }
     
     private var allShifts: [Shift] {
-        if !cachedAllShifts.isEmpty {
-            return cachedAllShifts
-        }
         guard let schedule = viewModel.schedules.first else { return [] }
-        let sorted = schedule.shifts.sorted { shift1, shift2 in
-            // Tri par date décroissante (plus récent en premier)
-            if shift1.date != shift2.date {
-                return shift1.date > shift2.date
-            }
-            // Si même date, tri par heure de début décroissante (plus tard en premier)
+        return schedule.shifts.sorted { shift1, shift2 in
+            if shift1.date != shift2.date { return shift1.date > shift2.date }
             return shift1.startTime > shift2.startTime
         }
-        cachedAllShifts = sorted
-        return sorted
     }
     
     // Shifts filtrés par le mois sélectionné dans le calendrier
@@ -329,6 +319,9 @@ struct ManageDataView: View {
         .onAppear {
             updateMonthCache()
         }
+        .onChange(of: viewModel.dataRefreshTrigger) {
+            updateMonthCache()
+        }
     }
     
     /// Label du mois et année sélectionné (ex: "Décembre 2025")
@@ -401,8 +394,18 @@ struct ManageDataView: View {
         }
         shiftsByDay = dict
         
-        // Invalider le cache d'heures
-        dayHoursCache.removeAll()
+        // Précomputer les heures par jour (évite toute mutation pendant le rendu)
+        var hoursCache: [Int: TimeInterval] = [:]
+        for (day, dayShifts) in dict {
+            var total: TimeInterval = 0
+            for shift in dayShifts {
+                let seg = shift.segment.lowercased()
+                guard seg != "général" && seg != "general" else { continue }
+                total += shift.duration
+            }
+            hoursCache[day] = total
+        }
+        dayHoursCache = hoursCache
     }
     
     /// Change de mois (navigation)
@@ -438,52 +441,19 @@ struct ManageDataView: View {
         return shiftsByDay[day] != nil && !shiftsByDay[day]!.isEmpty
     }
     
-    /// Calcule le total d'heures travaillées pour un jour donné (avec cache)
+    /// Calcule le total d'heures travaillées pour un jour donné (lecture du cache uniquement)
     private func totalHoursForDay(_ day: Int) -> TimeInterval {
-        // Vérifier le cache d'abord
-        if let cachedValue = dayHoursCache[day] {
-            return cachedValue
-        }
-        
-        var total: TimeInterval = 0
-        var shiftsForDay: [(String, TimeInterval)] = []
-        
-        // Utiliser le dictionnaire shiftsByDay pour accès direct
-        if let dayShifts = shiftsByDay[day] {
-            for shift in dayShifts {
-                // Exclure le shift "Général" du calcul
-                if shift.segment.lowercased() == "général" || shift.segment.lowercased() == "general" {
-                    continue
-                }
-                total += shift.duration
-                shiftsForDay.append((shift.segment, shift.duration))
-            }
-        }
-        
-        #if DEBUG
-        if !shiftsForDay.isEmpty {
-            let totalHours = total / 3600
-            print("📊 Jour \(day): \(shiftsForDay.count) shifts, Total: \(String(format: "%.2f", totalHours))h")
-            for (segment, duration) in shiftsForDay {
-                let hours = duration / 3600
-                print("   - \(segment): \(String(format: "%.2f", hours))h")
-            }
-        }
-        #endif
-        
-        // Mettre en cache le résultat
-        dayHoursCache[day] = total
-        
-        return total
+        return dayHoursCache[day] ?? 0
     }
     
-    /// Vérifie si un jour a exactement 8h de travail (tolérance de ±1 minute)
+    /// Vérifie si un jour a une journée de travail complète (≈ 7h ± 15 min).
+    /// La pause obligatoire de 1h est exclue des segments WorkJam,
+    /// un shift de 8h brut = 7h de travail effectif importé.
     private func dayHasFullWorkday(day: Int) -> Bool {
         let total = totalHoursForDay(day)
-        let eightHours: TimeInterval = 8 * 3600 // 8 heures en secondes
-        let tolerance: TimeInterval = 60 // Tolérance de 1 minute
-        
-        return abs(total - eightHours) <= tolerance
+        let sevenHours: TimeInterval = 7 * 3600
+        let tolerance: TimeInterval = 15 * 60 // ± 15 minutes
+        return abs(total - sevenHours) <= tolerance
     }
     
     private var totalHours: String {
@@ -501,7 +471,7 @@ struct ManageDataView: View {
 // MARK: - Manual Shift View (embedded to avoid adding new target file)
 struct ManualShiftView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: ScheduleViewModel
+    @Bindable var viewModel: ScheduleViewModel
     @Binding var isPresented: Bool
     // Binding optionnel vers la feuille parente (ManageDataView) pour pouvoir la fermer après enregistrement
     private var parentIsPresented: Binding<Bool>? = nil
@@ -666,7 +636,6 @@ struct ManualShiftView: View {
         let finalSegment = segment == "Aucun" ? customShiftName.trimmingCharacters(in: .whitespacesAndNewlines) : segment
 
         viewModel.addManualShift(to: schedule, date: date, startTime: combinedStart, endTime: combinedEnd, location: "", segment: finalSegment, notes: notes)
-        viewModel.syncToWatch()
         WidgetCenter.shared.reloadAllTimelines()
 
         // Fermer la feuille d'ajout
@@ -730,7 +699,7 @@ struct ShiftRowView: View {
 // MARK: - Édition de shift
 struct EditShiftView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: ScheduleViewModel
+    @Bindable var viewModel: ScheduleViewModel
     let shift: Shift
     @Binding var isPresented: Bool
     
