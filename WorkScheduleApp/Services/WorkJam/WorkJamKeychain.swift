@@ -8,7 +8,7 @@
 import Foundation
 import Security
 
-class WorkJamKeychain {
+final class WorkJamKeychain: @unchecked Sendable {
 
     static let shared = WorkJamKeychain()
 
