@@ -477,13 +477,13 @@ struct ManageDataView: View {
         return total
     }
     
-    /// Vérifie si un jour a exactement 8h de travail (tolérance de ±1 minute)
+    /// Vérifie si un jour a une journée de travail complète (≥ 6h).
+    /// Le seuil de 6h couvre les shifts manuels (8h sans pause) comme les imports
+    /// WorkJam par segments où les pauses sont exclues (~7h pour un shift 8h).
     private func dayHasFullWorkday(day: Int) -> Bool {
         let total = totalHoursForDay(day)
-        let eightHours: TimeInterval = 8 * 3600 // 8 heures en secondes
-        let tolerance: TimeInterval = 60 // Tolérance de 1 minute
-        
-        return abs(total - eightHours) <= tolerance
+        let sixHours: TimeInterval = 6 * 3600
+        return total >= sixHours
     }
     
     private var totalHours: String {
