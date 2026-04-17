@@ -176,7 +176,30 @@ class WorkJamAuthViewModel: NSObject, ObservableObject {
                 startDate: today,
                 endDate: endDate
             )
-            let shifts = WorkJamImportService.convertEvents(events)
+
+            // Récupérer les zones réelles en parallèle (uniquement pour les SHIFT, pas les congés)
+            statusMessage = "Récupération des zones de travail…"
+            let shiftEvents = events.filter { $0.type == "SHIFT" && $0.location != nil }
+            var zoneMap: [String: String] = [:]
+
+            await withTaskGroup(of: (String, String?).self) { group in
+                for event in shiftEvents {
+                    guard let locationID = event.location?.id else { continue }
+                    group.addTask {
+                        let zone = try? await self.api.fetchShiftDetail(
+                            token: token,
+                            shiftID: event.id,
+                            locationID: locationID
+                        ).primaryZone
+                        return (event.id, zone)
+                    }
+                }
+                for await (eventID, zone) in group {
+                    if let zone { zoneMap[eventID] = zone }
+                }
+            }
+
+            let shifts = WorkJamImportService.convertEvents(events, zoneMap: zoneMap)
             let count = WorkJamImportService.insertShifts(shifts, into: context)
             importedCount = count
             showImportSuccess = true

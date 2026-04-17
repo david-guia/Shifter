@@ -249,4 +249,33 @@ class WorkJamAPIClient {
             throw WJAPIError.networkError(error)
         }
     }
+
+    // MARK: - Détail d'un shift (segments / zones)
+
+    func fetchShiftDetail(token: String, shiftID: String, locationID: String) async throws -> WJShiftDetail {
+        let urlString = "\(baseURL)/api/v4/companies/\(companyID)/locations/\(locationID)/shifts/\(shiftID)"
+        guard let url = URL(string: urlString) else { throw WJAPIError.invalidURL }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("WORKJAM", forHTTPHeaderField: "marketplace")
+
+        do {
+            let (data, response) = try await session.data(for: request)
+            guard let http = response as? HTTPURLResponse else { throw WJAPIError.invalidResponse }
+            switch http.statusCode {
+            case 200...299:
+                return try JSONDecoder().decode(WJShiftDetail.self, from: data)
+            case 401:
+                throw WJAPIError.tokenExpired
+            case 403:
+                throw WJAPIError.unauthorized
+            default:
+                throw WJAPIError.serverError("Détail shift \(http.statusCode)")
+            }
+        } catch let e as WJAPIError { throw e }
+        catch { throw WJAPIError.networkError(error) }
+    }
 }

@@ -71,6 +71,34 @@ struct WJEventLocation: Codable {
     let timeZoneId: String?
 }
 
+// MARK: - Détail d'un shift (zones / segments)
+
+struct WJShiftDetail: Codable {
+    let id: String
+    let position: WJPosition?
+    let segments: [WJShiftSegment]
+
+    /// Nom de la zone principale : premier segment non-pause, sinon position racine
+    var primaryZone: String? {
+        segments.first(where: { !$0.isBreak })?.position?.name
+            ?? position?.name
+    }
+}
+
+struct WJPosition: Codable {
+    let id: String
+    let name: String
+}
+
+struct WJShiftSegment: Codable {
+    let type: String          // "SHIFT", "BREAK_MEAL", "BREAK_REST"
+    let startDateTime: String
+    let endDateTime: String
+    let position: WJPosition?
+
+    var isBreak: Bool { type.contains("BREAK") }
+}
+
 // MARK: - Erreurs API
 
 enum WJAPIError: LocalizedError {

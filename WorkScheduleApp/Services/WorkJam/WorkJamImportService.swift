@@ -13,31 +13,36 @@ class WorkJamImportService {
 
     // MARK: - Conversion WJEvent → Shift
 
-    /// Convertit une liste d'événements WorkJam en objets Shift compatibles avec Shifter
-    static func convertEvents(_ events: [WJEvent]) -> [Shift] {
+    /// Convertit une liste d'événements WorkJam en objets Shift.
+    /// `zoneMap` : dictionnaire [eventID: zoneName] issu des détails de shifts.
+    static func convertEvents(_ events: [WJEvent], zoneMap: [String: String] = [:]) -> [Shift] {
         let iso = ISO8601DateFormatter()
         iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 
         return events.compactMap { event in
             guard let startDate = iso.date(from: event.startDateTime),
                   let endDate = iso.date(from: event.endDateTime) else {
-                // Tentative sans millisecondes
                 let isoFallback = ISO8601DateFormatter()
                 isoFallback.formatOptions = [.withInternetDateTime]
                 guard let startDate = isoFallback.date(from: event.startDateTime),
                       let endDate = isoFallback.date(from: event.endDateTime) else {
                     return nil
                 }
-                return buildShift(event: event, startDate: startDate, endDate: endDate)
+                return buildShift(event: event, startDate: startDate, endDate: endDate,
+                                  zoneOverride: zoneMap[event.id])
             }
-            return buildShift(event: event, startDate: startDate, endDate: endDate)
+            return buildShift(event: event, startDate: startDate, endDate: endDate,
+                              zoneOverride: zoneMap[event.id])
         }
     }
 
-    private static func buildShift(event: WJEvent, startDate: Date, endDate: Date) -> Shift {
+    private static func buildShift(event: WJEvent, startDate: Date, endDate: Date,
+                                   zoneOverride: String? = nil) -> Shift {
         let locationName = event.location?.name ?? "WorkJam"
         let segmentName: String
-        if event.type == "AVAILABILITY_TIME_OFF" {
+        if let zone = zoneOverride, !zone.isEmpty {
+            segmentName = zone
+        } else if event.type == "AVAILABILITY_TIME_OFF" {
             segmentName = event.title?.isEmpty == false ? event.title! : "Congé"
         } else {
             segmentName = event.title?.isEmpty == false ? event.title! : "Shift"
