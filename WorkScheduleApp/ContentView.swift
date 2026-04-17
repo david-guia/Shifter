@@ -304,10 +304,12 @@ struct ContentView: View {
     }
     
     private func navigationButton(direction: NavigationDirection) -> some View {
-        Button {
+        let forward = direction == .next
+        let canNavigate = forward ? canGoForward : canGoBack
+
+        return Button {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                isNavigatingForward = direction == .next
-                changeDate(by: direction == .next ? 1 : -1)
+                navigatePeriod(forward: forward)
             }
         } label: {
             Text(direction == .previous ? "◀" : "▶")
@@ -315,13 +317,14 @@ struct ContentView: View {
                 .frame(width: 44, height: 36)
         }
         .buttonStyle(.plain)
-        .foregroundStyle(Color.systemBlack)
+        .foregroundStyle(canNavigate ? Color.systemBlack : Color.systemGray.opacity(0.4))
         .background(Color.systemWhite)
         .overlay(
             RoundedRectangle(cornerRadius: 6)
-                .stroke(Color.systemBlack, lineWidth: 2)
+                .stroke(canNavigate ? Color.systemBlack : Color.systemGray.opacity(0.4), lineWidth: 2)
         )
         .cornerRadius(6)
+        .disabled(!canNavigate)
     }
     
     private var periodLabelView: some View {
@@ -688,6 +691,7 @@ struct ContentView: View {
         }
         // Recalculer les shifts filtrés quand la période change (mois/trimestre/année)
         .onChange(of: selectedPeriod) { _, _ in
+            snapToNearestNonEmpty()
             updateFilteredShifts()
         }
         // Recalculer les shifts filtrés quand les données changent (import, suppression, etc.)
@@ -715,6 +719,7 @@ struct ContentView: View {
         .onAppear {
             viewModel.setModelContext(modelContext)
             updateFilteredShifts()
+            snapToNearestNonEmpty()
         }
         .task {
             // Sync automatique WorkJam au lancement (si connecté et sync > 6h)
@@ -867,10 +872,53 @@ struct ContentView: View {
         }
     }
     
-    /// Navigation par swipe sur le tableau des statistiques
+    /// Navigation par swipe sur le tableau des statistiques — saute les périodes vides
     private func navigatePeriod(forward: Bool) {
+        guard let newDate = nextNonEmptyDate(from: selectedDate, forward: forward) else { return }
         isNavigatingForward = forward
-        changeDate(by: forward ? 1 : -1)
+        selectedDate = newDate
+    }
+
+    /// Renvoie true si la période contient au moins un shift
+    private func hasShifts(for date: Date, period: TimePeriod) -> Bool {
+        guard let schedule = viewModel.schedules.first else { return false }
+        let calendar = Calendar.current
+        return schedule.shifts.contains { shift in
+            switch period {
+            case .month:   return calendar.isDate(shift.date, equalTo: date, toGranularity: .month)
+            case .quarter: return FiscalCalendarHelper.isInSameQuarter(shift.date, date)
+            case .year:    return calendar.isDate(shift.date, equalTo: date, toGranularity: .year)
+            }
+        }
+    }
+
+    /// Trouve la prochaine période non vide dans la direction donnée (max 120 itérations)
+    private func nextNonEmptyDate(from date: Date, forward: Bool) -> Date? {
+        guard let schedule = viewModel.schedules.first, !schedule.shifts.isEmpty else { return nil }
+        let calendar = Calendar.current
+        var candidate = date
+        for _ in 0..<120 {
+            switch selectedPeriod {
+            case .month:   candidate = calendar.date(byAdding: .month, value: forward ? 1 : -1, to: candidate) ?? candidate
+            case .quarter: candidate = calendar.date(byAdding: .month, value: forward ? 3 : -3, to: candidate) ?? candidate
+            case .year:    candidate = calendar.date(byAdding: .year, value: forward ? 1 : -1, to: candidate) ?? candidate
+            }
+            if hasShifts(for: candidate, period: selectedPeriod) { return candidate }
+        }
+        return nil
+    }
+
+    /// True s'il existe au moins une période avec des données en avant
+    private var canGoForward: Bool { nextNonEmptyDate(from: selectedDate, forward: true) != nil }
+    /// True s'il existe au moins une période avec des données en arrière
+    private var canGoBack: Bool { nextNonEmptyDate(from: selectedDate, forward: false) != nil }
+
+    /// Recale selectedDate sur la période non vide la plus proche (utile au changement de granularité)
+    private func snapToNearestNonEmpty() {
+        guard let schedule = viewModel.schedules.first, !schedule.shifts.isEmpty else { return }
+        if hasShifts(for: selectedDate, period: selectedPeriod) { return }
+        if let next = nextNonEmptyDate(from: selectedDate, forward: false) { selectedDate = next; return }
+        if let next = nextNonEmptyDate(from: selectedDate, forward: true)  { selectedDate = next }
     }
     
     /// Vérifie l'expiration du certificat développeur et affiche les alertes appropriées
