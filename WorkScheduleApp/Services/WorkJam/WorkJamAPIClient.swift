@@ -175,4 +175,78 @@ class WorkJamAPIClient {
             return false
         }
     }
+
+    // MARK: - Échange du code OAuth (SSO)
+
+    func exchangeOAuthCode(code: String) async throws -> WJAuthResponse {
+        guard let url = URL(string: "https://sso.workjam.com/oauth/token") else {
+            throw WJAPIError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+
+        let bodyParams = [
+            "grant_type=authorization_code",
+            "code=\(code)",
+            "client_id=workjam",
+            "redirect_uri=com.workjam.workjam://login/oauth2"
+        ].joined(separator: "&")
+        request.httpBody = bodyParams.data(using: .utf8)
+
+        do {
+            let (data, response) = try await session.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw WJAPIError.invalidResponse
+            }
+
+            switch httpResponse.statusCode {
+            case 200...299:
+                guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let accessToken = json["access_token"] as? String else {
+                    throw WJAPIError.serverError("Réponse OAuth invalide : access_token manquant")
+                }
+
+                // Décoder le JWT pour extraire l'employee ID
+                var employeeID: String?
+                let jwtParts = accessToken.components(separatedBy: ".")
+                if jwtParts.count >= 2 {
+                    var payload = jwtParts[1]
+                        .replacingOccurrences(of: "-", with: "+")
+                        .replacingOccurrences(of: "_", with: "/")
+                    let remainder = payload.count % 4
+                    if remainder > 0 { payload += String(repeating: "=", count: 4 - remainder) }
+                    if let payloadData = Data(base64Encoded: payload),
+                       let payloadJSON = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any] {
+                        employeeID = payloadJSON["sub"] as? String
+                    }
+                }
+
+                return WJAuthResponse(
+                    xToken: accessToken,
+                    token: nil,
+                    accessToken: nil,
+                    id: employeeID,
+                    employeeId: employeeID,
+                    firstName: nil,
+                    lastName: nil,
+                    email: nil,
+                    requiresMFA: false,
+                    mfaToken: nil,
+                    sessionId: nil
+                )
+
+            case 401:
+                throw WJAPIError.invalidCredentials
+            default:
+                throw WJAPIError.serverError("Échec de l'échange OAuth (\(httpResponse.statusCode))")
+            }
+        } catch let error as WJAPIError {
+            throw error
+        } catch {
+            throw WJAPIError.networkError(error)
+        }
+    }
 }

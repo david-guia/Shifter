@@ -2,150 +2,160 @@
 //  WorkJamAuthViewModel.swift
 //  WorkScheduleApp
 //
-//  ViewModel gérant l'authentification WorkJam et le déclenchement de l'import
+//  ViewModel gérant l'authentification SSO WorkJam via ASWebAuthenticationSession
+//  et le déclenchement de l'import automatique des horaires
 //
 
 import Foundation
 import SwiftData
+import AuthenticationServices
 
 @MainActor
-class WorkJamAuthViewModel: ObservableObject {
+class WorkJamAuthViewModel: NSObject, ObservableObject {
 
     // MARK: - État de l'interface
 
     @Published var email: String = ""
-    @Published var password: String = ""
-    @Published var mfaCode: String = ""
-
     @Published var isLoading: Bool = false
     @Published var isAuthenticated: Bool = false
-    @Published var needsMFA: Bool = false
     @Published var errorMessage: String?
-    @Published var saveCredentials: Bool = false
+    @Published var statusMessage: String?
 
     @Published var importedCount: Int = 0
     @Published var showImportSuccess: Bool = false
     @Published var isImporting: Bool = false
 
-    // MARK: - Propriétés privées
+    // MARK: - Privé
 
-    private var mfaToken: String?
     private let api = WorkJamAPIClient.shared
     private let keychain = WorkJamKeychain.shared
+    private var authSession: ASWebAuthenticationSession?
 
     // MARK: - Initialisation
 
-    init() {
+    override init() {
+        super.init()
         checkExistingSession()
-        loadSavedCredentials()
+        if let savedEmail = keychain.retrieveEmail() {
+            email = savedEmail
+        }
     }
-
-    // MARK: - Session existante
 
     func checkExistingSession() {
         isAuthenticated = keychain.isLoggedIn()
     }
 
-    private func loadSavedCredentials() {
-        if let savedEmail = keychain.retrieveEmail() {
-            email = savedEmail
-            saveCredentials = true
-        }
-        if let savedPassword = keychain.retrievePassword() {
-            password = savedPassword
-        }
+    // MARK: - Connexion SSO
+
+    var canStartAuth: Bool {
+        !email.isEmpty && email.contains("@") && !isLoading
     }
 
-    // MARK: - Connexion
-
-    func login() async {
-        guard !email.isEmpty, !password.isEmpty else {
-            errorMessage = "Veuillez saisir votre email et votre mot de passe."
+    func startSSO() async {
+        guard canStartAuth else {
+            errorMessage = "Veuillez saisir votre email professionnel."
             return
         }
 
         isLoading = true
         errorMessage = nil
+        statusMessage = "Préparation de l'authentification…"
 
-        do {
-            let response = try await api.login(email: email, password: password)
-
-            if response.requiresMFA == true,
-               let token = response.mfaToken ?? response.sessionId {
-                mfaToken = token
-                needsMFA = true
-                isLoading = false
-                return
-            }
-
-            guard let token = response.bearerToken, let empID = response.empID else {
-                errorMessage = "Réponse inattendue du serveur."
-                isLoading = false
-                return
-            }
-
-            _ = keychain.saveToken(token)
-            _ = keychain.saveEmployeeID(empID)
-
-            if saveCredentials {
-                _ = keychain.saveEmail(email)
-                _ = keychain.savePassword(password)
-            }
-
-            isAuthenticated = true
-
-        } catch let error as WJAPIError {
-            errorMessage = error.errorDescription
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-
-        isLoading = false
-    }
-
-    // MARK: - Vérification MFA
-
-    func verifyMFA() async {
-        guard let mfaToken, !mfaCode.isEmpty else {
-            errorMessage = "Veuillez saisir le code de vérification."
+        guard let encodedEmail = email.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
+            errorMessage = "Email invalide."
+            isLoading = false
             return
         }
 
-        isLoading = true
-        errorMessage = nil
+        var components = URLComponents(string: "https://sso.workjam.com/oauth/authorize")!
+        components.queryItems = [
+            URLQueryItem(name: "client_id", value: "workjam"),
+            URLQueryItem(name: "response_type", value: "code"),
+            URLQueryItem(name: "scope", value: "write"),
+            URLQueryItem(name: "redirect_uri", value: "com.workjam.workjam://login/oauth2"),
+            URLQueryItem(name: "login_hint", value: encodedEmail)
+        ]
 
+        guard let url = components.url else {
+            errorMessage = "Impossible de construire l'URL SSO."
+            isLoading = false
+            return
+        }
+
+        authSession = ASWebAuthenticationSession(
+            url: url,
+            callbackURLScheme: "com.workjam.workjam"
+        ) { [weak self] callbackURL, error in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if let error = error {
+                    let nsError = error as NSError
+                    if nsError.code == ASWebAuthenticationSessionError.canceledLogin.rawValue {
+                        self.statusMessage = "Connexion annulée."
+                        self.errorMessage = nil
+                    } else {
+                        self.errorMessage = "Erreur : \(error.localizedDescription)"
+                    }
+                    self.isLoading = false
+                    return
+                }
+                guard let callbackURL else {
+                    self.errorMessage = "Aucune URL de retour reçue."
+                    self.isLoading = false
+                    return
+                }
+                await self.handleCallback(url: callbackURL)
+            }
+        }
+
+        authSession?.prefersEphemeralWebBrowserSession = false
+        authSession?.presentationContextProvider = self
+        statusMessage = "Ouverture de la page de connexion…"
+
+        guard authSession?.start() == true else {
+            errorMessage = "Impossible de démarrer l'authentification."
+            isLoading = false
+            return
+        }
+    }
+
+    private func handleCallback(url: URL) async {
+        statusMessage = "Extraction du code d'autorisation…"
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let code = components.queryItems?.first(where: { $0.name == "code" })?.value else {
+            errorMessage = "Code d'autorisation introuvable."
+            isLoading = false
+            return
+        }
+        await exchangeCode(code)
+    }
+
+    private func exchangeCode(_ code: String) async {
+        statusMessage = "Finalisation de la connexion…"
         do {
-            let response = try await api.verifyMFA(mfaToken: mfaToken, code: mfaCode)
-
-            guard let token = response.bearerToken, let empID = response.empID else {
-                errorMessage = "Réponse MFA inattendue."
+            let authResponse = try await api.exchangeOAuthCode(code: code)
+            guard let token = authResponse.bearerToken, let empID = authResponse.empID else {
+                errorMessage = "Réponse invalide du serveur."
                 isLoading = false
                 return
             }
-
             _ = keychain.saveToken(token)
             _ = keychain.saveEmployeeID(empID)
-
-            if saveCredentials {
-                _ = keychain.saveEmail(email)
-                _ = keychain.savePassword(password)
-            }
-
-            needsMFA = false
+            _ = keychain.saveEmail(email)
             isAuthenticated = true
-
+            statusMessage = "Connexion réussie !"
+            isLoading = false
         } catch let error as WJAPIError {
             errorMessage = error.errorDescription
+            isLoading = false
         } catch {
             errorMessage = error.localizedDescription
+            isLoading = false
         }
-
-        isLoading = false
     }
 
     // MARK: - Import des horaires
 
-    /// Récupère les shifts WorkJam sur les 28 prochains jours et les insère dans Shifter
     func importShifts(context: ModelContext) async {
         guard let token = keychain.retrieveToken(),
               let empID = keychain.retrieveEmployeeID() else {
@@ -166,25 +176,14 @@ class WorkJamAuthViewModel: ObservableObject {
                 startDate: today,
                 endDate: endDate
             )
-
             let shifts = WorkJamImportService.convertEvents(events)
             let count = WorkJamImportService.insertShifts(shifts, into: context)
-
             importedCount = count
             showImportSuccess = true
-
         } catch WJAPIError.tokenExpired {
-            // Tenter une reconnexion automatique
-            if !email.isEmpty, !password.isEmpty {
-                await login()
-                if isAuthenticated {
-                    await importShifts(context: context)
-                    return
-                }
-            }
             errorMessage = "Session expirée. Veuillez vous reconnecter."
             isAuthenticated = false
-
+            keychain.logout()
         } catch let error as WJAPIError {
             errorMessage = error.errorDescription
         } catch {
@@ -200,9 +199,17 @@ class WorkJamAuthViewModel: ObservableObject {
         keychain.logout()
         isAuthenticated = false
         email = ""
-        password = ""
-        mfaCode = ""
-        mfaToken = nil
-        needsMFA = false
+        errorMessage = nil
+        statusMessage = nil
+    }
+}
+
+// MARK: - ASWebAuthenticationPresentationContextProviding
+
+extension WorkJamAuthViewModel: ASWebAuthenticationPresentationContextProviding {
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        let scenes = UIApplication.shared.connectedScenes
+        let windowScene = scenes.first as? UIWindowScene
+        return windowScene?.windows.first ?? ASPresentationAnchor()
     }
 }
