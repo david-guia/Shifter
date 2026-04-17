@@ -14,30 +14,63 @@ class WorkJamImportService {
     // MARK: - Conversion WJEvent → Shift
 
     /// Convertit une liste d'événements WorkJam en objets Shift.
-    /// `zoneMap` : dictionnaire [eventID: zoneName] issu des détails de shifts.
-    static func convertEvents(_ events: [WJEvent], zoneMap: [String: String] = [:]) -> [Shift] {
+    /// Pour les SHIFT avec segments de zones distincts, crée un Shift **par segment** (hors pauses).
+    /// `detailMap` : dictionnaire [eventID: WJShiftDetail] issu des appels de détail.
+    static func convertEvents(_ events: [WJEvent], detailMap: [String: WJShiftDetail] = [:]) -> [Shift] {
         let iso = ISO8601DateFormatter()
         iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let isoFallback = ISO8601DateFormatter()
+        isoFallback.formatOptions = [.withInternetDateTime]
 
-        return events.compactMap { event in
-            guard let startDate = iso.date(from: event.startDateTime),
-                  let endDate = iso.date(from: event.endDateTime) else {
-                let isoFallback = ISO8601DateFormatter()
-                isoFallback.formatOptions = [.withInternetDateTime]
-                guard let startDate = isoFallback.date(from: event.startDateTime),
-                      let endDate = isoFallback.date(from: event.endDateTime) else {
-                    return nil
+        var result: [Shift] = []
+
+        for event in events {
+            // SHIFT avec détail contenant des segments de zone
+            if event.type == "SHIFT", let detail = detailMap[event.id] {
+                let workSegments = detail.segments.filter { !$0.isBreak }
+                if !workSegments.isEmpty {
+                    for seg in workSegments {
+                        guard let start = parseDate(seg.startDateTime, primary: iso, fallback: isoFallback),
+                              let end   = parseDate(seg.endDateTime,   primary: iso, fallback: isoFallback) else { continue }
+                        result.append(Shift(
+                            date: Calendar.current.startOfDay(for: start),
+                            startTime: start,
+                            endTime: end,
+                            location: event.location?.name ?? "WorkJam",
+                            segment: seg.position?.name ?? detail.primaryZone ?? event.title ?? "Shift",
+                            notes: event.note ?? "",
+                            isConfirmed: true
+                        ))
+                    }
+                    continue
                 }
-                return buildShift(event: event, startDate: startDate, endDate: endDate,
-                                  zoneOverride: zoneMap[event.id])
+                // Détail présent mais aucun segment → zone principale
+                if let s = buildShift(event: event, primary: iso, fallback: isoFallback,
+                                      zoneOverride: detail.primaryZone) { result.append(s) }
+                continue
             }
-            return buildShift(event: event, startDate: startDate, endDate: endDate,
-                              zoneOverride: zoneMap[event.id])
+
+            // Congé ou absence de détail
+            if let s = buildShift(event: event, primary: iso, fallback: isoFallback) { result.append(s) }
         }
+        return result
     }
 
-    private static func buildShift(event: WJEvent, startDate: Date, endDate: Date,
-                                   zoneOverride: String? = nil) -> Shift {
+    // MARK: - Helpers privés
+
+    private static func parseDate(_ string: String,
+                                  primary: ISO8601DateFormatter,
+                                  fallback: ISO8601DateFormatter) -> Date? {
+        primary.date(from: string) ?? fallback.date(from: string)
+    }
+
+    private static func buildShift(event: WJEvent,
+                                   primary: ISO8601DateFormatter,
+                                   fallback: ISO8601DateFormatter,
+                                   zoneOverride: String? = nil) -> Shift? {
+        guard let startDate = parseDate(event.startDateTime, primary: primary, fallback: fallback),
+              let endDate   = parseDate(event.endDateTime,   primary: primary, fallback: fallback) else { return nil }
+
         let locationName = event.location?.name ?? "WorkJam"
         let segmentName: String
         if let zone = zoneOverride, !zone.isEmpty {
@@ -94,12 +127,12 @@ class WorkJamImportService {
         return insertedCount
     }
 
-    /// Clé de déduplication basée sur la date du jour + heure de début arrondie à la minute
+    /// Clé de déduplication : date + heure de début + lieu + segment (zone)
     private static func dedupeKey(for shift: Shift) -> String {
         let cal = Calendar.current
         let day = cal.startOfDay(for: shift.date)
         let startMinutes = cal.component(.hour, from: shift.startTime) * 60
                          + cal.component(.minute, from: shift.startTime)
-        return "\(day.timeIntervalSince1970)-\(startMinutes)-\(shift.location)"
+        return "\(day.timeIntervalSince1970)-\(startMinutes)-\(shift.location)-\(shift.segment)"
     }
 }
