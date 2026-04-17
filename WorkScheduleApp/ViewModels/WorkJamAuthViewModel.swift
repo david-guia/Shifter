@@ -7,23 +7,25 @@
 //
 
 import Foundation
+import Observation
 import SwiftData
 import AuthenticationServices
 
+@Observable
 @MainActor
-class WorkJamAuthViewModel: NSObject, ObservableObject {
+class WorkJamAuthViewModel: NSObject {
 
     // MARK: - État de l'interface
 
-    @Published var email: String = ""
-    @Published var isLoading: Bool = false
-    @Published var isAuthenticated: Bool = false
-    @Published var errorMessage: String?
-    @Published var statusMessage: String?
+    var email: String = ""
+    var isLoading: Bool = false
+    var isAuthenticated: Bool = false
+    var errorMessage: String?
+    var statusMessage: String?
 
-    @Published var importedCount: Int = 0
-    @Published var showImportSuccess: Bool = false
-    @Published var isImporting: Bool = false
+    var importedCount: Int = 0
+    var showImportSuccess: Bool = false
+    var isImporting: Bool = false
 
     // MARK: - Privé
 

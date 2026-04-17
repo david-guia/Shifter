@@ -12,7 +12,7 @@ struct WorkJamLoginView: View {
 
     @Binding var isPresented: Bool
     @Environment(\.modelContext) private var modelContext
-    @StateObject private var authVM = WorkJamAuthViewModel()
+    @State private var authVM = WorkJamAuthViewModel()
 
     var onImportComplete: ((Int) -> Void)?
 

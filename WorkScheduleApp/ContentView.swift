@@ -23,7 +23,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     
     /// ViewModel qui gère la logique métier (import OCR, export, backup auto)
-    @StateObject private var viewModel = ScheduleViewModel()
+    @State private var viewModel = ScheduleViewModel()
     
     /// Images sélectionnées via PhotosPicker pour import OCR
     @State private var selectedItems: [PhotosPickerItem] = []
@@ -55,7 +55,7 @@ struct ContentView: View {
     @State private var importTask: Task<Void, Never>?
     
     /// ViewModel dédié à la sync automatique WorkJam au lancement
-    @StateObject private var workJamAutoSync = WorkJamAuthViewModel()
+    @State private var workJamAutoSync = WorkJamAuthViewModel()
 
     /// Alertes pour l'expiration du certificat développeur
     @State private var showingExpiryWarning = false
@@ -1235,7 +1235,7 @@ struct ExportShareView: View {
 
 struct ImportView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: ScheduleViewModel
+    @Bindable var viewModel: ScheduleViewModel
     @Binding var isPresented: Bool
     @State private var jsonText = ""
     @State private var showingZipImporter = false

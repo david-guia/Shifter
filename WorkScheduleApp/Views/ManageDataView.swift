@@ -11,7 +11,7 @@ import WidgetKit
 
 struct ManageDataView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: ScheduleViewModel
+    @Bindable var viewModel: ScheduleViewModel
     @Binding var isPresented: Bool
     let initialDate: Date
     @State private var showingDeleteAllAlert = false
@@ -502,7 +502,7 @@ struct ManageDataView: View {
 // MARK: - Manual Shift View (embedded to avoid adding new target file)
 struct ManualShiftView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: ScheduleViewModel
+    @Bindable var viewModel: ScheduleViewModel
     @Binding var isPresented: Bool
     // Binding optionnel vers la feuille parente (ManageDataView) pour pouvoir la fermer après enregistrement
     private var parentIsPresented: Binding<Bool>? = nil
@@ -730,7 +730,7 @@ struct ShiftRowView: View {
 // MARK: - Édition de shift
 struct EditShiftView: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: ScheduleViewModel
+    @Bindable var viewModel: ScheduleViewModel
     let shift: Shift
     @Binding var isPresented: Bool
     

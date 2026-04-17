@@ -10,27 +10,28 @@ import SwiftUI
 import SwiftData
 import WidgetKit
 
+@Observable
 @MainActor
-class ScheduleViewModel: ObservableObject {
-    // MARK: - Propriétés publiées
+class ScheduleViewModel {
+    // MARK: - Propriétés observées
     
     /// Liste de tous les schedules (en pratique, un seul schedule principal)
-    @Published var schedules: [WorkSchedule] = []
+    var schedules: [WorkSchedule] = []
     
     /// Trigger pour forcer le rafraîchissement de l'UI (s'incrémente à chaque modification)
-    @Published var dataRefreshTrigger: Int = 0
+    var dataRefreshTrigger: Int = 0
     
     /// Indicateur de chargement pendant l'OCR
-    @Published var isLoading = false
+    var isLoading = false
     
     /// Message d'erreur à afficher
-    @Published var errorMessage: String?
-    @Published var showError = false
+    var errorMessage: String?
+    var showError = false
     
     /// Indicateur pour afficher le toast de restauration automatique
-    @Published var showRestoredMessage = false
+    var showRestoredMessage = false
     /// Message court affiché en toast après actions (ex: ajout manuel)
-    @Published var addedShiftMessage: String?
+    var addedShiftMessage: String?
     
     // MARK: - Propriétés privées
     
@@ -79,7 +80,6 @@ class ScheduleViewModel: ObservableObject {
     /// Force le rafraîchissement de l'UI en incrémentant le trigger
     private func triggerUIRefresh() {
         dataRefreshTrigger += 1
-        objectWillChange.send()
     }
     
     // MARK: - Import depuis image OCR
