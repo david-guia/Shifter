@@ -7,7 +7,7 @@
 
 import Foundation
 
-class WorkJamAPIClient {
+final class WorkJamAPIClient: @unchecked Sendable {
 
     static let shared = WorkJamAPIClient()
 

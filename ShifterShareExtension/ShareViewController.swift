@@ -5,7 +5,7 @@
 //  Extension de partage pour importer rapidement des captures d'écran
 //
 
-import UIKit
+@preconcurrency import UIKit
 import Social
 import UniformTypeIdentifiers
 
