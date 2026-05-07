@@ -18,10 +18,13 @@ struct ShiftStatisticsView: View {
     
     /// Période sélectionnée (mois/trimestre/année)
     let selectedPeriod: ContentView.TimePeriod
-    
+
     /// Date sélectionnée
     let selectedDate: Date
-    
+
+    /// Segments masqués par le filtre (les heures restent comptées dans le total)
+    var hiddenSegments: Set<String> = []
+
     // MARK: - Cache pour optimisation performance
     
     /// Statistiques mémorisées (recalculées uniquement si les shifts changent)
@@ -98,9 +101,9 @@ struct ShiftStatisticsView: View {
                     }
                     
                     ForEach(sortedSegments, id: \.self) { segment in
-                        if segment != "Général", let stats = segmentStats[segment] {
+                        if segment != "Général", !hiddenSegments.contains(segment), let stats = segmentStats[segment] {
                             let evolution = calculateEvolution(for: segment)
-                            
+
                             HStack(spacing: 0) {
                                 Text(segment)
                                     .font(.chicago12)

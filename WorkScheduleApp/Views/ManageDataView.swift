@@ -18,7 +18,6 @@ struct ManageDataView: View {
     @State private var selectedShiftToDelete: Shift?
     @State private var selectedShiftToEdit: Shift?
     @State private var selectedCalendarDate: Date
-    @State private var showingAddShiftSheet = false
     @State private var dayHoursCache: [Int: TimeInterval] = [:]
     @State private var monthShiftsCache: [Shift] = []
     @State private var shiftsByDay: [Int: [Shift]] = [:]
@@ -46,6 +45,32 @@ struct ManageDataView: View {
     // Shifts affichés (sans le shift "Général")
     private var displayedShifts: [Shift] {
         shiftsForSelectedMonth.filter { $0.segment.lowercased() != "général" && $0.segment.lowercased() != "general" }
+    }
+
+    // Shifts regroupés par jour (ordre décroissant)
+    private var shiftsGroupedByDay: [(Date, [Shift])] {
+        let calendar = Calendar.current
+        var dict: [Date: [Shift]] = [:]
+        for shift in displayedShifts {
+            let day = calendar.startOfDay(for: shift.date)
+            dict[day, default: []].append(shift)
+        }
+        return dict.sorted { $0.key > $1.key }.map { ($0.key, $0.value) }
+    }
+
+    private func dayHeaderLabel(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateFormat = "EEEE d MMMM"
+        return formatter.string(from: date).capitalized
+    }
+
+    private func dayTotalFormatted(for shifts: [Shift]) -> String {
+        let total = shifts.reduce(0.0) { $0 + $1.duration }
+        let hours = Int(total / 3600)
+        let minutes = Int((total.truncatingRemainder(dividingBy: 3600)) / 60)
+        if minutes == 0 { return "\(hours)h" }
+        return String(format: "%dh%02d", hours, minutes)
     }
     
     var body: some View {
@@ -179,47 +204,65 @@ struct ManageDataView: View {
                     .padding(.horizontal, 16)
                 } else {
                     List {
-                        ForEach(displayedShifts) { shift in
-                            ShiftRowView(shift: shift)
-                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                    Button(role: .destructive) {
-                                        selectedShiftToDelete = shift
-                                    } label: {
-                                        VStack(spacing: 4) {
-                                            Image(systemName: "trash.fill")
-                                                .font(.system(size: 20, weight: .semibold))
-                                            Text("Supprimer")
-                                                .font(.system(size: 10, weight: .medium))
+                        ForEach(shiftsGroupedByDay, id: \.0) { day, dayShifts in
+                            // En-tête de jour
+                            HStack {
+                                Text(dayHeaderLabel(for: day))
+                                    .font(.chicago12)
+                                    .foregroundStyle(Color.systemWhite)
+                                Spacer()
+                                Text(dayTotalFormatted(for: dayShifts))
+                                    .font(.chicago12)
+                                    .foregroundStyle(Color.systemWhite)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.systemBlack)
+
+                            ForEach(dayShifts) { shift in
+                                ShiftRowView(shift: shift)
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                        Button(role: .destructive) {
+                                            selectedShiftToDelete = shift
+                                        } label: {
+                                            VStack(spacing: 4) {
+                                                Image(systemName: "trash.fill")
+                                                    .font(.system(size: 20, weight: .semibold))
+                                                Text("Supprimer")
+                                                    .font(.system(size: 10, weight: .medium))
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         }
-                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        .tint(.red)
                                     }
-                                    .tint(.red)
-                                }
-                                .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                                    Button {
-                                        selectedShiftToEdit = shift
-                                    } label: {
-                                        VStack(spacing: 4) {
-                                            Image(systemName: "pencil")
-                                                .font(.system(size: 20, weight: .semibold))
-                                            Text("Modifier")
-                                                .font(.system(size: 10, weight: .medium))
+                                    .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                        Button {
+                                            selectedShiftToEdit = shift
+                                        } label: {
+                                            VStack(spacing: 4) {
+                                                Image(systemName: "pencil")
+                                                    .font(.system(size: 20, weight: .semibold))
+                                                Text("Modifier")
+                                                    .font(.system(size: 10, weight: .medium))
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         }
-                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        .tint(.blue)
                                     }
-                                    .tint(.blue)
-                                }
-                                .listRowSeparator(.hidden)
-                                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                                .listRowBackground(Color.systemWhite)
-                            
-                            if shift != displayedShifts.last {
-                                Rectangle()
-                                    .fill(Color.systemBlack)
-                                    .frame(height: 2)
                                     .listRowSeparator(.hidden)
-                                    .listRowInsets(EdgeInsets())
+                                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                                     .listRowBackground(Color.systemWhite)
+
+                                if shift != dayShifts.last {
+                                    Rectangle()
+                                        .fill(Color.systemBlack.opacity(0.12))
+                                        .frame(height: 1)
+                                        .listRowSeparator(.hidden)
+                                        .listRowInsets(EdgeInsets())
+                                        .listRowBackground(Color.systemWhite)
+                                }
                             }
                         }
                     }
@@ -237,27 +280,6 @@ struct ManageDataView: View {
                 
                 // Boutons en bas
                 VStack(spacing: 12) {
-                    Button {
-                        showingAddShiftSheet = true
-                    } label: {
-                        HStack(spacing: 12) {
-                            Text("➕")
-                                .font(.system(size: 18))
-                            Text("Ajouter un shift")
-                                .font(.chicago14)
-                        }
-                        .foregroundStyle(Color.systemBlack)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Color.systemWhite)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.systemBlack, lineWidth: 3)
-                        )
-                        .cornerRadius(8)
-                    }
-                    .buttonStyle(.plain)
-                    
                     Button {
                         showingDeleteAllAlert = true
                     } label: {
@@ -312,9 +334,6 @@ struct ManageDataView: View {
         }
         .sheet(item: $selectedShiftToEdit) { shift in
             EditShiftView(viewModel: viewModel, shift: shift, isPresented: .constant(true))
-        }
-        .sheet(isPresented: $showingAddShiftSheet) {
-            ManualShiftView(viewModel: viewModel, isPresented: $showingAddShiftSheet, parentIsPresented: $isPresented)
         }
         .onAppear {
             updateMonthCache()

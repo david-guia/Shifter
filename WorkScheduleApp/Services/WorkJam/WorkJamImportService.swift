@@ -94,8 +94,11 @@ class WorkJamImportService {
 
     // MARK: - Insertion dans SwiftData
 
-    /// Insère les shifts importés dans le schedule principal (crée le schedule si absent).
-    /// Retourne le nombre de nouveaux shifts insérés (les doublons sont ignorés).
+    /// Remplace les shifts des jours couverts par la synchronisation WorkJam.
+    /// Pour chaque jour présent dans `shifts`, tous les shifts existants pour ce jour
+    /// sont supprimés avant d'insérer les nouveaux — évite l'accumulation de zones
+    /// obsolètes quand les zoning changent d'une synchro à l'autre.
+    /// Retourne le nombre de shifts insérés.
     @MainActor
     static func insertShifts(_ shifts: [Shift], into context: ModelContext) -> Int {
         // Récupérer ou créer le schedule principal
@@ -111,28 +114,23 @@ class WorkJamImportService {
             context.insert(schedule)
         }
 
-        // Construire un ensemble de clés d'unicité (date + heure début + lieu)
-        let existingKeys = Set(schedule.shifts.map { dedupeKey(for: $0) })
+        // Collecter tous les jours couverts par la nouvelle synchro
+        let cal = Calendar.current
+        let incomingDays = Set(shifts.map { cal.startOfDay(for: $0.date) })
 
-        var insertedCount = 0
+        // Supprimer tous les shifts existants pour ces jours
+        let toDelete = schedule.shifts.filter { incomingDays.contains(cal.startOfDay(for: $0.date)) }
+        for shift in toDelete {
+            context.delete(shift)
+        }
+
+        // Insérer les nouveaux shifts
         for shift in shifts {
-            let key = dedupeKey(for: shift)
-            guard !existingKeys.contains(key) else { continue }
             shift.schedule = schedule
             context.insert(shift)
-            insertedCount += 1
         }
 
         try? context.save()
-        return insertedCount
-    }
-
-    /// Clé de déduplication : date + heure de début + lieu + segment (zone)
-    private static func dedupeKey(for shift: Shift) -> String {
-        let cal = Calendar.current
-        let day = cal.startOfDay(for: shift.date)
-        let startMinutes = cal.component(.hour, from: shift.startTime) * 60
-                         + cal.component(.minute, from: shift.startTime)
-        return "\(day.timeIntervalSince1970)-\(startMinutes)-\(shift.location)-\(shift.segment)"
+        return shifts.count
     }
 }

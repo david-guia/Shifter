@@ -37,4 +37,18 @@ enum FiscalCalendarHelper {
     static func quarterLabel(for date: Date) -> String {
         "Q\(fiscalQuarter(for: date)) \(fiscalYear(for: date))"
     }
+
+    /// Retourne le premier jour du trimestre fiscal contenant la date donnée
+    /// Q1 → 1er octobre, Q2 → 1er janvier, Q3 → 1er avril, Q4 → 1er juillet
+    static func quarterStartDate(for date: Date) -> Date {
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: date)
+        let startMonths = [10, 1, 4, 7] // indexé par quarter - 1
+        let startMonth = startMonths[fiscalQuarter(for: date) - 1]
+        var components = DateComponents()
+        components.year = year
+        components.month = startMonth
+        components.day = 1
+        return calendar.date(from: components) ?? date
+    }
 }

@@ -181,15 +181,9 @@ class WorkJamAuthViewModel: NSObject {
         isImporting = true
         errorMessage = nil
 
-        // Depuis le 6 juin 2024 jusqu'à 28 jours dans le futur
-        var startComponents = DateComponents()
-        startComponents.year = 2024
-        startComponents.month = 6
-        startComponents.day = 6
-        let historyStart = Calendar.current.date(from: startComponents)
-            ?? Calendar.current.startOfDay(for: Date())
-
+        // Depuis M-1 (1 mois en arrière) jusqu'à 28 jours dans le futur
         let today = Calendar.current.startOfDay(for: Date())
+        let historyStart = Calendar.current.date(byAdding: .month, value: -1, to: today) ?? today
         let endDate = Calendar.current.date(byAdding: .day, value: 28, to: today) ?? today
 
         do {

@@ -38,6 +38,8 @@ struct ContentView: View {
     @State private var showingMenu = false
     @State private var showingAboutSheet = false
     @State private var showingWorkJamSheet = false
+    @State private var showingFilterSheet = false
+    @State private var hiddenSegments: Set<String> = []
     
     @State private var exportFileURL: URL?
     
@@ -215,6 +217,26 @@ struct ContentView: View {
         .cornerRadius(8)
     }
     
+    // Bouton filtre segments
+    private var filterButton: some View {
+        let isActive = !hiddenSegments.isEmpty
+        return Button {
+            showingFilterSheet = true
+        } label: {
+            Image(systemName: isActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                .font(.system(size: 20, weight: .medium))
+                .foregroundStyle(isActive ? Color.systemWhite : Color.systemBlack)
+                .frame(width: 44, height: 44)
+        }
+        .buttonStyle(.plain)
+        .background(isActive ? Color.systemBlack : Color.systemWhite)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.systemBlack, lineWidth: 2)
+        )
+        .cornerRadius(8)
+    }
+
     // Bouton menu
     private var menuButton: some View {
         Button {
@@ -265,6 +287,8 @@ struct ContentView: View {
             Spacer()
             if viewModel.schedules.first != nil {
                 summaryButton
+                    .padding(.trailing, 12)
+                filterButton
                     .padding(.trailing, 12)
             }
             menuButton
@@ -349,7 +373,8 @@ struct ContentView: View {
                     shifts: filteredShifts,
                     allShifts: schedule.shifts,
                     selectedPeriod: selectedPeriod,
-                    selectedDate: selectedDate
+                    selectedDate: selectedDate,
+                    hiddenSegments: hiddenSegments
                 )
                 .padding(.top, 8)
                 .id("\(selectedPeriod.rawValue)-\(selectedDate.timeIntervalSince1970)")
@@ -694,6 +719,10 @@ struct ContentView: View {
             snapToNearestNonEmpty()
             updateFilteredShifts()
         }
+        // Persister le filtre à chaque modification
+        .onChange(of: hiddenSegments) { _, newValue in
+            saveHiddenSegments(newValue)
+        }
         // Recalculer les shifts filtrés quand les données changent (import, suppression, etc.)
         .onChange(of: viewModel.schedules) { _, _ in
             updateFilteredShifts()
@@ -718,6 +747,7 @@ struct ContentView: View {
         }
         .onAppear {
             viewModel.setModelContext(modelContext)
+            hiddenSegments = loadHiddenSegments()
             updateFilteredShifts()
             snapToNearestNonEmpty()
         }
@@ -746,10 +776,17 @@ struct ContentView: View {
             ImportView(viewModel: viewModel, isPresented: $showingImportSheet)
         }
         .sheet(isPresented: $showingManageSheet) {
-            ManageDataView(viewModel: viewModel, isPresented: $showingManageSheet, initialDate: selectedDate)
+            ManageDataView(viewModel: viewModel, isPresented: $showingManageSheet, initialDate: manageInitialDate)
         }
         .sheet(isPresented: $showingAboutSheet) {
             AboutView(isPresented: $showingAboutSheet)
+        }
+        .sheet(isPresented: $showingFilterSheet) {
+            SegmentFilterView(
+                segments: filterableSegments,
+                hiddenSegments: $hiddenSegments,
+                isPresented: $showingFilterSheet
+            )
         }
         .sheet(isPresented: $showingWorkJamSheet) {
             WorkJamLoginView(isPresented: $showingWorkJamSheet) { count in
@@ -912,6 +949,42 @@ struct ContentView: View {
     private var canGoForward: Bool { nextNonEmptyDate(from: selectedDate, forward: true) != nil }
     /// True s'il existe au moins une période avec des données en arrière
     private var canGoBack: Bool { nextNonEmptyDate(from: selectedDate, forward: false) != nil }
+
+    private static let hiddenSegmentsKey = "shifter.hiddenSegments"
+
+    private func loadHiddenSegments() -> Set<String> {
+        guard let data = UserDefaults.standard.data(forKey: Self.hiddenSegmentsKey),
+              let decoded = try? JSONDecoder().decode([String].self, from: data) else {
+            return []
+        }
+        return Set(decoded)
+    }
+
+    private func saveHiddenSegments(_ segments: Set<String>) {
+        if let encoded = try? JSONEncoder().encode(Array(segments)) {
+            UserDefaults.standard.set(encoded, forKey: Self.hiddenSegmentsKey)
+        }
+    }
+
+    /// Segments uniques triés disponibles dans la période affichée (hors "Général")
+    private var filterableSegments: [String] {
+        var seen = Set<String>()
+        return filteredShifts
+            .map(\.segment)
+            .filter { seg in
+                let lower = seg.lowercased()
+                guard lower != "général" && lower != "general" else { return false }
+                return seen.insert(seg).inserted
+            }
+            .sorted()
+    }
+
+    /// Date initiale pour ManageDataView : premier mois du trimestre si on est en vue Trimestre
+    private var manageInitialDate: Date {
+        selectedPeriod == .quarter
+            ? FiscalCalendarHelper.quarterStartDate(for: selectedDate)
+            : selectedDate
+    }
 
     /// Recale selectedDate sur la période non vide la plus proche (utile au changement de granularité)
     private func snapToNearestNonEmpty() {
