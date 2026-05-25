@@ -68,6 +68,7 @@ struct ContentView: View {
     
     /// Types de période disponibles pour le filtrage
     enum TimePeriod: String, CaseIterable {
+        case week = "Semaine"
         case month = "Mois"
         case quarter = "Trimestre"
         case year = "Année"
@@ -860,14 +861,13 @@ struct ContentView: View {
         // Filtrer les shifts selon la période sélectionnée
         filteredShifts = schedule.shifts.filter { shift in
             switch selectedPeriod {
+            case .week:
+                return calendar.isDate(shift.date, equalTo: selectedDate, toGranularity: .weekOfYear)
             case .month:
-                // Même mois et même année
                 return calendar.isDate(shift.date, equalTo: selectedDate, toGranularity: .month)
             case .quarter:
-                // Même trimestre fiscal (Q1: Oct-Dec, Q2: Jan-Mar, Q3: Apr-Jun, Q4: Jul-Sep)
                 return FiscalCalendarHelper.isInSameQuarter(shift.date, selectedDate)
             case .year:
-                // Même année
                 return calendar.isDate(shift.date, equalTo: selectedDate, toGranularity: .year)
             }
         }
@@ -882,6 +882,8 @@ struct ContentView: View {
     
     private var periodLabel: String {
         switch selectedPeriod {
+        case .week:
+            return selectedDate.weekLabel
         case .month:
             return selectedDate.monthYear
         case .quarter:
@@ -894,6 +896,10 @@ struct ContentView: View {
     private func changeDate(by offset: Int) {
         let calendar = Calendar.current
         switch selectedPeriod {
+        case .week:
+            if let newDate = calendar.date(byAdding: .weekOfYear, value: offset, to: selectedDate) {
+                selectedDate = newDate
+            }
         case .month:
             if let newDate = calendar.date(byAdding: .month, value: offset, to: selectedDate) {
                 selectedDate = newDate
@@ -922,6 +928,7 @@ struct ContentView: View {
         let calendar = Calendar.current
         return schedule.shifts.contains { shift in
             switch period {
+            case .week:    return calendar.isDate(shift.date, equalTo: date, toGranularity: .weekOfYear)
             case .month:   return calendar.isDate(shift.date, equalTo: date, toGranularity: .month)
             case .quarter: return FiscalCalendarHelper.isInSameQuarter(shift.date, date)
             case .year:    return calendar.isDate(shift.date, equalTo: date, toGranularity: .year)
@@ -936,6 +943,7 @@ struct ContentView: View {
         var candidate = date
         for _ in 0..<120 {
             switch selectedPeriod {
+            case .week:    candidate = calendar.date(byAdding: .weekOfYear, value: forward ? 1 : -1, to: candidate) ?? candidate
             case .month:   candidate = calendar.date(byAdding: .month, value: forward ? 1 : -1, to: candidate) ?? candidate
             case .quarter: candidate = calendar.date(byAdding: .month, value: forward ? 3 : -3, to: candidate) ?? candidate
             case .year:    candidate = calendar.date(byAdding: .year, value: forward ? 1 : -1, to: candidate) ?? candidate
@@ -1944,16 +1952,19 @@ struct SimpleSummarySheet: View {
         let dates = calculateComparisonDates(calendar: calendar, type: type)
         
         switch selectedPeriod {
+        case .week:
+            return dates.start.weekLabel
+
         case .month:
             dateFormatter.dateFormat = "MMMM yyyy"
             return dateFormatter.string(from: dates.start).capitalized
-            
+
         case .quarter:
             let month = calendar.component(.month, from: dates.start)
             let quarter = ((month - 1) / 3) + 1
             let year = calendar.component(.year, from: dates.start)
             return "Q\(quarter) \(year)"
-            
+
         case .year:
             dateFormatter.dateFormat = "yyyy"
             return dateFormatter.string(from: dates.start)
@@ -1971,6 +1982,8 @@ struct SimpleSummarySheet: View {
     
     private func calculateComparisonDates(calendar: Calendar, type: ComparisonType) -> (start: Date, end: Date) {
         switch selectedPeriod {
+        case .week:
+            return calculateWeekComparison(calendar: calendar, type: type)
         case .month:
             return calculateMonthComparison(calendar: calendar, type: type)
         case .quarter:
@@ -1980,6 +1993,24 @@ struct SimpleSummarySheet: View {
         }
     }
     
+    private func calculateWeekComparison(calendar: Calendar, type: ComparisonType) -> (start: Date, end: Date) {
+        guard let currentInterval = calendar.dateInterval(of: .weekOfYear, for: selectedDate) else {
+            return (selectedDate, selectedDate)
+        }
+        let currentStart = currentInterval.start
+        let currentEnd = calendar.date(byAdding: .day, value: -1, to: currentInterval.end) ?? currentInterval.end
+
+        if type == .previousPeriod {
+            let prevStart = calendar.date(byAdding: .weekOfYear, value: -1, to: currentStart)!
+            let prevEnd = calendar.date(byAdding: .day, value: -1, to: currentStart)!
+            return (prevStart, prevEnd)
+        } else {
+            let prevStart = calendar.date(byAdding: .year, value: -1, to: currentStart)!
+            let prevEnd = calendar.date(byAdding: .year, value: -1, to: currentEnd)!
+            return (prevStart, prevEnd)
+        }
+    }
+
     private func calculateMonthComparison(calendar: Calendar, type: ComparisonType) -> (start: Date, end: Date) {
         // Obtenir le début et la fin du mois actuel
         let currentMonthStart = calendar.startOfMonth(for: selectedDate)

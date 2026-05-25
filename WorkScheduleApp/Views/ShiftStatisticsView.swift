@@ -16,7 +16,7 @@ struct ShiftStatisticsView: View {
     /// Tous les shifts (pour calculer l'évolution)
     let allShifts: [Shift]
     
-    /// Période sélectionnée (mois/trimestre/année)
+    /// Période sélectionnée (semaine/mois/trimestre/année)
     let selectedPeriod: ContentView.TimePeriod
 
     /// Date sélectionnée
@@ -264,6 +264,8 @@ struct ShiftStatisticsView: View {
         var previousDate: Date?
         
         switch selectedPeriod {
+        case .week:
+            previousDate = calendar.date(byAdding: .weekOfYear, value: -1, to: selectedDate)
         case .month:
             previousDate = calendar.date(byAdding: .month, value: -1, to: selectedDate)
         case .quarter:
@@ -271,11 +273,13 @@ struct ShiftStatisticsView: View {
         case .year:
             previousDate = calendar.date(byAdding: .year, value: -1, to: selectedDate)
         }
-        
+
         guard let prevDate = previousDate else { return nil }
-        
+
         return allShifts.filter { shift in
             switch selectedPeriod {
+            case .week:
+                return calendar.isDate(shift.date, equalTo: prevDate, toGranularity: .weekOfYear)
             case .month:
                 return calendar.isDate(shift.date, equalTo: prevDate, toGranularity: .month)
             case .quarter:

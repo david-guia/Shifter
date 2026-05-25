@@ -48,5 +48,35 @@ extension Date {
     var time: String {
         DateFormatterCache.time.string(from: self)
     }
+
+    /// Format semaine — plage de dates (ex: "5–11 mai 2025")
+    var weekLabel: String {
+        let calendar = Calendar.current
+        guard let interval = calendar.dateInterval(of: .weekOfYear, for: self) else { return "" }
+        let start = interval.start
+        let end = calendar.date(byAdding: .day, value: -1, to: interval.end) ?? interval.end
+
+        let startDay = calendar.component(.day, from: start)
+        let endDay   = calendar.component(.day, from: end)
+        let startMonth = calendar.component(.month, from: start)
+        let endMonth   = calendar.component(.month, from: end)
+        let startYear  = calendar.component(.year,  from: start)
+        let endYear    = calendar.component(.year,  from: end)
+
+        let monthFmt = DateFormatter()
+        monthFmt.locale = Locale(identifier: "fr_FR")
+        monthFmt.dateFormat = "MMM"
+
+        let startMonthStr = monthFmt.string(from: start)
+        let endMonthStr   = monthFmt.string(from: end)
+
+        if startMonth == endMonth, startYear == endYear {
+            return "\(startDay)–\(endDay) \(startMonthStr) \(startYear)"
+        } else if startYear == endYear {
+            return "\(startDay) \(startMonthStr) – \(endDay) \(endMonthStr) \(endYear)"
+        } else {
+            return "\(startDay) \(startMonthStr) \(startYear) – \(endDay) \(endMonthStr) \(endYear)"
+        }
+    }
 }
 
