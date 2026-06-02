@@ -24,6 +24,10 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Shifter ajoute vos horaires de travail dans votre calendrier pour les consulter facilement.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Shifter ajoute vos horaires de travail dans votre calendrier pour les consulter facilement.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Nous avons besoin d'accéder à votre caméra pour photographier vos horaires.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

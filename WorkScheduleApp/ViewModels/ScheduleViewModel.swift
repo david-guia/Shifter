@@ -179,14 +179,14 @@ class ScheduleViewModel {
             
             // Rafraîchir les widgets
             WidgetCenter.shared.reloadAllTimelines()
-            
+
             isLoading = false
         } catch {
             isLoading = false
             handleError(error)
         }
     }
-    
+
     // MARK: - Import depuis PDF
     
     /// Importe les horaires depuis un fichier PDF
@@ -212,12 +212,13 @@ class ScheduleViewModel {
     
     func deleteSchedule(_ schedule: WorkSchedule) {
         guard let context = modelContext else { return }
-        
+
         context.delete(schedule)
-        
+
         do {
             try context.save()
             fetchSchedules()
+            triggerUIRefresh()
         } catch {
             handleError(error)
         }
@@ -249,10 +250,8 @@ class ScheduleViewModel {
             // Afficher un petit toast de confirmation
             addedShiftMessage = "Shift ajouté"
             Task {
-                try? await Task.sleep(nanoseconds: 2_000_000_000)
-                await MainActor.run {
-                    self.addedShiftMessage = nil
-                }
+                try? await Task.sleep(for: .seconds(2))
+                self.addedShiftMessage = nil
             }
         } catch {
             handleError(error)
@@ -283,9 +282,9 @@ class ScheduleViewModel {
     
     func deleteShift(_ shift: Shift) {
         guard let context = modelContext else { return }
-        
+
         context.delete(shift)
-        
+
         do {
             try context.save()
             fetchSchedules()
@@ -293,8 +292,28 @@ class ScheduleViewModel {
             Task {
                 await saveAutoBackup()
             }
-            
+
             // Rafraîchir les widgets
+            WidgetCenter.shared.reloadAllTimelines()
+        } catch {
+            handleError(error)
+        }
+    }
+
+    func deleteShifts(_ shifts: [Shift]) {
+        guard let context = modelContext else { return }
+
+        for shift in shifts {
+            context.delete(shift)
+        }
+
+        do {
+            try context.save()
+            fetchSchedules()
+            triggerUIRefresh()
+            Task {
+                await saveAutoBackup()
+            }
             WidgetCenter.shared.reloadAllTimelines()
         } catch {
             handleError(error)
@@ -372,18 +391,11 @@ class ScheduleViewModel {
         do {
             let jsonString = try String(contentsOf: backupURL, encoding: .utf8)
             await importFromJSON(jsonString)
-            
-            // Afficher le message de restauration
-            await MainActor.run {
-                showRestoredMessage = true
-                // Masquer après 3 secondes
-                Task { [weak self] in
-                    guard let self = self else { return }
-                    try? await Task.sleep(nanoseconds: 3_000_000_000)
-                    await MainActor.run {
-                        self.showRestoredMessage = false
-                    }
-                }
+
+            showRestoredMessage = true
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(3))
+                self?.showRestoredMessage = false
             }
         } catch {
             // Restauration échouée silencieusement

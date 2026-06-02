@@ -31,6 +31,22 @@ enum DateFormatterCache {
         formatter.dateFormat = "HH:mm"
         return formatter
     }()
+
+    /// Formatter pour entête de jour dans ManageDataView (ex: "Lundi 3 Juin")
+    static let dayHeader: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "fr_FR")
+        f.dateFormat = "EEEE d MMMM"
+        return f
+    }()
+
+    /// Formatter pour le mois court utilisé dans weekLabel (ex: "mai")
+    static let weekMonth: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "fr_FR")
+        f.dateFormat = "MMM"
+        return f
+    }()
 }
 
 extension Date {
@@ -63,12 +79,8 @@ extension Date {
         let startYear  = calendar.component(.year,  from: start)
         let endYear    = calendar.component(.year,  from: end)
 
-        let monthFmt = DateFormatter()
-        monthFmt.locale = Locale(identifier: "fr_FR")
-        monthFmt.dateFormat = "MMM"
-
-        let startMonthStr = monthFmt.string(from: start)
-        let endMonthStr   = monthFmt.string(from: end)
+        let startMonthStr = DateFormatterCache.weekMonth.string(from: start)
+        let endMonthStr   = DateFormatterCache.weekMonth.string(from: end)
 
         if startMonth == endMonth, startYear == endYear {
             return "\(startDay)–\(endDay) \(startMonthStr) \(startYear)"

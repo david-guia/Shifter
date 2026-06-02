@@ -26,11 +26,12 @@ struct ShiftStatisticsView: View {
     var hiddenSegments: Set<String> = []
 
     // MARK: - Cache pour optimisation performance
-    
+
     /// Statistiques mémorisées (recalculées uniquement si les shifts changent)
     @State private var memoizedSegmentStats: [String: (hours: Double, percentage: Double)] = [:]
     @State private var memoizedTotalHours: Double = 0
-    
+    @State private var memoizedPreviousShifts: [Shift]? = nil
+
     /// Hash des IDs des shifts pour détecter les changements
     @State private var lastShiftsHash: Int = 0
     
@@ -174,6 +175,7 @@ struct ShiftStatisticsView: View {
         lastShiftsHash = newHash
         memoizedTotalHours = calculateTotalHours()
         memoizedSegmentStats = calculateSegmentStats()
+        memoizedPreviousShifts = getPreviousPeriodShifts()
     }
     
     // MARK: - Statistiques calculées
@@ -229,33 +231,17 @@ struct ShiftStatisticsView: View {
     private func calculateEvolution(for segment: String) -> Double? {
         let currentHours = shifts.filter { $0.segment == segment }.reduce(0.0) { $0 + $1.duration / 3600 }
         let currentTotal = totalHours
-        
-        guard let previousShifts = getPreviousPeriodShifts() else { return nil }
+
+        guard let previousShifts = memoizedPreviousShifts else { return nil }
         let previousHours = previousShifts.filter { $0.segment == segment }.reduce(0.0) { $0 + $1.duration / 3600 }
         let previousTotal = previousShifts.filter { $0.segment != "Général" }.reduce(0.0) { $0 + $1.duration / 3600 }
-        
+
         guard previousTotal > 0, currentTotal > 0 else { return nil }
-        
-        // Calculer les pourcentages
+
         let currentPercentage = (currentHours / currentTotal) * 100
         let previousPercentage = (previousHours / previousTotal) * 100
-        
+
         return currentPercentage - previousPercentage
-    }
-    
-    private func calculateTotalEvolution() -> Double? {
-        let currentTotal = totalHours
-        
-        guard let previousShifts = getPreviousPeriodShifts() else { return nil }
-        let previousTotal = previousShifts.filter { $0.segment != "Général" }.reduce(0.0) { $0 + $1.duration / 3600 }
-        
-        guard previousTotal > 0, currentTotal > 0 else { return nil }
-        
-        // Variation en heures absolues converties en pourcentage du total
-        let variation = currentTotal - previousTotal
-        let variationPercentage = (variation / previousTotal) * 100
-        
-        return variationPercentage
     }
     
     private func getPreviousPeriodShifts() -> [Shift]? {

@@ -42,15 +42,21 @@ class OCRService {
     
     /// Regex pour horaires format 24h avec 'h': "9h-17h" ou "9:00-17:00"
     private static let timeRange24HRegex1: NSRegularExpression? = {
-        let pattern = "(\\d{1,2})[h:](\\d{2})?\\s*[\\-\\u{2013}]\\s*(\\d{1,2})[h:](\\d{2})?"
+        let pattern = "(\\d{1,2})[h:](\\d{2})?\\s*[-\u{2013}]\\s*(\\d{1,2})[h:](\\d{2})?"
         return try? NSRegularExpression(pattern: pattern, options: [])
     }()
-    
+
     private static let timeRange24HRegex2: NSRegularExpression? = {
-        let pattern = "(\\d{1,2}):(\\d{2})\\s*[\\-\\u{2013}]\\s*(\\d{1,2}):(\\d{2})"
+        let pattern = "(\\d{1,2}):(\\d{2})\\s*[-\u{2013}]\\s*(\\d{1,2}):(\\d{2})"
         return try? NSRegularExpression(pattern: pattern, options: [])
     }()
     
+    /// Regex pour détecter la date format UKG Pro: "mar. 02/06"
+    private static let ukgDateRegex: NSRegularExpression? = {
+        let pattern = "(?:lun|mar|mer|jeu|ven|sam|dim)\\.?\\s*(\\d{1,2})/(\\d{1,2})"
+        return try? NSRegularExpression(pattern: pattern, options: .caseInsensitive)
+    }()
+
     /// Regex pour détecter les segments/catégories de travail
     private static let segmentRegex: NSRegularExpression? = {
         // Détecte les segments WorkJam spécifiques + segments standards
@@ -193,9 +199,16 @@ class OCRService {
     /// Effectue le parsing réel du texte OCR
     /// Analyse ligne par ligne pour détecter dates, horaires et segments
     private func performParsing(_ text: String) -> [(date: Date, startTime: Date, endTime: Date, segment: String)] {
+        if isUKGProFormat(text) {
+            #if DEBUG
+            print("🔍 Format UKG Pro détecté")
+            #endif
+            return performUKGParsing(text)
+        }
+
         var shifts: [(date: Date, startTime: Date, endTime: Date, segment: String)] = []
         let lines = text.components(separatedBy: .newlines)
-        
+
         #if DEBUG
         print("🔍 Parsing \(lines.count) lignes...")
         #endif
@@ -651,6 +664,119 @@ class OCRService {
         return (startTime, endTime)
     }
     
+    // MARK: - UKG Pro format support
+
+    /// Détecte si le texte OCR provient de l'app UKG Pro
+    private func isUKGProFormat(_ text: String) -> Bool {
+        if text.contains("Votre horaire journalier") { return true }
+        // Bracket duration with comma decimal: "11:00-19:00 [8,00]"
+        return text.contains("•") &&
+               text.range(of: "\\d{1,2}:\\d{2}-\\d{1,2}:\\d{2}\\s*\\[", options: .regularExpression) != nil
+    }
+
+    /// Parse la date UKG Pro format "mar. 02/06" → Date de l'année courante
+    private func detectUKGDate(in text: String) -> Date? {
+        guard let regex = Self.ukgDateRegex,
+              let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+              match.numberOfRanges > 2 else { return nil }
+
+        let dayStr = (text as NSString).substring(with: match.range(at: 1))
+        let monthStr = (text as NSString).substring(with: match.range(at: 2))
+
+        guard let day = Int(dayStr), let month = Int(monthStr) else { return nil }
+
+        let calendar = Calendar.current
+        let currentYear = calendar.component(.year, from: Date())
+
+        var components = DateComponents()
+        components.year = currentYear
+        components.month = month
+        components.day = day
+        return calendar.date(from: components)
+    }
+
+    /// Extrait le nom du segment depuis une ligne UKG "R522 • 6. People • Daily Download"
+    private func extractUKGSegmentName(from line: String) -> String? {
+        let separators: [Character] = ["•", "·"]
+        for sep in separators {
+            if line.contains(sep) {
+                let parts = line.split(separator: sep, omittingEmptySubsequences: true)
+                guard let last = parts.last else { continue }
+                let raw = last.trimmingCharacters(in: .whitespaces)
+                if raw.isEmpty { continue }
+                return detectSegment(in: raw) ?? raw
+            }
+        }
+        return nil
+    }
+
+    /// Parse le texte OCR au format UKG Pro
+    private func performUKGParsing(_ text: String) -> [(date: Date, startTime: Date, endTime: Date, segment: String)] {
+        var shifts: [(date: Date, startTime: Date, endTime: Date, segment: String)] = []
+        let lines = text.components(separatedBy: .newlines)
+
+        // Date at bottom — scan entire text first
+        var shiftDate: Date?
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if let date = detectUKGDate(in: trimmed) {
+                shiftDate = date
+                break
+            }
+        }
+
+        guard let date = shiftDate else {
+            #if DEBUG
+            print("⚠️ UKG: aucune date trouvée")
+            #endif
+            return []
+        }
+
+        #if DEBUG
+        print("📅 UKG date détectée: \(date)")
+        #endif
+
+        // State machine: pair (time range) + (segment line or Pause)
+        var pendingTimeRange: (Date, Date)?
+
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.isEmpty { continue }
+
+            // Time range line
+            if let (start, end) = detectTimeRange24H(in: trimmed, referenceDate: date) {
+                // Overwrite pending — previous unpaired range was container or already used
+                pendingTimeRange = (start, end)
+                continue
+            }
+
+            // Break line — create "Pause repas" shift if time range available
+            let lower = trimmed.lowercased()
+            if lower == "pause" || lower == "pause repas" || (lower.hasPrefix("pause") && lower.count < 20) {
+                if let (start, end) = pendingTimeRange {
+                    shifts.append((date: date, startTime: start, endTime: end, segment: "Pause repas"))
+                }
+                pendingTimeRange = nil
+                continue
+            }
+
+            // Segment line with • separator
+            if trimmed.contains("•") || trimmed.contains("·") {
+                if let segmentName = extractUKGSegmentName(from: trimmed),
+                   let (start, end) = pendingTimeRange {
+                    shifts.append((date: date, startTime: start, endTime: end, segment: segmentName))
+                    pendingTimeRange = nil
+                }
+                continue
+            }
+        }
+
+        #if DEBUG
+        print("✅ UKG total shifts: \(shifts.count)")
+        #endif
+        return shifts
+    }
+
     private func detectTimeRange24H(in text: String, referenceDate: Date = Date()) -> (Date, Date)? {
         let calendar = Calendar.current
         

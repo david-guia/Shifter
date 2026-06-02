@@ -39,6 +39,7 @@ struct ContentView: View {
     @State private var showingAboutSheet = false
     @State private var showingWorkJamSheet = false
     @State private var showingFilterSheet = false
+    @State private var showingCalendarSyncSheet = false
     @State private var hiddenSegments: Set<String> = []
     
     @State private var exportFileURL: URL?
@@ -56,12 +57,19 @@ struct ContentView: View {
     /// Task pour gérer l'annulation des imports concurrents
     @State private var importTask: Task<Void, Never>?
     
+    /// Service de sync calendrier partagé entre ContentView, ScheduleViewModel et CalendarSyncView
+    @State private var calendarSync = CalendarSyncService()
+
     /// ViewModel dédié à la sync automatique WorkJam au lancement
     @State private var workJamAutoSync = WorkJamAuthViewModel()
 
     /// Alertes pour l'expiration du certificat développeur
     @State private var showingExpiryWarning = false
     @State private var showingExpiryUrgent = false
+
+    /// Cache des jours/heures restants avant expiration — calculé une fois au lancement
+    @State private var cachedDaysRemaining: Int = 7
+    @State private var cachedHoursRemaining: Int = 0
     
     /// État pour le résumé Apple Intelligence
     @State private var showingSummarySheet = false
@@ -76,21 +84,16 @@ struct ContentView: View {
     
     // MARK: - Calcul du temps restant avant expiration
     
-    /// Calcule les jours restants avant expiration du certificat développeur (7 jours)
-    private var daysRemaining: Int {
-        // Vérifier si c'est une nouvelle installation en comparant le build
-        detectAndResetIfNewInstallation()
-        
-        // Récupérer ou initialiser la date d'installation
+    /// Alias vers le cache — évite de recalculer à chaque render SwiftUI
+    private var daysRemaining: Int { cachedDaysRemaining }
+
+    private static func computeDaysRemaining() -> Int {
         if UserDefaults.standard.object(forKey: "firstInstallDate") == nil {
             UserDefaults.standard.set(Date(), forKey: "firstInstallDate")
         }
-        
         guard let installDate = UserDefaults.standard.object(forKey: "firstInstallDate") as? Date else {
             return 7
         }
-        
-        // Expiration complète : 7 jours
         let expiryDate = Calendar.current.date(byAdding: .day, value: 7, to: installDate)!
         let components = Calendar.current.dateComponents([.day], from: Date(), to: expiryDate)
         return max(0, components.day ?? 0)
@@ -134,12 +137,13 @@ struct ContentView: View {
         }
     }
     
-    /// Calcule les heures restantes (pour affichage détaillé)
-    private var hoursRemaining: Int {
+    /// Alias vers le cache heures
+    private var hoursRemaining: Int { cachedHoursRemaining }
+
+    private static func computeHoursRemaining() -> Int {
         guard let installDate = UserDefaults.standard.object(forKey: "firstInstallDate") as? Date else {
             return 0
         }
-        
         let expiryDate = Calendar.current.date(byAdding: .day, value: 7, to: installDate)!
         let components = Calendar.current.dateComponents([.hour], from: Date(), to: expiryDate)
         return max(0, components.hour ?? 0)
@@ -647,7 +651,29 @@ struct ContentView: View {
 
                             Divider()
                                 .background(Color.systemBlack)
-                            
+
+                            Button {
+                                showingMenu = false
+                                showingCalendarSyncSheet = true
+                            } label: {
+                                HStack {
+                                    Text("📅")
+                                        .font(.system(size: 16))
+                                    Text("Calendrier")
+                                        .font(.chicago12)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                .contentShape(Rectangle())
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Color.systemBlack)
+                            .background(Color.systemWhite)
+
+                            Divider()
+                                .background(Color.systemBlack)
+
                             Button {
                                 showingMenu = false
                                 showingAboutSheet = true
@@ -684,12 +710,8 @@ struct ContentView: View {
             }
         }
         .persistentSystemOverlays(.hidden)
-        .onAppear {
-            // Vérifier l'expiration du certificat et afficher les alertes appropriées
-            checkCertificateExpiry()
-        }
         // MARK: - Gestion des imports d'images
-        
+
         // Détection de nouvelles images sélectionnées via PhotosPicker
         .onChange(of: selectedItems) { _, newItems in
             // Fermer le menu automatiquement après sélection
@@ -724,13 +746,10 @@ struct ContentView: View {
         .onChange(of: hiddenSegments) { _, newValue in
             saveHiddenSegments(newValue)
         }
-        // Recalculer les shifts filtrés quand les données changent (import, suppression, etc.)
-        .onChange(of: viewModel.schedules) { _, _ in
-            updateFilteredShifts()
-        }
         // Trigger explicite pour forcer le rafraîchissement après toute modification
         .onChange(of: viewModel.dataRefreshTrigger) { _, _ in
             updateFilteredShifts()
+            triggerCalendarAutoSync()
         }
         .onChange(of: showingManageSheet) { _, newValue in
             // Quand la feuille de gestion se ferme, forcer un refresh (utile après ajout manuel)
@@ -747,10 +766,14 @@ struct ContentView: View {
                 .font(.geneva10)
         }
         .onAppear {
+            checkCertificateExpiry()
             viewModel.setModelContext(modelContext)
+            calendarSync.checkStatus()
+            showingCalendarSyncSheet = false  // reset si iOS restaure l'état de la scène
             hiddenSegments = loadHiddenSegments()
             updateFilteredShifts()
             snapToNearestNonEmpty()
+            triggerCalendarAutoSync()
         }
         .task {
             // Sync automatique WorkJam au lancement (si connecté et sync > 6h)
@@ -763,7 +786,8 @@ struct ContentView: View {
             updateFilteredShifts()
             let countLabel = count > 1 ? "\(count) shifts mis à jour" : "1 shift mis à jour"
             viewModel.addedShiftMessage = "↻ WorkJam synchronisé — \(countLabel)"
-            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+            Task {
+                try? await Task.sleep(for: .seconds(4))
                 viewModel.addedShiftMessage = nil
                 workJamAutoSync.showImportSuccess = false
             }
@@ -789,13 +813,19 @@ struct ContentView: View {
                 isPresented: $showingFilterSheet
             )
         }
+        .sheet(isPresented: $showingCalendarSyncSheet) {
+            if let schedule = viewModel.schedules.first {
+                CalendarSyncView(isPresented: $showingCalendarSyncSheet, shifts: schedule.shifts, service: calendarSync)
+            }
+        }
         .sheet(isPresented: $showingWorkJamSheet) {
             WorkJamLoginView(isPresented: $showingWorkJamSheet) { count in
                 viewModel.fetchSchedules()
                 updateFilteredShifts()
                 if count > 0 {
                     viewModel.addedShiftMessage = "\(count) shift\(count > 1 ? "s" : "") importé\(count > 1 ? "s" : "") depuis WorkJam"
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    Task {
+                        try? await Task.sleep(for: .seconds(3))
                         viewModel.addedShiftMessage = nil
                     }
                 }
@@ -849,6 +879,17 @@ struct ContentView: View {
     
     // MARK: - Helpers
     
+    /// Déclenche une sync calendrier silencieuse si le service est configuré et autorisé
+    private func triggerCalendarAutoSync() {
+        guard calendarSync.isConfigured,
+              calendarSync.isAuthorized,
+              calendarSync.lastSyncDate != nil,
+              let schedule = viewModel.schedules.first else { return }
+        Task {
+            await calendarSync.syncShifts(schedule.shifts)
+        }
+    }
+
     /// Met à jour le cache des shifts filtrés selon la période et la date sélectionnées
     /// Optimisation : évite les recalculs inutiles grâce au cache @State
     private func updateFilteredShifts() {
@@ -1002,9 +1043,12 @@ struct ContentView: View {
         if let next = nextNonEmptyDate(from: selectedDate, forward: true)  { selectedDate = next }
     }
     
-    /// Vérifie l'expiration du certificat développeur et affiche les alertes appropriées
+    /// Vérifie l'expiration du certificat développeur, met à jour le cache, et affiche les alertes
     private func checkCertificateExpiry() {
-        let days = daysRemaining
+        detectAndResetIfNewInstallation()
+        cachedDaysRemaining = Self.computeDaysRemaining()
+        cachedHoursRemaining = Self.computeHoursRemaining()
+        let days = cachedDaysRemaining
         
         // Alerte urgente (J0-1)
         if days <= 1 {
@@ -1015,7 +1059,8 @@ struct ContentView: View {
             
             if lastAlert == nil || !calendar.isDateInToday(lastAlert!) {
                 UserDefaults.standard.set(Date(), forKey: lastUrgentAlertKey)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                Task {
+                    try? await Task.sleep(for: .seconds(1))
                     showingExpiryUrgent = true
                 }
             }
@@ -1025,10 +1070,11 @@ struct ContentView: View {
             let lastWarningAlertKey = "lastWarningAlertDate"
             let lastAlert = UserDefaults.standard.object(forKey: lastWarningAlertKey) as? Date
             let calendar = Calendar.current
-            
+
             if lastAlert == nil || !calendar.isDateInToday(lastAlert!) {
                 UserDefaults.standard.set(Date(), forKey: lastWarningAlertKey)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                Task {
+                    try? await Task.sleep(for: .seconds(1))
                     showingExpiryWarning = true
                 }
             }
