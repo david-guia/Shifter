@@ -35,6 +35,7 @@
 		5A21 /* SegmentFilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B21 /* SegmentFilterView.swift */; };
 		5A22 /* CalendarSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B22 /* CalendarSyncService.swift */; };
 		5A23 /* CalendarSyncView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B23 /* CalendarSyncView.swift */; };
+		5A24 /* DailyScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B24 /* DailyScheduleView.swift */; };
 		5A3 /* Shift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B3 /* Shift.swift */; };
 		5A4 /* WorkSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B4 /* WorkSchedule.swift */; };
 		5A5 /* ScheduleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B5 /* ScheduleViewModel.swift */; };
@@ -100,6 +101,7 @@
 		5B21 /* SegmentFilterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentFilterView.swift; sourceTree = "<group>"; };
 		5B22 /* CalendarSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarSyncService.swift; sourceTree = "<group>"; };
 		5B23 /* CalendarSyncView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarSyncView.swift; sourceTree = "<group>"; };
+		5B24 /* DailyScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyScheduleView.swift; sourceTree = "<group>"; };
 		5B3 /* Shift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shift.swift; sourceTree = "<group>"; };
 		5B4 /* WorkSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkSchedule.swift; sourceTree = "<group>"; };
 		5B5 /* ScheduleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleViewModel.swift; sourceTree = "<group>"; };
@@ -234,6 +236,7 @@
 				5B19 /* WorkJamLoginView.swift */,
 				5B21 /* SegmentFilterView.swift */,
 				5B23 /* CalendarSyncView.swift */,
+				5B24 /* DailyScheduleView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -474,6 +477,7 @@
 				5A21 /* SegmentFilterView.swift in Sources */,
 				5A22 /* CalendarSyncService.swift in Sources */,
 				5A23 /* CalendarSyncView.swift in Sources */,
+				5A24 /* DailyScheduleView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

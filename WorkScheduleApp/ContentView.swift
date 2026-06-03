@@ -36,6 +36,8 @@ struct ContentView: View {
     @State private var showingImportSheet = false
     @State private var showingManageSheet = false
     @State private var showingMenu = false
+    @State private var menuPage: MenuPage = .main
+    @State private var menuGoingForward = true
     @State private var showingAboutSheet = false
     @State private var showingWorkJamSheet = false
     @State private var showingFilterSheet = false
@@ -50,7 +52,14 @@ struct ContentView: View {
     
     /// Cache des shifts filtrés (optimisation performance)
     @State private var filteredShifts: [Shift] = []
-    
+
+    /// Index O(1) — reconstruit uniquement lors des modifications de données
+    @State private var shiftIndex = ShiftIndex()
+
+    /// Cache de navigabilité — mis à jour avec filteredShifts pour éviter O(n×120) à chaque render
+    @State private var canGoForward: Bool = false
+    @State private var canGoBack: Bool = false
+
     /// Sens de la navigation pour l'animation de transition
     @State private var isNavigatingForward: Bool = true
     
@@ -74,11 +83,16 @@ struct ContentView: View {
     /// État pour le résumé Apple Intelligence
     @State private var showingSummarySheet = false
     
+    private enum MenuPage {
+        case main, importer, sauvegarde, reglages
+    }
+
     /// Types de période disponibles pour le filtrage
     enum TimePeriod: String, CaseIterable {
-        case week = "Semaine"
+        case day = "Jour"
+        case week = "Sem"
         case month = "Mois"
-        case quarter = "Trimestre"
+        case quarter = "Trim"
         case year = "Année"
     }
     
@@ -374,13 +388,19 @@ struct ContentView: View {
     var statisticsContent: some View {
         Group {
             if let schedule = viewModel.schedules.first {
-                ShiftStatisticsView(
-                    shifts: filteredShifts,
-                    allShifts: schedule.shifts,
-                    selectedPeriod: selectedPeriod,
-                    selectedDate: selectedDate,
-                    hiddenSegments: hiddenSegments
-                )
+                Group {
+                    if selectedPeriod == .day {
+                        DailyScheduleView(shifts: filteredShifts, selectedDate: selectedDate)
+                    } else {
+                        ShiftStatisticsView(
+                            shifts: filteredShifts,
+                            allShifts: schedule.shifts,
+                            selectedPeriod: selectedPeriod,
+                            selectedDate: selectedDate,
+                            hiddenSegments: hiddenSegments
+                        )
+                    }
+                }
                 .padding(.top, 8)
                 .id("\(selectedPeriod.rawValue)-\(selectedDate.timeIntervalSince1970)")
                 .transition(.asymmetric(
@@ -509,191 +529,171 @@ struct ContentView: View {
                     .ignoresSafeArea()
                     .onTapGesture {
                         showingMenu = false
+                        menuPage = .main
                     }
-                
+
                 VStack {
                     HStack {
                         Spacer()
-                        
+
                         VStack(spacing: 0) {
-                            PhotosPicker(selection: $selectedItems, matching: .images) {
-                                HStack {
-                                    Text("📸")
-                                        .font(.system(size: 20))
-                                    Text("Images")
-                                        .font(.chicago12)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                }
-                                .contentShape(Rectangle())
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
-                            }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(Color.systemBlack)
-                            .background(Color.systemWhite)
-                            
-                            Divider()
-                                .background(Color.systemBlack)
-                            
-                            Button {
-                                showingMenu = false
-                                showingPDFPicker = true
-                            } label: {
-                                HStack {
-                                    Text("📄")
-                                        .font(.system(size: 20))
-                                    Text("PDF")
-                                        .font(.chicago12)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                }
-                                .contentShape(Rectangle())
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
-                            }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(Color.systemBlack)
-                            .background(Color.systemWhite)
-                            
-                            if viewModel.schedules.first != nil {
-                                Divider()
-                                    .background(Color.systemBlack)
-                                
+                            Group {
+                            if menuPage == .main {
+                                // ── Menu principal ──
                                 Button {
-                                    showingMenu = false
-                                    if let zipURL = viewModel.exportToZIP() {
-                                        exportFileURL = zipURL
-                                        showingExportSheet = true
+                                    withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
+                                        menuGoingForward = true
+                                        menuPage = .importer
                                     }
                                 } label: {
-                                    HStack {
-                                        Text("💾")
-                                            .font(.system(size: 16))
-                                        Text("Exporter")
-                                            .font(.chicago12)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                    menuRowLabel(icon: "📥", text: "Importer", chevron: true)
+                                }
+                                .menuRowStyle()
+
+                                Divider().background(Color.systemBlack)
+
+                                Button {
+                                    withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
+                                        menuGoingForward = true
+                                        menuPage = .sauvegarde
                                     }
-                                    .contentShape(Rectangle())
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 12)
+                                } label: {
+                                    menuRowLabel(icon: "💾", text: "Sauvegarde", chevron: true)
                                 }
-                                .buttonStyle(.plain)
-                                .foregroundStyle(Color.systemBlack)
-                                .background(Color.systemWhite)
-                            }
-                            
-                            Divider()
-                                .background(Color.systemBlack)
-                            
-                            Button {
-                                showingMenu = false
-                                showingImportSheet = true
-                            } label: {
-                                HStack {
-                                    Text("📥")
-                                        .font(.system(size: 16))
-                                    Text("Restaurer")
-                                        .font(.chicago12)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                .menuRowStyle()
+
+                                if viewModel.schedules.first != nil {
+                                    Divider().background(Color.systemBlack)
+                                    Button {
+                                        showingMenu = false
+                                        menuPage = .main
+                                        showingManageSheet = true
+                                    } label: {
+                                        menuRowLabel(icon: "⚙️", text: "Gérer", chevron: false)
+                                    }
+                                    .menuRowStyle()
                                 }
-                                .contentShape(Rectangle())
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
-                            }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(Color.systemBlack)
-                            .background(Color.systemWhite)
-                            
-                            if viewModel.schedules.first != nil {
-                                Divider()
-                                    .background(Color.systemBlack)
-                                
+
+                                Divider().background(Color.systemBlack)
+
+                                Button {
+                                    withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
+                                        menuGoingForward = true
+                                        menuPage = .reglages
+                                    }
+                                } label: {
+                                    menuRowLabel(icon: "🔧", text: "Réglages", chevron: true)
+                                }
+                                .menuRowStyle()
+
+                            } else if menuPage == .importer {
+                                // ── Importer ──
+                                menuBackHeader("Importer") {
+                                    withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
+                                        menuGoingForward = false
+                                        menuPage = .main
+                                    }
+                                }
+
+                                PhotosPicker(selection: $selectedItems, matching: .images) {
+                                    menuRowLabel(icon: "📸", text: "Images", chevron: false)
+                                }
+                                .menuRowStyle()
+
+                                Divider().background(Color.systemBlack)
+
                                 Button {
                                     showingMenu = false
-                                    showingManageSheet = true
+                                    menuPage = .main
+                                    showingPDFPicker = true
                                 } label: {
-                                    HStack {
-                                        Text("⚙️")
-                                            .font(.system(size: 16))
-                                        Text("Gérer")
-                                            .font(.chicago12)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                    menuRowLabel(icon: "📄", text: "PDF", chevron: false)
+                                }
+                                .menuRowStyle()
+
+                                Divider().background(Color.systemBlack)
+
+                                Button {
+                                    showingMenu = false
+                                    menuPage = .main
+                                    showingWorkJamSheet = true
+                                } label: {
+                                    menuRowLabel(icon: "⬇️", text: "WorkJam Auto", chevron: false)
+                                }
+                                .menuRowStyle()
+
+                            } else if menuPage == .sauvegarde {
+                                // ── Sauvegarde ──
+                                menuBackHeader("Sauvegarde") {
+                                    withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
+                                        menuGoingForward = false
+                                        menuPage = .main
                                     }
-                                    .contentShape(Rectangle())
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 12)
                                 }
-                                .buttonStyle(.plain)
-                                .foregroundStyle(Color.systemBlack)
-                                .background(Color.systemWhite)
-                            }
-                            
-                            Divider()
-                                .background(Color.systemBlack)
 
-                            Button {
-                                showingMenu = false
-                                showingWorkJamSheet = true
-                            } label: {
-                                HStack {
-                                    Text("⬇️")
-                                        .font(.system(size: 16))
-                                    Text("WorkJam Auto")
-                                        .font(.chicago12)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                if viewModel.schedules.first != nil {
+                                    Button {
+                                        showingMenu = false
+                                        menuPage = .main
+                                        if let zipURL = viewModel.exportToZIP() {
+                                            exportFileURL = zipURL
+                                            showingExportSheet = true
+                                        }
+                                    } label: {
+                                        menuRowLabel(icon: "📤", text: "Exporter", chevron: false)
+                                    }
+                                    .menuRowStyle()
+
+                                    Divider().background(Color.systemBlack)
                                 }
-                                .contentShape(Rectangle())
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
-                            }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(Color.systemBlack)
-                            .background(Color.systemWhite)
 
-                            Divider()
-                                .background(Color.systemBlack)
-
-                            Button {
-                                showingMenu = false
-                                showingCalendarSyncSheet = true
-                            } label: {
-                                HStack {
-                                    Text("📅")
-                                        .font(.system(size: 16))
-                                    Text("Calendrier")
-                                        .font(.chicago12)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                Button {
+                                    showingMenu = false
+                                    menuPage = .main
+                                    showingImportSheet = true
+                                } label: {
+                                    menuRowLabel(icon: "📥", text: "Restaurer", chevron: false)
                                 }
-                                .contentShape(Rectangle())
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
-                            }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(Color.systemBlack)
-                            .background(Color.systemWhite)
+                                .menuRowStyle()
 
-                            Divider()
-                                .background(Color.systemBlack)
-
-                            Button {
-                                showingMenu = false
-                                showingAboutSheet = true
-                            } label: {
-                                HStack {
-                                    Text("ℹ️")
-                                        .font(.system(size: 16))
-                                    Text("À Propos")
-                                        .font(.chicago12)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                            } else {
+                                // ── Réglages ──
+                                menuBackHeader("Réglages") {
+                                    withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
+                                        menuGoingForward = false
+                                        menuPage = .main
+                                    }
                                 }
-                                .contentShape(Rectangle())
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
+
+                                Button {
+                                    showingMenu = false
+                                    menuPage = .main
+                                    showingCalendarSyncSheet = true
+                                } label: {
+                                    menuRowLabel(icon: "📅", text: "Calendrier", chevron: false)
+                                }
+                                .menuRowStyle()
+
+                                Divider().background(Color.systemBlack)
+
+                                Button {
+                                    showingMenu = false
+                                    menuPage = .main
+                                    showingAboutSheet = true
+                                } label: {
+                                    menuRowLabel(icon: "ℹ️", text: "À Propos", chevron: false)
+                                }
+                                .menuRowStyle()
                             }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(Color.systemBlack)
-                            .background(Color.systemWhite)
+                            }
+                            .id(menuPage)
+                            .transition(.asymmetric(
+                                insertion: .move(edge: menuGoingForward ? .trailing : .leading).combined(with: .opacity),
+                                removal: .move(edge: menuGoingForward ? .leading : .trailing).combined(with: .opacity)
+                            ))
                         }
-                        .frame(width: 200)
+                        .clipped()
+                        .frame(width: 210)
                         .background(Color.systemWhite)
                         .overlay(
                             Rectangle()
@@ -704,7 +704,7 @@ struct ContentView: View {
                         .padding(.trailing, 16)
                         .padding(.top, 70)
                     }
-                    
+
                     Spacer()
                 }
             }
@@ -748,12 +748,13 @@ struct ContentView: View {
         }
         // Trigger explicite pour forcer le rafraîchissement après toute modification
         .onChange(of: viewModel.dataRefreshTrigger) { _, _ in
+            rebuildIndex()
             updateFilteredShifts()
             triggerCalendarAutoSync()
         }
         .onChange(of: showingManageSheet) { _, newValue in
-            // Quand la feuille de gestion se ferme, forcer un refresh (utile après ajout manuel)
             if !newValue {
+                rebuildIndex()
                 updateFilteredShifts()
             }
         }
@@ -771,8 +772,9 @@ struct ContentView: View {
             calendarSync.checkStatus()
             showingCalendarSyncSheet = false  // reset si iOS restaure l'état de la scène
             hiddenSegments = loadHiddenSegments()
-            updateFilteredShifts()
+            rebuildIndex()
             snapToNearestNonEmpty()
+            updateFilteredShifts()
             triggerCalendarAutoSync()
         }
         .task {
@@ -783,6 +785,7 @@ struct ContentView: View {
             guard success, workJamAutoSync.importedCount > 0 else { return }
             let count = workJamAutoSync.importedCount
             viewModel.fetchSchedules()
+            rebuildIndex()
             updateFilteredShifts()
             let countLabel = count > 1 ? "\(count) shifts mis à jour" : "1 shift mis à jour"
             viewModel.addedShiftMessage = "↻ WorkJam synchronisé — \(countLabel)"
@@ -821,6 +824,7 @@ struct ContentView: View {
         .sheet(isPresented: $showingWorkJamSheet) {
             WorkJamLoginView(isPresented: $showingWorkJamSheet) { count in
                 viewModel.fetchSchedules()
+                rebuildIndex()
                 updateFilteredShifts()
                 if count > 0 {
                     viewModel.addedShiftMessage = "\(count) shift\(count > 1 ? "s" : "") importé\(count > 1 ? "s" : "") depuis WorkJam"
@@ -893,24 +897,48 @@ struct ContentView: View {
     /// Met à jour le cache des shifts filtrés selon la période et la date sélectionnées
     /// Optimisation : évite les recalculs inutiles grâce au cache @State
     private func updateFilteredShifts() {
-        guard let schedule = viewModel.schedules.first else {
+        guard !shiftIndex.isEmpty else {
             filteredShifts = []
+            canGoForward = false
+            canGoBack = false
             return
         }
-        
-        let calendar = Calendar.current
-        // Filtrer les shifts selon la période sélectionnée
-        filteredShifts = schedule.shifts.filter { shift in
-            switch selectedPeriod {
-            case .week:
-                return calendar.isDate(shift.date, equalTo: selectedDate, toGranularity: .weekOfYear)
-            case .month:
-                return calendar.isDate(shift.date, equalTo: selectedDate, toGranularity: .month)
-            case .quarter:
-                return FiscalCalendarHelper.isInSameQuarter(shift.date, selectedDate)
-            case .year:
-                return calendar.isDate(shift.date, equalTo: selectedDate, toGranularity: .year)
-            }
+        let key = periodKey(for: selectedDate, period: selectedPeriod)
+        switch selectedPeriod {
+        case .day:     filteredShifts = shiftIndex.byDay[key]     ?? []
+        case .week:    filteredShifts = shiftIndex.byWeek[key]    ?? []
+        case .month:   filteredShifts = shiftIndex.byMonth[key]   ?? []
+        case .quarter: filteredShifts = shiftIndex.byQuarter[key] ?? []
+        case .year:    filteredShifts = shiftIndex.byYear[key]    ?? []
+        }
+        canGoForward = nextNonEmptyDate(from: selectedDate, forward: true) != nil
+        canGoBack    = nextNonEmptyDate(from: selectedDate, forward: false) != nil
+    }
+
+    private func rebuildIndex() {
+        guard let schedule = viewModel.schedules.first else {
+            shiftIndex = ShiftIndex()
+            return
+        }
+        shiftIndex = ShiftIndex.build(from: schedule.shifts)
+    }
+
+    private func periodKey(for date: Date, period: TimePeriod) -> String {
+        let cal = Calendar.current
+        switch period {
+        case .day:
+            let dc = cal.dateComponents([.year, .month, .day], from: date)
+            return "\(dc.year!)-\(dc.month!)-\(dc.day!)"
+        case .week:
+            let dc = cal.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+            return "\(dc.yearForWeekOfYear!)-\(dc.weekOfYear!)"
+        case .month:
+            let dc = cal.dateComponents([.year, .month], from: date)
+            return "\(dc.year!)-\(dc.month!)"
+        case .quarter:
+            return FiscalCalendarHelper.quarterLabel(for: date)
+        case .year:
+            return "\(cal.component(.year, from: date))"
         }
     }
     
@@ -923,6 +951,8 @@ struct ContentView: View {
     
     private var periodLabel: String {
         switch selectedPeriod {
+        case .day:
+            return selectedDate.dayLabel
         case .week:
             return selectedDate.weekLabel
         case .month:
@@ -937,6 +967,10 @@ struct ContentView: View {
     private func changeDate(by offset: Int) {
         let calendar = Calendar.current
         switch selectedPeriod {
+        case .day:
+            if let newDate = calendar.date(byAdding: .day, value: offset, to: selectedDate) {
+                selectedDate = newDate
+            }
         case .week:
             if let newDate = calendar.date(byAdding: .weekOfYear, value: offset, to: selectedDate) {
                 selectedDate = newDate
@@ -965,15 +999,13 @@ struct ContentView: View {
 
     /// Renvoie true si la période contient au moins un shift
     private func hasShifts(for date: Date, period: TimePeriod) -> Bool {
-        guard let schedule = viewModel.schedules.first else { return false }
-        let calendar = Calendar.current
-        return schedule.shifts.contains { shift in
-            switch period {
-            case .week:    return calendar.isDate(shift.date, equalTo: date, toGranularity: .weekOfYear)
-            case .month:   return calendar.isDate(shift.date, equalTo: date, toGranularity: .month)
-            case .quarter: return FiscalCalendarHelper.isInSameQuarter(shift.date, date)
-            case .year:    return calendar.isDate(shift.date, equalTo: date, toGranularity: .year)
-            }
+        let key = periodKey(for: date, period: period)
+        switch period {
+        case .day:     return shiftIndex.days.contains(key)
+        case .week:    return shiftIndex.weeks.contains(key)
+        case .month:   return shiftIndex.months.contains(key)
+        case .quarter: return shiftIndex.quarters.contains(key)
+        case .year:    return shiftIndex.years.contains(key)
         }
     }
 
@@ -984,6 +1016,7 @@ struct ContentView: View {
         var candidate = date
         for _ in 0..<120 {
             switch selectedPeriod {
+            case .day:     candidate = calendar.date(byAdding: .day, value: forward ? 1 : -1, to: candidate) ?? candidate
             case .week:    candidate = calendar.date(byAdding: .weekOfYear, value: forward ? 1 : -1, to: candidate) ?? candidate
             case .month:   candidate = calendar.date(byAdding: .month, value: forward ? 1 : -1, to: candidate) ?? candidate
             case .quarter: candidate = calendar.date(byAdding: .month, value: forward ? 3 : -3, to: candidate) ?? candidate
@@ -993,11 +1026,6 @@ struct ContentView: View {
         }
         return nil
     }
-
-    /// True s'il existe au moins une période avec des données en avant
-    private var canGoForward: Bool { nextNonEmptyDate(from: selectedDate, forward: true) != nil }
-    /// True s'il existe au moins une période avec des données en arrière
-    private var canGoBack: Bool { nextNonEmptyDate(from: selectedDate, forward: false) != nil }
 
     private static let hiddenSegmentsKey = "shifter.hiddenSegments"
 
@@ -1153,6 +1181,94 @@ struct ContentView: View {
                 .frame(width: 200, height: 80)
             }
         }
+    }
+}
+
+// MARK: - Shift Index
+
+private struct ShiftIndex {
+    var byDay:     [String: [Shift]] = [:]
+    var byWeek:    [String: [Shift]] = [:]
+    var byMonth:   [String: [Shift]] = [:]
+    var byQuarter: [String: [Shift]] = [:]
+    var byYear:    [String: [Shift]] = [:]
+
+    var days:     Set<String> = []
+    var weeks:    Set<String> = []
+    var months:   Set<String> = []
+    var quarters: Set<String> = []
+    var years:    Set<String> = []
+
+    var isEmpty: Bool { days.isEmpty }
+
+    static func build(from shifts: [Shift]) -> ShiftIndex {
+        var idx = ShiftIndex()
+        let cal = Calendar.current
+        for shift in shifts {
+            let dc = cal.dateComponents([.yearForWeekOfYear, .year, .month, .day, .weekOfYear], from: shift.date)
+            guard let year = dc.year, let month = dc.month, let day = dc.day,
+                  let weekYear = dc.yearForWeekOfYear, let week = dc.weekOfYear else { continue }
+
+            let dKey = "\(year)-\(month)-\(day)"
+            let wKey = "\(weekYear)-\(week)"
+            let mKey = "\(year)-\(month)"
+            let qKey = FiscalCalendarHelper.quarterLabel(for: shift.date)
+            let yKey = "\(year)"
+
+            idx.days.insert(dKey);     idx.byDay[dKey, default: []].append(shift)
+            idx.weeks.insert(wKey);    idx.byWeek[wKey, default: []].append(shift)
+            idx.months.insert(mKey);   idx.byMonth[mKey, default: []].append(shift)
+            idx.quarters.insert(qKey); idx.byQuarter[qKey, default: []].append(shift)
+            idx.years.insert(yKey);    idx.byYear[yKey, default: []].append(shift)
+        }
+        return idx
+    }
+}
+
+// MARK: - Menu helpers
+
+private func menuRowLabel(icon: String, text: String, chevron: Bool) -> some View {
+    HStack {
+        Text(icon)
+            .font(.system(size: 18))
+        Text(text)
+            .font(.chicago12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        if chevron {
+            Text("›")
+                .font(.chicago12)
+                .foregroundStyle(Color.systemGray)
+        }
+    }
+    .contentShape(Rectangle())
+    .padding(.horizontal, 16)
+    .padding(.vertical, 12)
+}
+
+private func menuBackHeader(_ title: String, action: @escaping @MainActor () -> Void) -> some View {
+    Button { action() } label: {
+        HStack(spacing: 6) {
+            Text("‹")
+                .font(.chicago14)
+            Text(title)
+                .font(.chicago12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .contentShape(Rectangle())
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+    }
+    .buttonStyle(.plain)
+    .foregroundStyle(Color.systemWhite)
+    .background(Color.systemBlack)
+}
+
+private extension View {
+    func menuRowStyle() -> some View {
+        self
+            .buttonStyle(.plain)
+            .foregroundStyle(Color.systemBlack)
+            .background(Color.systemWhite)
     }
 }
 
@@ -1998,6 +2114,9 @@ struct SimpleSummarySheet: View {
         let dates = calculateComparisonDates(calendar: calendar, type: type)
         
         switch selectedPeriod {
+        case .day:
+            return dates.start.dayLabel
+
         case .week:
             return dates.start.weekLabel
 
@@ -2028,6 +2147,8 @@ struct SimpleSummarySheet: View {
     
     private func calculateComparisonDates(calendar: Calendar, type: ComparisonType) -> (start: Date, end: Date) {
         switch selectedPeriod {
+        case .day:
+            return calculateDayComparison(calendar: calendar, type: type)
         case .week:
             return calculateWeekComparison(calendar: calendar, type: type)
         case .month:
@@ -2036,6 +2157,19 @@ struct SimpleSummarySheet: View {
             return calculateQuarterComparison(calendar: calendar, type: type)
         case .year:
             return calculateYearComparison(calendar: calendar, type: type)
+        }
+    }
+
+    private func calculateDayComparison(calendar: Calendar, type: ComparisonType) -> (start: Date, end: Date) {
+        let startOfDay = calendar.startOfDay(for: selectedDate)
+        if type == .previousPeriod {
+            let prevStart = calendar.date(byAdding: .day, value: -1, to: startOfDay)!
+            let prevEnd = startOfDay.addingTimeInterval(-1)
+            return (prevStart, prevEnd)
+        } else {
+            let prevStart = calendar.date(byAdding: .year, value: -1, to: startOfDay)!
+            let prevEnd = calendar.date(byAdding: DateComponents(year: -1, day: 1), to: startOfDay)!.addingTimeInterval(-1)
+            return (prevStart, prevEnd)
         }
     }
     

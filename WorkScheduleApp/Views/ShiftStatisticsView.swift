@@ -250,6 +250,8 @@ struct ShiftStatisticsView: View {
         var previousDate: Date?
         
         switch selectedPeriod {
+        case .day:
+            previousDate = calendar.date(byAdding: .day, value: -1, to: selectedDate)
         case .week:
             previousDate = calendar.date(byAdding: .weekOfYear, value: -1, to: selectedDate)
         case .month:
@@ -264,6 +266,8 @@ struct ShiftStatisticsView: View {
 
         return allShifts.filter { shift in
             switch selectedPeriod {
+            case .day:
+                return calendar.isDate(shift.date, inSameDayAs: prevDate)
             case .week:
                 return calendar.isDate(shift.date, equalTo: prevDate, toGranularity: .weekOfYear)
             case .month:

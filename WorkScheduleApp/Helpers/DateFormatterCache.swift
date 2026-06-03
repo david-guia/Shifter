@@ -47,6 +47,14 @@ enum DateFormatterCache {
         f.dateFormat = "MMM"
         return f
     }()
+
+    /// Formatter pour la vue journalière (ex: "Lundi 3 juin 2026")
+    static let dayFull: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "fr_FR")
+        f.dateFormat = "EEEE d MMMM yyyy"
+        return f
+    }()
 }
 
 extension Date {
@@ -63,6 +71,12 @@ extension Date {
     /// Format heure (14:30)
     var time: String {
         DateFormatterCache.time.string(from: self)
+    }
+
+    /// Format journalier (ex: "Lundi 3 juin 2026")
+    var dayLabel: String {
+        let s = DateFormatterCache.dayFull.string(from: self)
+        return s.prefix(1).uppercased() + s.dropFirst()
     }
 
     /// Format semaine — plage de dates (ex: "5–11 mai 2025")
